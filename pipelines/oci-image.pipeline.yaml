@@ -53,7 +53,8 @@ include:
     - gitlab-ci image push ./.build/images/*.yaml
   needs:
     - build-image
-    - unittest
+    - job: unittest
+      optional: true
   rules:
     - if: $CI_COMMIT_REF_PROTECTED =~ /true/
     - if: $GITLABCI_PUSH_IMAGE_FORCE =~ /true/
