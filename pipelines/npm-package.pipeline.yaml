@@ -1,0 +1,22 @@
+include:
+  - project: ${DEVSECOPS_GITLABCI_PROJECT}
+    ref: ${DEVSECOPS_GITLABCI_REF}
+    file:
+      - pipelines/.stages.yaml
+
+.npm-build:
+  stage: build
+  script:
+    - echo "Not implemented"
+
+.npm-publish:
+  stage: publish
+  before_script:
+    - |
+      if [[ -f .package.json.tmpl ]]; then
+        cp .package.json.tmpl package.json
+        sed -i 's/PROJECT_NAME/${CI_PROJECT_PATH_SLUG}/g'           package.json
+        sed -i 's/PROJECT_VERSION/${TBD}/g'                         package.json
+        sed -i 's/PROJECT_DESCRIPTION/${CI_PROJECT_DESCRIPTION}/g'  package.json
+        sed -i 's/PROJECT_URL/${CI_PROJECT_URL}/g'                  package.json
+      fi

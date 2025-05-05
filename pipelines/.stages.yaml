@@ -1,0 +1,6 @@
+stages:
+  - .pre
+  - build
+  - test
+  - publish
+  - .post
