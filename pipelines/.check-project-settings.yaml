@@ -1,0 +1,8 @@
+# ----------------------------------------------------------------------------
+# Checks this project's settings for conformance.
+.check-project-settings:
+  image: $GITLABCI_DEFAULT_IMAGE_NAME:$GITLABCI_DEFAULT_IMAGE_VERSION
+  stage: .pre
+  script:
+    - gitlab-ci project ${CI_PROJECT_ID}
+  allow_failure: true

@@ -1,0 +1,37 @@
+spec:
+  inputs:
+    DOCKERFILE:
+      type: string
+      default: Dockerfile
+    CONTEXT:
+      type: string
+      default: .
+    TARGET:
+      type: string
+      default: <default>
+    UNITTESTS:
+      type: boolean
+      default: true
+
+---
+workflow:
+  name: OCI Image
+
+variables:
+  GITLABCI_BUILD_IMAGE_DOCKERFILE: $[[ DOCKERFILE ]]
+  GITLABCI_BUILD_IMAGE_CONTEXT:  $[[ CONTEXT ]]
+  GITLABCI_BUILD_IMAGE_TARGET:  $[[ TARGET ]]
+  GITLABCI_IMAGE_UNITTESTS:  $[[ UNITTESTS ]]
+
+include:
+  - local: ./pipelines/.check-project-settings.yaml
+  - local: ./pipelines/oci-image.pipeline.yaml
+
+check-project-settings:
+  extends: .check-project-settings
+
+build-image:
+  extends: .build-image
+
+push-image:
+  extends: .push-image

@@ -1,0 +1,59 @@
+include:
+  - local: ./pipelines/.stages.yaml
+
+
+# ----------------------------------------------------------------------------
+# Builds and saves the OCI image for this project
+.build-image:
+  image: $GITLABCI_DEFAULT_IMAGE_NAME:$GITLABCI_DEFAULT_IMAGE_VERSION
+  stage: build
+  script:
+    - mkdir -p ./.build/images
+    - gitlab-ci image build --save ./.build/images
+                            --save-manifest
+  needs: []
+  artifacts:
+    paths:
+      - ./.build/images
+    expire_in: 1 week
+
+
+# ----------------------------------------------------------------------------
+# Unit tests this project
+.unittest-image:
+  image: $GITLABCI_DEFAULT_IMAGE_NAME:$GITLABCI_DEFAULT_IMAGE_VERSION
+  stage: test
+  script:
+    - mkdir -p ./.build/test-results
+    - export TEST_IMAGE_NAME=$(gitlab-ci image build --target test --name-only)
+    - gitlab-ci image build  --target test
+    - podman run  --rm
+                  --interactive
+                  --tty
+                  --volume ./.build/test-results:/var/tmp
+                  ${TEST_IMAGE_NAME}
+  rules:
+    - if: $GITLABCI_IMAGE_UNITTESTS =~ /false/
+      when: never
+  needs: []
+  artifacts:
+    paths:
+      - ./.build/test-results/unit-tests.xml
+    reports:
+      junit: ./.build/test-results/unit-tests.xml
+    expire_in: 1 week
+
+
+# ----------------------------------------------------------------------------
+# Pushes this project's image(s) to the container registry
+.push-image:
+  image: $GITLABCI_DEFAULT_IMAGE_NAME:$GITLABCI_DEFAULT_IMAGE_VERSION
+  stage: publish
+  script:
+    - gitlab-ci image push ./.build/images/*.yaml
+  needs:
+    - build-image
+    - unittest
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED =~ /true/
+    - if: $GITLABCI_PUSH_IMAGE_FORCE =~ /true/
