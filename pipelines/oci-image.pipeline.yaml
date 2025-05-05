@@ -1,5 +1,8 @@
 include:
-  - local: ./pipelines/.stages.yaml
+  - project: $GITLABCI_DEFAULT_PIPELINE_PROJECT
+    ref: $GITLABCI_DEFAULT_PIPELINE_REF
+    file:
+      - pipelines/.stages.yaml
 
 
 # ----------------------------------------------------------------------------
