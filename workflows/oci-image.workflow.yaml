@@ -18,10 +18,10 @@ workflow:
   name: OCI Image
 
 variables:
-  GITLABCI_BUILD_IMAGE_DOCKERFILE: $[[ DOCKERFILE ]]
-  GITLABCI_BUILD_IMAGE_CONTEXT:  $[[ CONTEXT ]]
-  GITLABCI_BUILD_IMAGE_TARGET:  $[[ TARGET ]]
-  GITLABCI_IMAGE_UNITTESTS:  $[[ UNITTESTS ]]
+  GITLABCI_BUILD_IMAGE_DOCKERFILE: $[[ inputs.DOCKERFILE ]]
+  GITLABCI_BUILD_IMAGE_CONTEXT:  $[[ inputs.CONTEXT ]]
+  GITLABCI_BUILD_IMAGE_TARGET:  $[[ inputs.TARGET ]]
+  GITLABCI_IMAGE_UNITTESTS:  $[[ inputs.UNITTESTS ]]
 
 include:
   - local: ./pipelines/.check-project-settings.yaml
