@@ -24,8 +24,11 @@ variables:
   GITLABCI_IMAGE_UNITTESTS:  $[[ inputs.UNITTESTS ]]
 
 include:
-  - local: ./pipelines/.check-project-settings.yaml
-  - local: ./pipelines/oci-image.pipeline.yaml
+  - project: $GITLABCI_DEFAULT_PIPELINE_PROJECT
+    ref: $GITLABCI_DEFAULT_PIPELINE_REF
+    file:
+      - pipelines/.check-project-settings.yaml
+      - pipelines/oci-image.pipeline.yaml
 
 check-project-settings:
   extends: .check-project-settings
