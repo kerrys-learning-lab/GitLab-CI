@@ -3,6 +3,7 @@ include:
     ref: $GITLABCI_DEFAULT_PIPELINE_REF
     file:
       - pipelines/.stages.yaml
+      - pipelines/.defaults.yaml
 
 .configure-registries:
   script:
@@ -21,7 +22,6 @@ include:
 # ----------------------------------------------------------------------------
 # Builds and saves the OCI image for this project
 .build-image:
-  image: $GITLABCI_DEFAULT_IMAGE_NAME:$GITLABCI_DEFAULT_IMAGE_VERSION
   stage: build
   before_script:
     - !reference ['.configure-registries', 'script']
@@ -45,7 +45,6 @@ include:
 # ----------------------------------------------------------------------------
 # Unit tests this project
 .unittest-image:
-  image: $GITLABCI_DEFAULT_IMAGE_NAME:$GITLABCI_DEFAULT_IMAGE_VERSION
   stage: test
   before_script:
     - !reference ['.configure-registries', 'script']
@@ -73,7 +72,6 @@ include:
 # ----------------------------------------------------------------------------
 # Pushes this project's image(s) to the container registry
 .push-image:
-  image: $GITLABCI_DEFAULT_IMAGE_NAME:$GITLABCI_DEFAULT_IMAGE_VERSION
   stage: publish
   before_script:
     - !reference ['.configure-registries', 'script']
