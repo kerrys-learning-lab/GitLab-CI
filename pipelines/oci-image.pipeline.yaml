@@ -4,16 +4,37 @@ include:
     file:
       - pipelines/.stages.yaml
 
+.configure-registries:
+  script:
+    - export EPHEMERAL_REGISTRY_CONF_PATH=/etc/containers/registries.conf.d/ephemeral-registry.conf
+    - |
+      if [[ -n "${GITLABCI_EPHEMERAL_REGISTRY_URL}" && ! -f ${EPHEMERAL_REGISTRY_CONF_PATH} ]]; then
+        cat > ${EPHEMERAL_REGISTRY_CONF_PATH} <<__EOF
+          [[registry]]
+          location = "${GITLABCI_EPHEMERAL_REGISTRY_URL}"
+          insecure = true
+      __EOF
+      fi
+    - podman login ${CI_REGISTRY} --username ${CI_REGISTRY_USER}
+                                  --password ${CI_REGISTRY_PASSWORD}
 
 # ----------------------------------------------------------------------------
 # Builds and saves the OCI image for this project
 .build-image:
   image: $GITLABCI_DEFAULT_IMAGE_NAME:$GITLABCI_DEFAULT_IMAGE_VERSION
   stage: build
+  before_script:
+    - !reference ['.configure-registries', 'script']
   script:
     - mkdir -p ./.build/images
-    - gitlab-ci image build --save ./.build/images
-                            --save-manifest
+    - |
+      if [[ -n "${GITLABCI_EPHEMERAL_REGISTRY_URL}" ]];  then
+        gitlab-ci image build --push-registry ${GITLABCI_EPHEMERAL_REGISTRY_URL} \
+                              --output-dir ./.build/images
+      else
+        gitlab-ci image build --save-file \
+                              --output-dir ./.build/images
+      fi
   needs: []
   artifacts:
     paths:
@@ -26,6 +47,8 @@ include:
 .unittest-image:
   image: $GITLABCI_DEFAULT_IMAGE_NAME:$GITLABCI_DEFAULT_IMAGE_VERSION
   stage: test
+  before_script:
+    - !reference ['.configure-registries', 'script']
   script:
     - mkdir -p ./.build/test-results
     - export TEST_IMAGE_NAME=$(gitlab-ci image build --target test --name-only)
@@ -52,6 +75,8 @@ include:
 .push-image:
   image: $GITLABCI_DEFAULT_IMAGE_NAME:$GITLABCI_DEFAULT_IMAGE_VERSION
   stage: publish
+  before_script:
+    - !reference ['.configure-registries', 'script']
   script:
     - gitlab-ci image push ./.build/images/*.yaml
   needs:
