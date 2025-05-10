@@ -1,0 +1,26 @@
+include:
+  - project: $GITLABCI_DEFAULT_PIPELINE_PROJECT
+    ref: $GITLABCI_DEFAULT_PIPELINE_REF
+    file:
+      - pipelines/.stages.yaml
+      - pipelines/.defaults.yaml
+
+.package-chart:
+  stage: build
+  script:
+    - mkdir -p ./.build/charts
+    - gitlab-ci chart build --chart-dir ${GITLABCI_CHART_DIR:.}
+                            --output-dir ./.build/charts
+  artifacts:
+    paths:
+      - ./.build/charts
+    expire_in: 1 week
+
+.push-chart:
+  stage: publish
+  script:
+    - gitlab-ci chart push  --channel stable
+                            ./.build/charts/*.tgz
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED =~ /true/
+    - if: $GITLABCI_PUSH_CHART_FORCE =~ /true/
