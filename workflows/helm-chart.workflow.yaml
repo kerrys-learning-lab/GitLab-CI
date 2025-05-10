@@ -1,0 +1,28 @@
+spec:
+  inputs:
+    CHART_DIR:
+      type: string
+      default: .
+
+---
+workflow:
+  name: Helm Chart
+
+variables:
+  GITLABCI_CHART_DIR: $[[ inputs.CHART_DIR ]]
+
+include:
+  - project: $GITLABCI_DEFAULT_PIPELINE_PROJECT
+    ref: $GITLABCI_DEFAULT_PIPELINE_REF
+    file:
+      - pipelines/.check-project-settings.yaml
+      - pipelines/helm-chart.pipeline.yaml
+
+check-project-settings:
+  extends: .check-project-settings
+
+package-chart:
+  extends: .package-chart
+
+push-chart:
+  extends: .push-chart
