@@ -1,0 +1,11 @@
+# ----------------------------------------------------------------------------
+# Calculates this pipeline's version information and writes a dotenv for
+# (optional) use in subsequent jobs.
+.calculate-pipeline-version:
+  image: $GITLABCI_DEFAULT_IMAGE_NAME:$GITLABCI_DEFAULT_IMAGE_VERSION
+  stage: .pre
+  script:
+    - gitlab-ci pipeline version --to-file ./version.env --force
+  artifacts:
+    reports:
+      dotenv: ./version.env

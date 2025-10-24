@@ -15,11 +15,15 @@ include:
   - project: $GITLABCI_DEFAULT_PIPELINE_PROJECT
     ref: $GITLABCI_DEFAULT_PIPELINE_REF
     file:
+      - pipelines/.calculate-pipeline-version.yaml
       - pipelines/.check-project-settings.yaml
       - pipelines/helm-chart.pipeline.yaml
 
 check-project-settings:
   extends: .check-project-settings
+
+calculate-pipeline-version:
+  extends: .calculate-pipeline-version
 
 package-chart:
   extends: .package-chart
