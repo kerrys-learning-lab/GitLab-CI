@@ -1,0 +1,27 @@
+
+.apply-downstream-project:
+    stage: publish
+    before_script:
+        - |
+            if [[ -z "${DOWNSTREAM_PROJECT_NAME}" || -z "${DOWNSTREAM_PROJECT_GROUP}" ]]; then
+                echo "DOWNSTREAM_PROJECT_NAME and DOWNSTREAM_PROJECT_GROUP must be set"
+                exit 1
+            fi
+        - git config --global user.email ${GITLAB_CICD_BOT_EMAIL}
+        - git config --global user.name "${GITLAB_CICD_BOT_NAME}"
+        - git clone https://gitlab-cicd-bot:${GITLAB_CICD_BOT_TOKEN}@${CI_SERVER_HOST}/${DOWNSTREAM_PROJECT_GROUP}/${DOWNSTREAM_PROJECT_NAME}.git
+        - cd ${DOWNSTREAM_PROJECT_NAME}
+        - |
+            if [[ -n "${CI_COMMIT_BRANCH}" ]]; then
+                git switch     ${CI_COMMIT_BRANCH} 2> /dev/null || \
+                git switch -c  ${CI_COMMIT_BRANCH}
+            fi
+    after_script:
+        - |
+            git commit -m "Generated automatically by upstream pipeline: ${CI_PIPELINE_URL:-'N/A'}"
+        - |
+            if [[ -n "${CI_COMMIT_TAG}" ]]; then
+                git tag -a ${CI_COMMIT_TAG} -m "${CI_COMMIT_MESSAGE}"
+            fi
+        - |
+            git push origin ${CI_COMMIT_REF_NAME}
