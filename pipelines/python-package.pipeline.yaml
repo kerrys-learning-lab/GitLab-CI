@@ -1,0 +1,33 @@
+include:
+  - project: $GITLABCI_DEFAULT_PIPELINE_PROJECT
+    ref: $GITLABCI_DEFAULT_PIPELINE_REF
+    file:
+      - pipelines/.stages.yaml
+      - pipelines/.defaults.yaml
+
+
+# ----------------------------------------------------------------------------
+# Builds and saves a Python package for this project
+.build-python-package:
+  stage: build
+  variables:
+    PROJECT_ROOT: .
+  script:
+    - gitlab-ci  python  --project-root ${PROJECT_ROOT}  build
+  artifacts:
+    paths:
+      - ./dist
+    expire_in: 1 week
+
+
+# ----------------------------------------------------------------------------
+# Pushes this project's Python package to the container registry
+.push-python-package:
+  stage: publish
+  variables:
+    PROJECT_ROOT: .
+  script:
+    - gitlab-ci  python  --project-root ${PROJECT_ROOT}  push
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED =~ /true/
+    - if: $GITLABCI_PUSH_PYTHON_FORCE =~ /true/
