@@ -17,6 +17,7 @@
                 git switch -c  ${CI_COMMIT_BRANCH}
             fi
     after_script:
+        - cd ${DOWNSTREAM_PROJECT_NAME}
         - |
             git commit -m "Generated automatically by upstream pipeline: ${CI_PIPELINE_URL:-'N/A'}"
         - |
