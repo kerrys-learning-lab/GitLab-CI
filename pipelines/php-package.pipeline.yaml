@@ -1,0 +1,27 @@
+include:
+  - project: $GITLABCI_DEFAULT_PIPELINE_PROJECT
+    ref: $GITLABCI_DEFAULT_PIPELINE_REF
+    file:
+      - pipelines/.stages.yaml
+      - pipelines/.defaults.yaml
+
+
+# ----------------------------------------------------------------------------
+# Pushes this project's PHP package to the composer registry
+.push-php-package:
+  stage: publish
+  script:
+    - |
+      export DATA=
+      if [[ - n "${CI_COMMIT_BRANCH}" ]]; then
+        export DATA="branch=${CI_COMMIT_BRANCH}"
+      else
+        export DATA="tag=${CI_COMMIT_TAG}"
+      fi
+      curl  --fail-with-body                      \
+            --header "Job-Token: ${CI_JOB_TOKEN}" \
+            --data ${DATA}                        \
+            ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/composer
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED =~ /true/
+    - if: $GITLABCI_PUSH_PHP_FORCE =~ /true/
