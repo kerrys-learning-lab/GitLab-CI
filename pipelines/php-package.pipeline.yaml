@@ -13,7 +13,7 @@ include:
   script:
     - |
       export DATA=
-      if [[ - n "${CI_COMMIT_BRANCH}" ]]; then
+      if [[ -n "${CI_COMMIT_BRANCH}" ]]; then
         export DATA="branch=${CI_COMMIT_BRANCH}"
       else
         export DATA="tag=${CI_COMMIT_TAG}"
