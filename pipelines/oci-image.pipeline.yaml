@@ -27,14 +27,21 @@ include:
     - !reference ['.configure-registries', 'script']
   script:
     - mkdir -p ./.build/images
+    - export PUSH_REGISTRY_CLI_ARG=
+    - export TARGET_CLI_ARG=
+    - export OUTPUT_DIR_CLI_ARG="--output-dir ./.build/images"
     - |
       if [[ -n "${GITLABCI_EPHEMERAL_REGISTRY_URL}" ]];  then
-        gitlab-ci image build --push-registry ${GITLABCI_EPHEMERAL_REGISTRY_URL} \
-                              --output-dir ./.build/images
-      else
-        gitlab-ci image build --save-file \
-                              --output-dir ./.build/images
+        export PUSH_REGISTRY_CLI_ARG="--push-registry ${GITLABCI_EPHEMERAL_REGISTRY_URL}"
       fi
+    - |
+      if [[ -n "${GITLABCI_IMAGE_BUILD_TARGET}" ]]; then
+        TARGET_CLI_ARG="--target ${GITLABCI_IMAGE_BUILD_TARGET}"
+      fi
+    - |
+      gitlab-ci image build   ${PUSH_REGISTRY_CLI_ARG} \
+                              ${TARGET_CLI_ARG} \
+                              ${OUTPUT_DIR_CLI_ARG}
   needs: []
   artifacts:
     paths:
