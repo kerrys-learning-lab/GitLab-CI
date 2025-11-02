@@ -9,8 +9,8 @@ include:
   stage: build
   script:
     - mkdir -p ./.build/charts
-    - gitlab-ci chart build --verbose
-                            --chart-dir ${GITLABCI_CHART_DIR:-.}
+    - gitlab-ci --verbose
+                chart build --chart-dir ${GITLABCI_CHART_DIR:-.}
                             --output-dir ./.build/charts
   artifacts:
     paths:
