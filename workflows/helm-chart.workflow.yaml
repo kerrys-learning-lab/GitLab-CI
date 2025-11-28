@@ -25,8 +25,8 @@ check-project-settings:
 calculate-pipeline-version:
   extends: .calculate-pipeline-version
 
-package-chart:
-  extends: .package-chart
+package-helm-chart:
+  extends: .package-helm-chart
 
-push-chart:
-  extends: .push-chart
+push-helm-chart:
+  extends: .push-helm-chart

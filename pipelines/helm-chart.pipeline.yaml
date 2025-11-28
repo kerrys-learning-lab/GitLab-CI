@@ -5,22 +5,22 @@ include:
       - pipelines/.stages.yaml
       - pipelines/.defaults.yaml
 
-.package-chart:
+.package-helm-chart:
   stage: build
   script:
     - mkdir -p ./.build/charts
     - gitlab-ci --verbose
-                chart build --chart-dir ${GITLABCI_CHART_DIR:-.}
+                helm  build --chart-dir ${GITLABCI_CHART_DIR:-.}
                             --output-dir ./.build/charts
   artifacts:
     paths:
       - ./.build/charts
     expire_in: 1 week
 
-.push-chart:
+.push-helm-chart:
   stage: publish
   script:
-    - gitlab-ci chart push  --channel stable
+    - gitlab-ci helm  push  --channel stable
                             ./.build/charts/*.tgz
   rules:
     - if: $CI_COMMIT_REF_PROTECTED =~ /true/

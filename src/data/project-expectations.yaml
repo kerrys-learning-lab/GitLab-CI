@@ -1,0 +1,81 @@
+project:
+  children:
+    Default branch is '{value}':
+      type: exact-match
+      key: default_branch
+      value: main
+    Project visibility is '{value}':
+      key: visibility
+      type: exact-match
+      value: internal
+    "Merge Checks: Pipelines must succeed":
+      key: only_allow_merge_if_pipeline_succeeds
+      type: exact-match
+      value: true
+    "Merge Checks: Skipped pipelines are considered successful":
+      key: allow_merge_on_skipped_pipeline
+      type: exact-match
+      value: true
+    Verify protected branches:
+      key: protected_branches
+      type: protected-branches
+      value:
+        required:
+          - main
+          - "{project-path}-*"
+        strict: true
+      children:
+        Verify push permissions:
+          key: push_access_levels
+          alt: allowed_to_push
+          type: access-level
+          value:
+            len: 1
+          children:
+            Only Maintainers can push to protected branch:
+              key: access_level
+              type: key-value
+              value: 40
+        Verify merge permissions:
+          key: merge_access_levels
+          alt: allowed_to_merge
+          type: access-level
+          value:
+            len: 1
+          children:
+            Developers + Maintainers can merge protected branch:
+              key: access_level
+              type: key-value
+              value: 30
+        Force push is disallowed:
+          key: allow_force_push
+          type: exact-match
+          value: false
+    Registry Cleanup Policy:
+      key: container_expiration_policy
+      type: nested
+      children:
+        Cleanup enabled:
+          key: enabled
+          type: key-value
+          value: true
+        Cleanup cadence:
+          key: cadence
+          type: key-value
+          value: 1d
+        Keep most recent:
+          key: keep_n
+          type: key-value
+          value: 5
+        Remove tags older than:
+          key: older_than
+          type: key-value
+          value: 30d
+        Remove tags matching:
+          key: name_regex
+          type: key-value
+          value: .*
+        Keep tags matching:
+          key: name_regex_keep
+          type: key-value
+          value: (backstop|main|\d\.\d\.\d)

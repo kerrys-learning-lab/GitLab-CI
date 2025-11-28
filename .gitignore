@@ -1,0 +1,11 @@
+**/__pycache__
+images
+.build
+**/*secret*
+pyproject.toml
+.data
+.venv
+dist
+.pytest_cache
+**/*.log
+

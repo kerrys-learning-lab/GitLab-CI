@@ -1,0 +1,47 @@
+env:
+  AWS_ACCESS_KEY_ID: TBP
+  AWS_SECRET_ACCESS_KEY: TBP
+  CI_API_V4_URL: https://gitlab.westsidestreet.net/api/v4
+  CI_COMMIT_AUTHOR: TBP
+  CI_COMMIT_BRANCH: gitlab-ci-local
+  CI_COMMIT_DESCRIPTION: This is the commit description
+  CI_COMMIT_MESSAGE: This is the commit message
+  CI_COMMIT_REF_NAME: working-branch
+  CI_COMMIT_REF_SLUG: working-branch
+  CI_COMMIT_REF_PROTECTED: true
+  CI_COMMIT_SHA: 2d6bf90914999c3a04072df5aa14eae41529bbcd
+  CI_COMMIT_SHORT_SHA: 2d6bf909
+  CI_COMMIT_TIMESTAMP: 2025-01-31T16:47:55Z
+  CI_COMMIT_TITLE: This is the title
+  CI_DEFAULT_BRANCH: main
+  CI_JOB_ID: 1234
+  CI_PIPELINE_ID: 42
+  CI_PIPELINE_IID: 42
+  CI_PIPELINE_URL: https://gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-runner
+  CI_PROJECT_DESCRIPTION: This is the description of the project
+  CI_PROJECT_DIR: /workspace
+  CI_PROJECT_ID: 3
+  CI_PROJECT_NAME: gitlab-runner
+  CI_PROJECT_NAMESPACE: kerrys-learning-lab/devsecops
+  CI_PROJECT_TITLE: GitLab Runner
+  CI_PROJECT_URL: https://gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-runner
+  CI_REGISTRY: registry.westsidestreet.net
+  CI_REGISTRY_IMAGE: registry.gitlab.com/kerrys-learning-lab/devsecops/gitlab-runner
+  CI_REGISTRY_USER: kerry
+  CI_REGISTRY_PASSWORD: TBP
+  CI_REPOSITORY_URL: https://gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-runner.git
+  CI_SERVER_URL: https://gilab.westsidestreet.net
+  GITLAB_PAT: glpat-Ytb16gMhuCBiFpMv2GLH
+  GITLABCI_BUILD_IMAGE_DOCKERFILE: /workspace/test/data/Dockerfile
+  ML_DATA_S3_ENDPOINT_URL: http://nas-minio.westsidestreet.net:9000
+  ML_DATA_S3_USE_SSL: false
+  ML_DATA_S3_VERIFY: false
+  ML_DATA_BUCKET_NAME: machine-learning-data
+image:
+  name: kerrys-learning-lab/devsecops/gitlab-runner/gitlab-runner
+  version: main
+  repo: registry.westsidestreet.net
+registries:
+  ephemeral:
+    url: nas.westsidestreet.net:5555
+    insecure: true

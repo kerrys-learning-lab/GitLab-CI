@@ -1,0 +1,20 @@
+image:
+  build:
+    context: .
+    dockerfile: /workspace/test/data/Dockerfile
+    labels:
+    - org.opencontainers.image.created=2025-05-09T00:37:19.477971+00:00
+    - org.opencontainers.image.authors=kerry.t.johnson@gmail.com
+    - org.opencontainers.image.url=https://gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-runner
+    - org.opencontainers.image.documentation=https://gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-runner
+    - org.opencontainers.image.source=https://gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-runner
+    - org.opencontainers.image.version=1.2.3
+    - org.opencontainers.image.revision=2d6bf90914999c3a04072df5aa14eae41529bbcd
+    - org.opencontainers.image.title=gitlab-runner
+    - org.opencontainers.image.description=This is the description of the project
+    tags:
+    - 1.2.3
+    - 1.2.3-4.5.6
+    target: <default>
+  name: registry.gitlab.com/kerrys-learning-lab/devsecops/gitlab-runner/gitlab-runner:1.2.3
+  remote: nas.westsidestreet.net:5555/kerrys-learning-lab/devsecops/gitlab-runner/gitlab-runner:1.2.3
