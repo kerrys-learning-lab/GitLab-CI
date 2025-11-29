@@ -1,3 +1,6 @@
 CI_PROJECT_DESCRIPTION: Provides re-usable CI/CD pipelines, workflows, and utilities
 CI_PROJECT_ID: 4
 CI_REPOSITORY_URL: https://gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci
+GITLABCI_DEFAULT_PIPELINE_REF: dev
+GITLABCI_DEFAULT_IMAGE_NAME: registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/gitlab-ci
+GITLABCI_DEFAULT_IMAGE_VERSION: dev

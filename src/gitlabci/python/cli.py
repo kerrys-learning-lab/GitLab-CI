@@ -4,6 +4,7 @@ import os
 import pathlib
 import requests
 import rich_argparse
+import shutil
 import subprocess
 import tomlkit
 from .. import utils
@@ -28,6 +29,7 @@ class PythonProject:
     self.output_dir = output_dir
     self.info: Info = info or Info.create()
     self.version: PipelineVersion = version or VersionFactory.create()
+    self.pyproject_toml_path = pathlib.Path(self.project_root) / 'pyproject.toml'
 
   def build(self) -> list[pathlib.Path]:
     self._update_pyproject_toml()
@@ -52,22 +54,22 @@ class PythonProject:
 
   def push(self):
     url: str = f'{self.info.apiUrl}/projects/{self.info.projectId}/packages/pypi'
-    env: dict = {'UV_PUBLISH_USERNAME': self.info.registryUser,
-                 'UV_PUBLISH_PASSWORD': self.info.registryPassword.get_secret_value()}
     LOGGER.debug(url)
-    LOGGER.debug(env)
 
     command = [
       'uv',
       'publish',
+      '--username', self.info.registryUser,
+      '--password', self.info.registryPassword.get_secret_value(),
       '--publish-url', url
     ]
-    command.extend([str(a) for a in self.artifacts])
+    # command.extend([str(a) for a in self.artifacts])
+
+    print(command)
 
     with subprocess.Popen(command,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.STDOUT,
-                            env=env,
                             encoding='utf-8') as proc:
         utils.ProcessPrinter.follow(proc, logger=LOGGER, method='debug')
 
@@ -83,15 +85,17 @@ class PythonProject:
       return []
 
   def _update_pyproject_toml(self) -> pathlib.Path:
-    with open(pathlib.Path(self.project_root) / 'pyproject.toml', 'r') as pyprojectTomlFile:
-        pyprojectToml = tomlkit.load(pyprojectTomlFile)
+    with open(self.pyproject_toml_path, 'r') as fd:
+        pyprojectToml = tomlkit.load(fd)
+
+    shutil.copy2(self.pyproject_toml_path, f'{self.pyproject_toml_path}.bak')
 
     pyprojectToml['project']['version'] = self.version.pythonicVersion
 
-    with open(pathlib.Path(self.project_root) / 'pyproject.toml', 'w') as pyprojectTomlFile:
-        tomlkit.dump(pyprojectToml, pyprojectTomlFile)
+    with open(self.pyproject_toml_path, 'w') as fd:
+        tomlkit.dump(pyprojectToml, fd)
 
-        return pathlib.Path(pyprojectTomlFile.name)
+        return pathlib.Path(fd.name)
 
 def build(args: argparse.Namespace):
   info: Info = Info.create()

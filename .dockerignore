@@ -1,2 +1,5 @@
 *
-!python
+!pyproject.toml
+!src
+!test
+!uv.lock

@@ -34,7 +34,7 @@ variables:
 # ----------------------------------------------------------------------------
 # Checks this project's settings for conformance.
 check-project-settings:
-  image: registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/gitlab-ci:main
+  image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: .pre
   script:
     - ${GITLABCI_SCRIPT} project --expectations ./src/data/project-expectations.yaml ${CI_PROJECT_ID}
@@ -42,9 +42,9 @@ check-project-settings:
 
 
 # ----------------------------------------------------------------------------
-# Checks this project's settings for conformance.
+# Checks this pipeline's version information.
 calculate-pipeline-version:
-  image: registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/gitlab-ci:main
+  image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: .pre
   script:
     - ${GITLABCI_SCRIPT} pipeline version --to-file ./version.env --force
@@ -54,9 +54,9 @@ calculate-pipeline-version:
 
 
 # ----------------------------------------------------------------------------
-# Builds and saves the OCI image for this project
+# Builds and saves the Python package for this project
 build-python-package:
-  image: registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/gitlab-ci:main
+  image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: build
   script:
     - ${GITLABCI_SCRIPT} python build
@@ -70,7 +70,7 @@ build-python-package:
 # ----------------------------------------------------------------------------
 # Builds and saves the OCI image for this project
 build-image:
-  image: registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/gitlab-ci:main
+  image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: build
   before_script:
     - !reference ['.configure-registries', 'script']
@@ -95,7 +95,7 @@ build-image:
 # ----------------------------------------------------------------------------
 # Builds and saves a Python package for this project
 build-python-package:
-  image: registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/gitlab-ci:main
+  image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: build
   script:
     - ${GITLABCI_SCRIPT}  --verbose python --project-name gitlabci build
@@ -109,7 +109,7 @@ build-python-package:
 # ----------------------------------------------------------------------------
 # Tests the data preparation job for ML Pipelines
 prepare-data:
-  image: registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/gitlab-ci:main
+  image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: build
   variables:
     PYTHONPATH: ./src:./test
@@ -127,22 +127,18 @@ prepare-data:
 # ----------------------------------------------------------------------------
 # Unit tests this project
 unittest:
-  image: registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/gitlab-ci:main
+  image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: test
   script:
-    - mkdir -p ./.build/test-results
-    - export TEST_IMAGE_NAME=$(${GITLABCI_SCRIPT} image build --target test --name-only)
-    - ${GITLABCI_SCRIPT} image build  --target test
-    - podman run  --rm
-                  --interactive
-                  --tty
-                  --volume ./.build/test-results:/var/tmp
-                  ${TEST_IMAGE_NAME}
+    - uv run pytest
   needs: []
   artifacts:
     paths:
-      - ./.build/test-results/unit-tests.xml
+      - ./.build/test-results/pytest.log
     reports:
+      coverage_report:
+        coverage_format: cobertura
+        path: ./.build/test-results/coverage.xml
       junit: ./.build/test-results/unit-tests.xml
     expire_in: 1 week
 
@@ -150,7 +146,7 @@ unittest:
 # ----------------------------------------------------------------------------
 # Tests (verifies) the ability to build/push Helm Charts
 helmtest:
-  image: registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/gitlab-ci:main
+  image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: test
   script:
     - mkdir -p ./.build/charts
@@ -166,7 +162,7 @@ helmtest:
 # ----------------------------------------------------------------------------
 # Pushes this project's image(s) to the container registry
 push-image:
-  image: registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/gitlab-ci:main
+  image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: publish
   before_script:
     - !reference ['.configure-registries', 'script']
@@ -184,7 +180,7 @@ push-image:
 # ----------------------------------------------------------------------------
 # Pushes this project's Python package to the container registry
 push-python-package:
-  image: registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/gitlab-ci:main
+  image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: publish
   script:
     - ${GITLABCI_SCRIPT}  --verbose python --project-name gitlabci push

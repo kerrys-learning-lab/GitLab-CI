@@ -6,8 +6,8 @@ env:
   CI_COMMIT_BRANCH: gitlab-ci-local
   CI_COMMIT_DESCRIPTION: This is the commit description
   CI_COMMIT_MESSAGE: This is the commit message
-  CI_COMMIT_REF_NAME: working-branch
-  CI_COMMIT_REF_SLUG: working-branch
+  CI_COMMIT_REF_NAME: 1-consolidate-projects-support-uv
+  CI_COMMIT_REF_SLUG: 1-consolidate-projects-support-uv
   CI_COMMIT_REF_PROTECTED: true
   CI_COMMIT_SHA: 2d6bf90914999c3a04072df5aa14eae41529bbcd
   CI_COMMIT_SHORT_SHA: 2d6bf909
@@ -20,7 +20,7 @@ env:
   CI_PIPELINE_URL: https://gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-runner
   CI_PROJECT_DESCRIPTION: This is the description of the project
   CI_PROJECT_DIR: /workspace
-  CI_PROJECT_ID: 3
+  CI_PROJECT_ID: 4
   CI_PROJECT_NAME: gitlab-runner
   CI_PROJECT_NAMESPACE: kerrys-learning-lab/devsecops
   CI_PROJECT_TITLE: GitLab Runner

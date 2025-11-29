@@ -1,7 +1,22 @@
 # ---------------------------------------------------------------------------
-FROM quay.io/podman/stable:v5.4 AS base
+ARG PYTHON_VERSION=3.14
+ARG PODMAN_IMAGE_VERSION=v5.4
+FROM python:${PYTHON_VERSION} AS build
 
-# Silince this warning: Emulate Docker CLI using podman...
+COPY src/           /var/tmp/gitlab-ci/src
+COPY pyproject.toml /var/tmp/gitlab-ci/pyproject.toml
+COPY uv.lock        /var/tmp/gitlab-ci/uv.lock
+
+ENV PATH="${PATH}:~/.local/bin"
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh  && \
+    cd /var/tmp/gitlab-ci  && \
+    ~/.local/bin/uv build
+
+
+# ---------------------------------------------------------------------------
+FROM quay.io/podman/stable:${PODMAN_IMAGE_VERSION} AS base
+
+# Silence this warning: Emulate Docker CLI using podman...
 RUN touch /etc/containers/nodocker
 
 RUN dnf update  -y &&  \
@@ -10,53 +25,19 @@ RUN dnf update  -y &&  \
                     git  \
                     helm  \
                     npm  \
+                    python3-pip  \
                     rsync  \
-                    sponge
+                    sponge  \
+                    vim
 
-RUN groupadd --gid 1001  \
-             gitlab-ci   && \
-    useradd  --gid 1001  \
-             --uid 1001  \
-             --shell /bin/bash  \
-             --home-dir /opt/gitlab-ci  \
-             gitlab-ci
+RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL="/bin" sh
 
-COPY --chown=1001:1001 python/pyproject.toml  /opt/gitlab-ci/pyproject.toml
-COPY --chown=1001:1001 python/src/            /opt/gitlab-ci/src
-
-RUN ln -s /opt/gitlab-ci/gitlab-ci.py /bin/gitlab-ci
-
-USER gitlab-ci
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
-
-
-ENV PYTHONPATH=/opt/gitlab-ci
+COPY --from=build   /var/tmp/gitlab-ci/dist /usr/local/gitlab-ci
+COPY                src/gitlab-ci.py        /opt/gitlab-ci/gitlab-ci.py
 
 WORKDIR /opt/gitlab-ci
+RUN pip3 install --root-user-action ignore /usr/local/gitlab-ci/*.whl
+
 
 ENTRYPOINT ["/bin/bash", "-c"]
-
-# ---------------------------------------------------------------------------
-FROM base AS test
-
-COPY test/  /opt/gitlab-ci/test
-
-RUN dnf install -y  python3-pytest  \
-                    python3-pytest-cov
-
-ENV PYTHONPATH=/opt/gitlab-ci:/opt/gitlab-ci/test
-
-ENTRYPOINT ["/usr/bin/pytest"]
-CMD [  \
-  "--junitxml", "/var/tmp/unit-tests.xml"  \
-]
-
-# Test coverage disabled for now:
-# "--cov-report", "term",  \
-# "--cov-report", "xml:/var/tmp/test-coverage.xml",  \
-# "--cov-fail-under=75",  \
-# "--cov=gitlabci"  \
-
-# ---------------------------------------------------------------------------
-FROM base AS production
-
+CMD ["/opt/gitlab-ci/gitlab-ci.py", "--help"]
