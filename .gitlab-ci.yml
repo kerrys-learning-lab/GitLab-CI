@@ -93,20 +93,6 @@ build-image:
 
 
 # ----------------------------------------------------------------------------
-# Builds and saves a Python package for this project
-build-python-package:
-  image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
-  stage: build
-  script:
-    - ${GITLABCI_SCRIPT}  --verbose python --project-name gitlabci build
-  needs: []
-  artifacts:
-    paths:
-      - ./dist
-    expire_in: 1 week
-
-
-# ----------------------------------------------------------------------------
 # Tests the data preparation job for ML Pipelines
 prepare-data:
   image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
@@ -183,7 +169,7 @@ push-python-package:
   image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: publish
   script:
-    - ${GITLABCI_SCRIPT}  --verbose python --project-name gitlabci push
+    - ${GITLABCI_SCRIPT}  --verbose  python  push
   needs:
     - build-python-package
     - unittest
