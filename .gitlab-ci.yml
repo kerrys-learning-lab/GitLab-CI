@@ -13,7 +13,7 @@ stages:
 
 variables:
   PYTHONPATH: ./src
-  GITLABCI_SCRIPT: ./src/gitlab-ci.py
+  GITLABCI_SCRIPT: uv run ./src/gitlab-ci.py
   LOCAL_HELM_DEPENDENCIES: ./src/data/helm-repo-dependencies.yaml
 
 .configure-registries:
