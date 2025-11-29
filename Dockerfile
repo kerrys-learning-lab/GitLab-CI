@@ -1,4 +1,6 @@
 # ---------------------------------------------------------------------------
+# NOTE: Don't upgrade PODMAN_IMAGE_VERSION from v5.4 until they fix the
+#       /etc/machine-id bug!
 ARG PYTHON_VERSION=3.14
 ARG PODMAN_IMAGE_VERSION=v5.4
 FROM python:${PYTHON_VERSION} AS build
@@ -19,6 +21,7 @@ FROM quay.io/podman/stable:${PODMAN_IMAGE_VERSION} AS base
 # Silence this warning: Emulate Docker CLI using podman...
 RUN touch /etc/containers/nodocker
 
+# In lieu of upgrading from v5.4 (see NOTE above), we do an update here:
 RUN dnf update  -y &&  \
     dnf install -y  awk  \
                     curl  \

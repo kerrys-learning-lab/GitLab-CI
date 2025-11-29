@@ -38,7 +38,7 @@ env:
   ML_DATA_S3_VERIFY: false
   ML_DATA_BUCKET_NAME: machine-learning-data
 image:
-  name: kerrys-learning-lab/devsecops/gitlab-runner/gitlab-runner
+  name: kerrys-learning-lab/devsecops/gitlab-ci/gitlab-ci
   version: main
   repo: registry.westsidestreet.net
 registries:

@@ -5,7 +5,7 @@ $ helm  upgrade \
         --install \
         --namespace dev \
         --values ./test/helm/values.secrets.yaml \
-        gitlab-runner-test \
+        gitlab-ci-test \
         test/helm/
 ```
 
