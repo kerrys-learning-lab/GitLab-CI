@@ -40,7 +40,7 @@ COPY                src/gitlab-ci.py        /opt/gitlab-ci/gitlab-ci.py
 
 WORKDIR /opt/gitlab-ci
 RUN pip3 install --root-user-action ignore /usr/local/gitlab-ci/*.whl
-
+RUN ln -s /opt/gitlab-ci/gitlab-ci.py /bin/gitlab-ci
 
 ENTRYPOINT ["/bin/bash", "-c"]
 CMD ["/opt/gitlab-ci/gitlab-ci.py", "--help"]
