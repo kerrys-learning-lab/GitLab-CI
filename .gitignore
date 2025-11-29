@@ -1,0 +1,12 @@
+**/*.bak
+**/*.log
+**/__pycache__
+**/*secret*
+.build
+.coverage
+.data
+.pytest_cache
+.venv
+images
+dist
+

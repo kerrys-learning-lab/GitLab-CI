@@ -1,0 +1,31 @@
+{
+  "tasks": [
+    {
+      "label": "Helm: Install/Upgrade Test Chart",
+      "type": "shell",
+      "command": "helm",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "args": [
+        "upgrade",
+        "--values",
+        "test/helm/values.secrets.yaml",
+        "--install",
+        "--namespace",
+        "dev",
+        "gitlab-runner-test",
+        "test/helm"
+      ],
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "dedicated",
+        "showReuseMessage": false,
+        "clear": true
+      },
+      "problemMatcher": []
+    }
+  ]
+}
