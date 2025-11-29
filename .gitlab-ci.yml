@@ -47,6 +47,9 @@ calculate-pipeline-version:
   image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: .pre
   script:
+    - id
+    - pwd
+    - ls -alF
     - ${GITLABCI_SCRIPT} pipeline version --to-file ./version.env --force
   artifacts:
     reports:
