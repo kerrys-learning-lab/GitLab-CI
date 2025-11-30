@@ -1,6 +1,6 @@
 [project]
 name = "gitlabci"
-version = "0.0.0"
+version = "0.0.0+1-consolidate-projects-support-uv.42"
 description = "Add your description here"
 authors = [{ name = "Kerry Johnson", email = "kerry.t.johnson@gmail.com" }]
 requires-python = ">=3.13"

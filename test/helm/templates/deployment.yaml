@@ -44,7 +44,6 @@ spec:
             - name: live-code
               mountPath: /workspace/{{ $path }}
               subPath: devsecops/gitlab-ci/{{ $path }}
-              readonly: true
             {{- end }}
       imagePullSecrets:
         - name: gitlab-image-pull
