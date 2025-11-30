@@ -54,7 +54,7 @@ default-groups = [
 [tool.pytest.ini_options]
 console_output_style    = "progress"
 pythonpath              = "src"
-testpaths               = "test"
+testpaths               = "test/gitlabci_test"
 log_file                = "./.build/test-results/pytest.log"
 log_file_level          = "DEBUG"
 log_file_format         = "%(asctime)s - %(levelname)-6s - %(name)20s - %(message)s"

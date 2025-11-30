@@ -620,7 +620,7 @@ wheels = [
 
 [[package]]
 name = "gitlabci"
-version = "0.0.0"
+version = "0.0.0+1.consolidate.projects.support.uv.42"
 source = { editable = "." }
 dependencies = [
     { name = "boto3" },
