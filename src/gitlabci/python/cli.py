@@ -42,9 +42,10 @@ class PythonProject:
         ]
 
         with subprocess.Popen(command,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                encoding='utf-8') as proc:
+                              cwd=self.project_root,
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT,
+                              encoding='utf-8') as proc:
             utils.ProcessPrinter.follow(proc, logger=LOGGER, method='debug')
 
             if proc.returncode != 0:
@@ -65,9 +66,10 @@ class PythonProject:
         ]
 
         with subprocess.Popen(command,
-                                stdout=subprocess.PIPE,
-                                stderr=subprocess.STDOUT,
-                                encoding='utf-8') as proc:
+                              cwd=self.project_root,
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT,
+                              encoding='utf-8') as proc:
             utils.ProcessPrinter.follow(proc, logger=LOGGER, method='debug')
 
             if proc.returncode != 0:
