@@ -62,7 +62,9 @@ build-python-package:
   image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: build
   script:
-    - ${GITLABCI_SCRIPT} python build
+    - ${GITLABCI_SCRIPT} python --project-root .
+                                --build-type uv
+                                build
   needs: []
   artifacts:
     paths:
@@ -172,7 +174,9 @@ push-python-package:
   image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: publish
   script:
-    - ${GITLABCI_SCRIPT}  --verbose  python  push
+    - ${GITLABCI_SCRIPT}  --verbose  python --project-root .
+                                            --build-type uv
+                                            push
   needs:
     - build-python-package
     - unittest

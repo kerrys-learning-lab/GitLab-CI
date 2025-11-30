@@ -11,9 +11,12 @@ include:
 .build-python-package:
   stage: build
   variables:
-    PROJECT_ROOT: .
+    PYTHON_BUILD_TYPE: uv
+    PYTHON_PROJECT_ROOT: .
   script:
-    - gitlab-ci  python  --project-root ${PROJECT_ROOT:-.}  build
+    - gitlab-ci  python --project-root ${PYTHON_PROJECT_ROOT:-.}
+                        --build-type ${PYTHON_BUILD_TYPE}
+                        build
   artifacts:
     paths:
       - ./dist
@@ -25,9 +28,12 @@ include:
 .push-python-package:
   stage: publish
   variables:
-    PROJECT_ROOT: .
+    PYTHON_BUILD_TYPE: uv
+    PYTHON_PROJECT_ROOT: .
   script:
-    - gitlab-ci  python  --project-root ${PROJECT_ROOT}  push
+    - gitlab-ci  python --project-root ${PYTHON_PROJECT_ROOT}
+                        --build-type ${PYTHON_BUILD_TYPE}
+                        push
   rules:
     - if: $CI_COMMIT_REF_PROTECTED =~ /true/
     - if: $GITLABCI_PUSH_PYTHON_FORCE =~ /true/
