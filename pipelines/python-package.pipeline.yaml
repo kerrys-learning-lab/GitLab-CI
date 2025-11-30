@@ -13,7 +13,7 @@ include:
   variables:
     PROJECT_ROOT: .
   script:
-    - gitlab-ci  python  --project-root ${PROJECT_ROOT}  build
+    - gitlab-ci  python  --project-root ${PROJECT_ROOT:-.}  build
   artifacts:
     paths:
       - ./dist

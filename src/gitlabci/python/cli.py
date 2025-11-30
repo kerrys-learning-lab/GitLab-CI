@@ -73,6 +73,8 @@ class PythonProject:
             utils.ProcessPrinter.follow(proc, logger=LOGGER, method='debug')
 
             if proc.returncode != 0:
+                print(stdout)
+                print(stderr)
                 raise PythonBuildError(f'Error occured while uploading {self.name}:{self.version.pythonicVersion}')
 
 
