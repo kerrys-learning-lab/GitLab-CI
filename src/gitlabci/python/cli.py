@@ -208,11 +208,11 @@ def push(args: argparse.Namespace):
     info: Info = Info.create()
     version: PipelineVersion = VersionFactory.create()
 
-    project = PythonProject(args.project_name or info.projectName,
-                            pathlib.Path(args.project_root),
-                            pathlib.Path(args.output_dir),
-                            info=info,
-                            version=version)
+    project = args.build_type.builder_class(args.project_name or info.projectName,
+                                            pathlib.Path(args.project_root),
+                                            pathlib.Path(args.output_dir),
+                                            info=info,
+                                            version=version)
 
     project.push()
 
