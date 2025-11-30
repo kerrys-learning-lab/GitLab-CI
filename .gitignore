@@ -9,4 +9,5 @@
 .venv
 images
 dist
+version.env
 

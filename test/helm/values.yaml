@@ -45,3 +45,13 @@ registries:
   ephemeral:
     url: nas.westsidestreet.net:5555
     insecure: true
+live_code:
+  paths:
+    - .gitlab-ci.yml
+    - bin
+    - pipelines
+    - pyproject.toml
+    - src
+    - test
+    - uv.lock
+    - workflows

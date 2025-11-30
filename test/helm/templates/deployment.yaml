@@ -40,9 +40,12 @@ spec:
             - name: live-code
               mountPath: /opt/gitlab-ci
               subPath: devsecops/gitlab-ci/src
+            {{- range $path := .Values.live_code.paths | default list }}
             - name: live-code
-              mountPath: /workspace
-              subPath: devsecops/gitlab-ci
+              mountPath: /workspace/{{ $path }}
+              subPath: devsecops/gitlab-ci/{{ $path }}
+              readonly: true
+            {{- end }}
       imagePullSecrets:
         - name: gitlab-image-pull
       volumes:
