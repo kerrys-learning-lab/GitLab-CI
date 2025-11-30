@@ -112,7 +112,7 @@ class PythonProject:
         readme = self.project_root / 'README.md'
 
         if readme.exists():
-            pyprojectToml['project']['readme'] = readme
+            pyprojectToml['project']['readme'] = str(readme)
 
         return pyprojectToml
 
