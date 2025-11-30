@@ -1,0 +1,1084 @@
+openapi: 3.0.3
+info:
+  description: API for the Boids application
+  title: Boids API
+  version: 0.1.0
+servers:
+- description: Development server
+  url: http://boids-gateway.boids:8888/api/v1
+paths:
+  /pubsub/boids.boids:
+    get:
+      operationId: pubsub_boids_boids_get
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BoidTelemetryEvent"
+          description: Foo
+      tags:
+      - Pub/sub Topics
+      x-openapi-router-controller: boidsapi.controllers.pub_sub_topics_controller
+  /pubsub/boids.system-events:
+    get:
+      operationId: pubsub_boids_system_events_get
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SystemEvent"
+          description: Foo
+      tags:
+      - Pub/sub Topics
+      x-openapi-router-controller: boidsapi.controllers.pub_sub_topics_controller
+  /pubsub/boids.system-time:
+    get:
+      operationId: pubsub_boids_system_time_get
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionTimestamp"
+          description: Stream of system time updates
+      tags:
+      - Pub/sub Topics
+      x-openapi-router-controller: boidsapi.controllers.pub_sub_topics_controller
+  /pubsub/sessions:
+    get:
+      operationId: pubsub_sessions_get
+      responses:
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionConfigurationStatus"
+          description: Stream of SessionConfiguration updates
+      tags:
+      - Pub/sub Topics
+      x-openapi-router-controller: boidsapi.controllers.pub_sub_topics_controller
+  /session:
+    get:
+      description: Retrieve the list of Boids sessions
+      operationId: session_get
+      parameters:
+      - description: Filter SessionConfigurations by title.
+        explode: true
+        in: query
+        name: title
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Filter SessionConfigurations by state.
+        explode: true
+        in: query
+        name: state
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: uuid
+        required: false
+        schema:
+          $ref: "#/components/schemas/UUID"
+        style: form
+      - description: |
+          Field name to sort by.  Defaults to ascending. For descending, prepend a '-' minus.  Examples: 'title' (sorts by title ascending), '-title' sorts by title descending)
+        explode: true
+        in: query
+        name: order_by
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Pagination offset (0-based)
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      - description: Pagination size
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 500
+          minimum: 10
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionConfigurationStatusList"
+          description: Returns 0..n Sessions
+      tags:
+      - Sessions
+      x-openapi-router-controller: boidsapi.controllers.sessions_controller
+    post:
+      description: |
+        Create a Boids session.
+        Required fields: title
+      operationId: session_post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionConfiguration"
+        x-body-name: body
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionConfigurationStatus"
+          description: Returns the Session
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: |
+            Describes an error condition.
+      tags:
+      - Sessions
+      x-openapi-router-controller: boidsapi.controllers.sessions_controller
+      x-codegen-request-body-name: body
+  /session/{session_uuid}/boid/{boid_uuid}:
+    delete:
+      operationId: session_session_uuid_boid_boid_uuid_delete
+      parameters:
+      - explode: false
+        in: path
+        name: session_uuid
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+        style: simple
+      - explode: false
+        in: path
+        name: boid_uuid
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+        style: simple
+      responses:
+        "204":
+          description: The specified Boid was deleted.
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Not found - the specified Boid could not be found.
+      tags:
+      - Sessions
+      - Boids
+      x-openapi-router-controller: boidsapi.controllers.sessions_controller
+    get:
+      operationId: session_session_uuid_boid_boid_uuid_get
+      parameters:
+      - explode: false
+        in: path
+        name: session_uuid
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+        style: simple
+      - explode: false
+        in: path
+        name: boid_uuid
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Boid"
+          description: Returns the Boid
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: |
+            Describes an error condition.
+      tags:
+      - Sessions
+      - Boids
+      x-openapi-router-controller: boidsapi.controllers.sessions_controller
+  /session/{uuid}:
+    delete:
+      operationId: session_uuid_delete
+      parameters:
+      - explode: false
+        in: path
+        name: uuid
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+        style: simple
+      responses:
+        "200":
+          description: The Session was successfully deleted
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: |
+            Describes an error condition.
+      tags:
+      - Sessions
+      x-openapi-router-controller: boidsapi.controllers.sessions_controller
+    get:
+      description: Retrieve the specified session
+      operationId: session_uuid_get
+      parameters:
+      - explode: false
+        in: path
+        name: uuid
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionConfigurationStatus"
+          description: Returns the Session
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: |
+            Describes an error condition.
+      tags:
+      - Sessions
+      x-openapi-router-controller: boidsapi.controllers.sessions_controller
+    put:
+      operationId: session_uuid_put
+      parameters:
+      - explode: false
+        in: path
+        name: uuid
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionConfiguration"
+        x-body-name: body
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionConfigurationStatus"
+          description: Returns the Session
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: |
+            Describes an error condition.
+      tags:
+      - Sessions
+      x-openapi-router-controller: boidsapi.controllers.sessions_controller
+      x-codegen-request-body-name: body
+  /session/{uuid}/boid:
+    get:
+      description: Return the list of Boids
+      operationId: session_uuid_boid_get
+      parameters:
+      - explode: false
+        in: path
+        name: uuid
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+        style: simple
+      - description: |
+          Field name to sort by.  Defaults to ascending. For descending, prepend a '-' minus.  Examples: 'title' (sorts by title ascending), '-title' sorts by title descending)
+        explode: true
+        in: query
+        name: order_by
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Pagination offset (0-based)
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      - description: Pagination size
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 500
+          minimum: 10
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BoidList"
+          description: Return a list of Boid objects
+      tags:
+      - Sessions
+      - Boids
+      x-openapi-router-controller: boidsapi.controllers.sessions_controller
+    post:
+      description: |
+        Create a Boid.  The 'id' and 'timestamp' fields must not be present. The newly created Boid is assigned an ID by the simulation.
+      operationId: session_uuid_boid_post
+      parameters:
+      - explode: false
+        in: path
+        name: uuid
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Boid"
+        x-body-name: body
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Boid"
+          description: Returns the Boid
+        default:
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: One or more Boid was not created.
+      tags:
+      - Sessions
+      - Boids
+      x-openapi-router-controller: boidsapi.controllers.sessions_controller
+      x-codegen-request-body-name: body
+  /session/{uuid}/event:
+    get:
+      description: Retrieve system events in descending time order (most recent first)
+      operationId: session_uuid_event_get
+      parameters:
+      - explode: false
+        in: path
+        name: uuid
+        required: true
+        schema:
+          $ref: "#/components/schemas/UUID"
+        style: simple
+      - description: |
+          Field name to sort by.  Defaults to ascending. For descending, prepend a '-' minus.  Examples: 'title' (sorts by title ascending), '-title' sorts by title descending)
+        explode: true
+        in: query
+        name: order_by
+        required: false
+        schema:
+          type: string
+        style: form
+      - description: Pagination offset (0-based)
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          minimum: 0
+          type: integer
+        style: form
+      - description: Pagination size
+        explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 20
+          maximum: 500
+          minimum: 10
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/SystemEventList"
+                type: array
+          description: Return a list of system events
+      tags:
+      - Events
+      x-openapi-router-controller: boidsapi.controllers.events_controller
+components:
+  parameters:
+    uuid_path:
+      explode: false
+      in: path
+      name: uuid
+      required: true
+      schema:
+        $ref: "#/components/schemas/UUID"
+      style: simple
+    uuid_query:
+      explode: true
+      in: query
+      name: uuid
+      required: false
+      schema:
+        $ref: "#/components/schemas/UUID"
+      style: form
+    title_query:
+      description: Filter SessionConfigurations by title.
+      explode: true
+      in: query
+      name: title
+      required: false
+      schema:
+        type: string
+      style: form
+    state_query:
+      description: Filter SessionConfigurations by state.
+      explode: true
+      in: query
+      name: state
+      required: false
+      schema:
+        type: string
+      style: form
+    order_by_query:
+      description: |
+        Field name to sort by.  Defaults to ascending. For descending, prepend a '-' minus.  Examples: 'title' (sorts by title ascending), '-title' sorts by title descending)
+      explode: true
+      in: query
+      name: order_by
+      required: false
+      schema:
+        type: string
+      style: form
+    offset_query:
+      description: Pagination offset (0-based)
+      explode: true
+      in: query
+      name: offset
+      required: false
+      schema:
+        default: 0
+        minimum: 0
+        type: integer
+      style: form
+    limit_query:
+      description: Pagination size
+      explode: true
+      in: query
+      name: limit
+      required: false
+      schema:
+        default: 20
+        maximum: 500
+        minimum: 10
+        type: integer
+      style: form
+  responses:
+    session:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SessionConfigurationStatus"
+      description: Returns the Session
+    session_list:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SessionConfigurationStatusList"
+      description: Returns 0..n Sessions
+    uuid:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UUID"
+      description: Returns a UUID
+    boid:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Boid"
+      description: Returns the Boid
+    boid_list:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BoidList"
+      description: Return a list of Boid objects
+    system_event_list:
+      content:
+        application/json:
+          schema:
+            items:
+              $ref: "#/components/schemas/SystemEventList"
+            type: array
+      description: Return a list of system events
+    default:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorModel"
+      description: |
+        Describes an error condition.
+  schemas:
+    UUID:
+      format: uuid
+      title: uuid
+      type: string
+    URL:
+      format: uri
+      title: url
+      type: string
+    Pagination:
+      example:
+        total: 1
+        offset: 0
+        limit: 6
+        order_by: order_by
+      properties:
+        order_by:
+          title: order_by
+          type: string
+        offset:
+          title: offset
+          type: integer
+        limit:
+          title: limit
+          type: integer
+        total:
+          title: total
+          type: integer
+      required:
+      - limit
+      - offset
+      - order_by
+      - total
+      title: Pagination
+      type: object
+    SpeedRange:
+      example:
+        min: 2
+        max: 7
+      properties:
+        min:
+          default: 1
+          title: min
+          type: integer
+        max:
+          default: 100
+          title: max
+          type: integer
+      required:
+      - max
+      - min
+      title: SpeedRange
+      type: object
+    SessionState:
+      enum:
+      - PENDING
+      - PAUSED
+      - RESET
+      - RUNNING
+      - STEP
+      - TERMINATED
+      - ARCHIVED
+      title: SessionState
+      type: string
+    WorldConfiguration:
+      example:
+        width: 6
+        height: 1
+      properties:
+        width:
+          default: 500
+          format: int64
+          title: width
+          type: integer
+        height:
+          default: 500
+          format: int64
+          title: height
+          type: integer
+      required:
+      - height
+      - width
+      title: WorldConfiguration
+      type: object
+    BehaviorConfiguration:
+      example:
+        avoid_walls: true
+        speed_limits:
+          min: 2
+          max: 7
+        view_angle: 202
+        normalize_velocity: true
+        view_range: 5
+      properties:
+        avoid_walls:
+          default: true
+          title: avoid_walls
+          type: boolean
+        normalize_velocity:
+          default: true
+          title: normalize_velocity
+          type: boolean
+        view_range:
+          format: int64
+          title: view_range
+          type: integer
+        view_angle:
+          format: int64
+          maximum: 359
+          minimum: 0
+          title: view_angle
+          type: integer
+        speed_limits:
+          $ref: "#/components/schemas/SpeedRange"
+      title: BehaviorConfiguration
+      type: object
+    SessionConfiguration:
+      description: |
+        Creates or updates a SessionConfiguration.
+      example:
+        world:
+          width: 6
+          height: 1
+        state: PENDING
+        title: title
+        behavior:
+          avoid_walls: true
+          speed_limits:
+            min: 2
+            max: 7
+          view_angle: 202
+          normalize_velocity: true
+          view_range: 5
+        num_boids: 0
+      properties:
+        title:
+          description: Session title
+          title: title
+          type: string
+        num_boids:
+          format: int64
+          title: num_boids
+          type: integer
+        state:
+          $ref: "#/components/schemas/SessionState"
+        world:
+          $ref: "#/components/schemas/WorldConfiguration"
+        behavior:
+          $ref: "#/components/schemas/BehaviorConfiguration"
+      title: SessionConfiguration
+      type: object
+    SessionConfigurationStatus:
+      allOf:
+      - $ref: "#/components/schemas/SessionConfiguration"
+      - properties:
+          uuid:
+            $ref: "#/components/schemas/UUID"
+          url:
+            $ref: "#/components/schemas/URL"
+          next_states:
+            items:
+              $ref: "#/components/schemas/SessionState"
+            type: array
+          created:
+            format: date-time
+            type: string
+          modified:
+            format: date-time
+            type: string
+        required:
+        - next_states
+        - state
+        - url
+        - uuid
+        type: object
+      example:
+        world:
+          width: 6
+          height: 1
+        next_states:
+        - null
+        - null
+        created: 2000-01-23T04:56:07.000+00:00
+        modified: 2000-01-23T04:56:07.000+00:00
+        state: PENDING
+        title: title
+        behavior:
+          avoid_walls: true
+          speed_limits:
+            min: 2
+            max: 7
+          view_angle: 202
+          normalize_velocity: true
+          view_range: 5
+        uuid: null
+        url: null
+        num_boids: 0
+      title: SessionConfigurationStatus
+      type: object
+    SessionConfigurationStatusList:
+      description: "List of Boids sessions, possibly paginated"
+      example:
+        pagination:
+          total: 1
+          offset: 0
+          limit: 6
+          order_by: order_by
+        values:
+        - world:
+            width: 6
+            height: 1
+          next_states:
+          - null
+          - null
+          created: 2000-01-23T04:56:07.000+00:00
+          modified: 2000-01-23T04:56:07.000+00:00
+          state: PENDING
+          title: title
+          behavior:
+            avoid_walls: true
+            speed_limits:
+              min: 2
+              max: 7
+            view_angle: 202
+            normalize_velocity: true
+            view_range: 5
+          uuid: null
+          url: null
+          num_boids: 0
+        - world:
+            width: 6
+            height: 1
+          next_states:
+          - null
+          - null
+          created: 2000-01-23T04:56:07.000+00:00
+          modified: 2000-01-23T04:56:07.000+00:00
+          state: PENDING
+          title: title
+          behavior:
+            avoid_walls: true
+            speed_limits:
+              min: 2
+              max: 7
+            view_angle: 202
+            normalize_velocity: true
+            view_range: 5
+          uuid: null
+          url: null
+          num_boids: 0
+      properties:
+        values:
+          items:
+            $ref: "#/components/schemas/SessionConfigurationStatus"
+          title: values
+          type: array
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required:
+      - pagination
+      - values
+      title: SessionConfigurationStatusList
+      type: object
+    CartesianTriple:
+      example:
+        x: 1.4658129805029452
+        "y": 5.962133916683182
+        z: 5.637376656633329
+      properties:
+        x:
+          format: double
+          title: x
+          type: number
+        "y":
+          format: double
+          title: "y"
+          type: number
+        z:
+          format: double
+          title: z
+          type: number
+      required:
+      - x
+      - "y"
+      title: CartesianTriple
+      type: object
+    SessionTimestamp:
+      description: |
+        Identifies a unique point in time for a simulation. At tick 0, no movement has been initiated.
+      example:
+        elapsed_time: elapsed_time
+        tick: 0
+        delta_time: 6.0274563
+      properties:
+        tick:
+          format: int64
+          title: tick
+          type: integer
+        elapsed_time:
+          pattern: "\\d{1,}:[0-5]\\d:[0-5]\\d\\.\\d{3}"
+          title: elapsed_time
+          type: string
+        delta_time:
+          format: float
+          title: delta_time
+          type: number
+      required:
+      - elapsed_time
+      - tick
+      title: SessionTimestamp
+      type: object
+    Boid:
+      description: |
+        Describes a Boid.
+      example:
+        position:
+          x: 1.4658129805029452
+          "y": 5.962133916683182
+          z: 5.637376656633329
+        velocity:
+          x: 1.4658129805029452
+          "y": 5.962133916683182
+          z: 5.637376656633329
+        uuid: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        url: https://openapi-generator.tech
+      properties:
+        uuid:
+          format: uuid
+          title: uuid
+          type: string
+        position:
+          $ref: "#/components/schemas/CartesianTriple"
+        velocity:
+          $ref: "#/components/schemas/CartesianTriple"
+        url:
+          format: uri
+          title: url
+          type: string
+      required:
+      - position
+      - velocity
+      title: Boid
+      type: object
+    BoidList:
+      description: "List of Boids, possibly paginated"
+      example:
+        pagination:
+          total: 1
+          offset: 0
+          limit: 6
+          order_by: order_by
+        values:
+        - position:
+            x: 1.4658129805029452
+            "y": 5.962133916683182
+            z: 5.637376656633329
+          velocity:
+            x: 1.4658129805029452
+            "y": 5.962133916683182
+            z: 5.637376656633329
+          uuid: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          url: https://openapi-generator.tech
+        - position:
+            x: 1.4658129805029452
+            "y": 5.962133916683182
+            z: 5.637376656633329
+          velocity:
+            x: 1.4658129805029452
+            "y": 5.962133916683182
+            z: 5.637376656633329
+          uuid: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          url: https://openapi-generator.tech
+      properties:
+        values:
+          items:
+            $ref: "#/components/schemas/Boid"
+          title: values
+          type: array
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required:
+      - values
+      title: BoidList
+      type: object
+    SystemEventLevel:
+      enum:
+      - ERROR
+      - WARNING
+      - INFO
+      - STATUS
+      - TELEMETRY
+      title: SystemEventLevel
+      type: string
+    SystemEvent:
+      description: |
+        Describes an occurance within the simulation
+      discriminator:
+        propertyName: event_type
+      example:
+        event_type: event_type
+        level: ERROR
+        timestamp:
+          elapsed_time: elapsed_time
+          tick: 0
+          delta_time: 6.0274563
+      properties:
+        timestamp:
+          $ref: "#/components/schemas/SessionTimestamp"
+        level:
+          $ref: "#/components/schemas/SystemEventLevel"
+        event_type:
+          title: event_type
+          type: string
+      required:
+      - event_type
+      - level
+      - timestamp
+      title: SystemEvent
+      type: object
+    SystemMessageEvent:
+      allOf:
+      - $ref: "#/components/schemas/SystemEvent"
+      - properties:
+          source:
+            type: string
+          message:
+            type: string
+        required:
+        - message
+        - source
+        type: object
+      type: object
+    BoidTelemetryEvent:
+      allOf:
+      - $ref: "#/components/schemas/SystemEvent"
+      - properties:
+          id:
+            type: string
+          position:
+            $ref: "#/components/schemas/CartesianTriple"
+          velocity:
+            $ref: "#/components/schemas/CartesianTriple"
+        required:
+        - id
+        - position
+        - velocity
+        type: object
+      example:
+        event_type: event_type
+        level: ERROR
+        id: id
+        position:
+          x: 1.4658129805029452
+          "y": 5.962133916683182
+          z: 5.637376656633329
+        velocity:
+          x: 1.4658129805029452
+          "y": 5.962133916683182
+          z: 5.637376656633329
+        timestamp:
+          elapsed_time: elapsed_time
+          tick: 0
+          delta_time: 6.0274563
+      title: BoidTelemetryEvent
+      type: object
+    SystemEventList:
+      description: "List of System Events, possibly paginated"
+      example:
+        pagination:
+          total: 1
+          offset: 0
+          limit: 6
+          order_by: order_by
+        values:
+        - event_type: event_type
+          level: ERROR
+          timestamp:
+            elapsed_time: elapsed_time
+            tick: 0
+            delta_time: 6.0274563
+        - event_type: event_type
+          level: ERROR
+          timestamp:
+            elapsed_time: elapsed_time
+            tick: 0
+            delta_time: 6.0274563
+      properties:
+        values:
+          items:
+            $ref: "#/components/schemas/SystemEvent"
+          title: values
+          type: array
+        pagination:
+          $ref: "#/components/schemas/Pagination"
+      required:
+      - values
+      title: SystemEventList
+      type: object
+    ErrorModel:
+      example:
+        code: 140
+        message: message
+      properties:
+        message:
+          title: message
+          type: string
+        code:
+          maximum: 600
+          minimum: 100
+          title: code
+          type: integer
+      required:
+      - code
+      - message
+      title: ErrorModel
+      type: object
