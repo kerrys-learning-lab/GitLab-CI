@@ -22,3 +22,5 @@ def process_cli_options(parser: argparse.ArgumentParser, args: argparse.Namespac
         cli.process_cli_options(parser, args, **kwargs)
 
 Info = info_module.Info
+Version = version.PipelineVersion
+VersionFactory = version.VersionFactory
