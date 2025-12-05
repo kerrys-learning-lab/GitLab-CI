@@ -53,7 +53,7 @@ class PythonProject:
         pyprojectToml = tomlkit.toml_document.TOMLDocument()
         pyprojectToml.add('project', tomlkit.table())
         pyprojectToml['project']['name'] =  self.name
-        pyprojectToml['project']['version'] = self.version.pythonicVersion
+        pyprojectToml['project']['version'] = self.version.langPythonVersion
         pyprojectToml['project']['urls'] = tomlkit.table()
         pyprojectToml['project']['urls']['Homepage'] = str(self.info.projectUrl)
 
@@ -75,7 +75,7 @@ class PythonProjectUv(PythonProject):
         # NOTE: For uv-based project, the toml file is required
         #       Raises FileNotFoundError if the above is violated
         pyprojectToml = self._load_pyproject_toml()
-        pyprojectToml['project']['version'] = self.version.pythonicVersion
+        pyprojectToml['project']['version'] = self.version.langPythonVersion
 
         with open(self.pyproject_toml_path, 'w') as fd:
             tomlkit.dump(pyprojectToml, fd)
@@ -95,7 +95,7 @@ class PythonProjectUv(PythonProject):
             utils.ProcessPrinter.follow(proc, logger=LOGGER, method='debug')
 
             if proc.returncode != 0:
-                raise PythonBuildError(f'Error occured while building {self.name}:{self.version.pythonicVersion}')
+                raise PythonBuildError(f'Error occured while building {self.name}:{self.version.langPythonVersion}')
 
         return self.artifacts
 
@@ -119,7 +119,7 @@ class PythonProjectUv(PythonProject):
             utils.ProcessPrinter.follow(proc, logger=LOGGER, method='debug')
 
             if proc.returncode != 0:
-                raise PythonBuildError(f'Error occured while uploading {self.name}:{self.version.pythonicVersion}')
+                raise PythonBuildError(f'Error occured while uploading {self.name}:{self.version.langPythonVersion}')
 
 
 # ----------------------------------------------------------------------------
@@ -143,7 +143,7 @@ class PythonProjectBuiltIn(PythonProject):
             utils.ProcessPrinter.follow(proc, logger=LOGGER, method='debug')
 
             if proc.returncode != 0:
-                raise PythonBuildError(f'Error occured while building {self.name}:{self.version.pythonicVersion}')
+                raise PythonBuildError(f'Error occured while building {self.name}:{self.version.langPythonVersion}')
 
         return self.artifacts
 
@@ -169,7 +169,7 @@ class PythonProjectBuiltIn(PythonProject):
             utils.ProcessPrinter.follow(proc, logger=LOGGER, method='debug')
 
             if proc.returncode != 0:
-                raise PythonBuildError(f'Error occured while uploading {self.name}:{self.version.pythonicVersion}')
+                raise PythonBuildError(f'Error occured while uploading {self.name}:{self.version.langPythonVersion}')
 
 
 # ----------------------------------------------------------------------------

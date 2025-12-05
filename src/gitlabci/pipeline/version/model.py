@@ -23,8 +23,17 @@ class PipelineVersion(pydantic.BaseModel):
         Additional labels for pre-release and build metadata are available as
         extensions to the MAJOR.MINOR.PATCH format.'''
 
-    pythonicVersion: str
+    langPythonVersion: str
     ''' Version string suitable for Python packages (PEP-440) '''
+
+    langPhpVersion: str
+    ''' Version string suitable for PHP packages.
+
+        Examples:
+            - 1.0.0
+            - v1.2.3
+            - dev-foo
+            - 1.0.0-dev '''
 
     @staticmethod
     def fromEnv(envFilePath: pathlib.Path|None = None, **kwargs) -> "PipelineVersion":
@@ -35,7 +44,8 @@ class PipelineVersion(pydantic.BaseModel):
         return PipelineVersion(
             version=kwargs['ARTIFACT_VERSION'],
             semanticVersion=kwargs['ARTIFACT_SEMANTIC_VERSION'],
-            pythonicVersion=kwargs['ARTIFACT_PYTHONIC_VERSION'],
+            langPythonVersion=kwargs['ARTIFACT_LANG_PYTHON_VERSION'],
+            langPhpVersion=kwargs['ARTIFACT_LANG_PHP_VERSION'],
         )
 
     @staticmethod
@@ -45,7 +55,8 @@ class PipelineVersion(pydantic.BaseModel):
             return PipelineVersion(
                 version=values['artifactVersion'],
                 semanticVersion=values['artifactSemanticVersion'],
-                pythonicVersion=values['artifactPythonicVersion'],
+                langPythonVersion=values['artifactLangPythonVersion'],
+                langPhpVersion=values['artifactLangPhpVersion'],
             )
 
     def write(self, path: pathlib.Path, format='env', force=False) -> pathlib.Path:
@@ -73,11 +84,13 @@ class PipelineVersion(pydantic.BaseModel):
     def toEnvString(self):
         s  = f'ARTIFACT_VERSION={self.version}\n'
         s += f'ARTIFACT_SEMANTIC_VERSION={self.semanticVersion}\n'
-        s += f'ARTIFACT_PYTHONIC_VERSION={self.pythonicVersion}\n'
+        s += f'ARTIFACT_LANG_PYTHON_VERSION={self.langPythonVersion}\n'
+        s += f'ARTIFACT_LANG_PHP_VERSION={self.langPhpVersion}\n'
         return s
 
     def toYamlString(self):
         return yaml.dump({'artifactVersion': self.version,
                           'artifactSemanticVersion': str(self.semanticVersion),
-                          'artifactPythonicVersion': self.pythonicVersion},
+                          'artifactLangPythonVersion': self.langPythonVersion,
+                          'artifactLangPhpVersion': self.langPhpVersion},
                           default_flow_style=False)
