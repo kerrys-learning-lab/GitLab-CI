@@ -49,8 +49,6 @@ live_code:
   paths:
     - .gitlab-ci.yml
     - bin
-    # TODO: 'out' was only added to test the python building of generated code!
-    - out
     - pipelines
     - pyproject.toml
     - src
