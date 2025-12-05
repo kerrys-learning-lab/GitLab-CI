@@ -141,7 +141,6 @@ class VersionFactory:
     @staticmethod
     def create(info: Info | None = None, **kwargs) -> PipelineVersion:
         info = info or Info.create()
-        LOGGER.error(info)
         versionInfo = VersionFactory._inferVersionInfoFromPipeline(info, **kwargs)
 
         pipelineVersion = PipelineVersion(version=versionInfo.version,
@@ -162,18 +161,16 @@ class VersionFactory:
             try:
                 varValue = getattr(info, initTypeName, None)
                 if initTypeName == 'default' or varValue is not None:
-                    LOGGER.error(f'Calling {initTypeName} ({initTypeFunc})')
                     func = getattr(VersionFactory, initTypeFunc)
                     return func(info, **kwargs)
             except CantDeduceVersionTypeError as ex:
-                LOGGER.error(ex)
+                LOGGER.debug(ex)
                 pass
 
         raise CantDeduceVersionTypeError()
 
     @staticmethod
     def _initFromBranch(info: Info, **kwargs) -> VersionInfo:
-        LOGGER.error(info.commitBranch)
         assert(info.commitBranch)
         if info.commitBranch == info.defaultBranch:
             LOGGER.debug(f'Creating version from default branch: {info.commitBranch}')

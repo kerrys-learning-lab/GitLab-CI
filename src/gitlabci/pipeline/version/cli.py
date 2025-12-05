@@ -2,15 +2,32 @@ import argparse
 import logging
 import pathlib
 import rich_argparse
-import gitlabci.pipeline.version
+import gitlabci.pipeline
 
 LOGGER = logging.getLogger('gitlabci.version')
 
 def version_main(args: argparse.Namespace):
-    version: PipelineVersion = gitlabci.pipeline.version.VersionFactory.create()
-    LOGGER.info(f'Version:          {version.version}')
-    LOGGER.info(f'Semantic Version: {version.version}')
-    LOGGER.info(f'Pythonic Version: {version.version}')
+    info: gitlabci.pipeline.Info = gitlabci.pipeline.Info.create()
+    version: gitlabci.pipeline.Version = gitlabci.pipeline.VersionFactory.create()
+
+    semver = str(version.semanticVersion)
+    protected = 'Yes' if info.commitRefProtected else 'No'
+    defaultBranch = 'Yes' if info.commitBranch == info.defaultBranch else 'No'
+
+    LOGGER.info('')
+    LOGGER.info( '+-------------------------+--------------------------------+')
+    LOGGER.info(f'| Commit Ref Protected?   | {protected or "":<30} |')
+    LOGGER.info(f'| Commit Branch           | {info.commitBranch or "":<30} |')
+    LOGGER.info(f'| Commit Branch Default?  | {defaultBranch or "":<30} |')
+    LOGGER.info(f'| Commit Tag              | {info.commitTag or "":<30} |')
+    LOGGER.info( '+-------------------------+--------------------------------+')
+    LOGGER.info(f'| Version                 | {version.version:<30} |')
+    LOGGER.info(f'| Semantic Version        | {semver:<30} |')
+    LOGGER.info(f'| Python Language Version | {version.langPythonVersion:<30} |')
+    LOGGER.info(f'| PHP Language Version    | {version.langPhpVersion:<30} |')
+    LOGGER.info( '+-------------------------+--------------------------------+')
+    LOGGER.info('')
+
 
     if args.to_file:
         try:
