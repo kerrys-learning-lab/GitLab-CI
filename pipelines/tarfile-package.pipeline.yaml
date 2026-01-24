@@ -7,6 +7,7 @@ include:
 
 variables:
   DEFAULT_TARFILE_EXCLUDES: |
+    .dockerignore
     .git*
     .vscode
     artifacts
@@ -29,16 +30,19 @@ variables:
   stage: build
   extends: .tar-package-prerequisites
   script:
+    - |
+      TARCMD_TARFILE_CONTENTS=${TARFILE_CONTENTS:-.}
+
     # Build the exclude list for tar, including defaults and user-specified
     # excludes (via TARFILE_EXCLUDES), if any
     - |
-      TARCMD_TARFILE_EXCLUDES=--exclude-vcs
+      TARCMD_TARFILE_EXCLUDES=(--exclude-vcs)
       for excl in ${DEFAULT_TARFILE_EXCLUDES} ${TARFILE_EXCLUDES}; do
-        TARCMD_TARFILE_EXCLUDES="${TARCMD_TARFILE_EXCLUDES} --exclude=${TARFILE_CONTENTS}/${excl}"
+        TARCMD_TARFILE_EXCLUDES+=(--exclude=${TARCMD_TARFILE_CONTENTS}/${excl})
       done
 
       if [[ -f .tarignore ]]; then
-        TARCMD_TARFILE_EXCLUDES="${TARCMD_TARFILE_EXCLUDES} --exclude-from=.tarignore"
+        TARCMD_TARFILE_EXCLUDES+=(--exclude-from=.tarignore)
       fi
 
     # Build the transform list for tar to make all contents relative to a
@@ -58,7 +62,6 @@ variables:
     # Create the tar file
     - |
       TARCMD_TARFILE_ROOT_DIR=${TARFILE_ROOT_DIR:-.}
-      TARCMD_TARFILE_CONTENTS=${TARFILE_CONTENTS:-.}
 
       mkdir -p artifacts
       tar --directory ${TARCMD_TARFILE_ROOT_DIR}  \
