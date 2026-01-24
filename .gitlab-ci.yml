@@ -189,11 +189,13 @@ push-python-package:
 # ----------------------------------------------------------------------------
 # Test creating a tarfile of this project
 build-tar-package:
-  extends: .build-tar-package
+  extends:
+    - .build-tar-package
 
 
 # ----------------------------------------------------------------------------
 # Push this projects tarfile package to the package registry
 push-tar-package:
-  extends: .push-tar-package
+  extends:
+    - .push-tar-package
 
