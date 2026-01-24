@@ -34,7 +34,7 @@ check-project-settings:
   image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: .pre
   script:
-    - ${GITLABCI_SCRIPT} project --expectations ./src/data/project-expectations.yaml ${CI_PROJECT_ID}
+    - ${GITLABCI_SCRIPT} project --expectations ./data/project-expectations.yaml ${CI_PROJECT_ID}
   allow_failure: true
 
 

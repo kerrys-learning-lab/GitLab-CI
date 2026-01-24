@@ -1,19 +1,4 @@
-# ---------------------------------------------------------------------------
-# NOTE: Don't upgrade PODMAN_IMAGE_VERSION from v5.4 until they fix the
-#       /etc/machine-id bug!
-ARG PYTHON_VERSION=3.14
 ARG PODMAN_IMAGE_VERSION=v5.7.1
-FROM python:${PYTHON_VERSION} AS build
-
-COPY src/           /var/tmp/gitlab-ci/src
-COPY pyproject.toml /var/tmp/gitlab-ci/pyproject.toml
-COPY uv.lock        /var/tmp/gitlab-ci/uv.lock
-
-ENV PATH="${PATH}:~/.local/bin"
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh  && \
-    cd /var/tmp/gitlab-ci  && \
-    ~/.local/bin/uv build
-
 
 # ---------------------------------------------------------------------------
 FROM quay.io/containers/podman:${PODMAN_IMAGE_VERSION} AS base
@@ -37,8 +22,21 @@ RUN dnf install -y dnf-plugins-core && \
     dnf copr enable -y dcarp/bazelisk && \
     dnf install -y bazelisk
 
-RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL="/bin" sh
+RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_INSTALL_DIR="/bin" UV_NO_MODIFY_PATH=1 UV_PRINT_QUIET=1 sh
 
+
+# ---------------------------------------------------------------------------
+FROM base AS build
+
+COPY src/           /var/tmp/gitlab-ci/src
+COPY pyproject.toml /var/tmp/gitlab-ci/pyproject.toml
+COPY uv.lock        /var/tmp/gitlab-ci/uv.lock
+
+ENV PATH="${PATH}:~/.local/bin"
+RUN cd /var/tmp/gitlab-ci  && \
+    uv build
+
+FROM base AS final
 COPY --from=build   /var/tmp/gitlab-ci/dist /usr/local/gitlab-ci
 COPY                src/gitlab-ci.py        /opt/gitlab-ci/gitlab-ci.py
 COPY                data                    /opt/gitlab-ci/data
