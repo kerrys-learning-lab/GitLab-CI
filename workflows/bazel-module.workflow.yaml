@@ -1,0 +1,26 @@
+---
+workflow:
+  name: Bazel Module
+
+include:
+  - project: $GITLABCI_DEFAULT_PIPELINE_PROJECT
+    ref: $GITLABCI_DEFAULT_PIPELINE_REF
+    file:
+      - pipelines/.calculate-pipeline-version.yaml
+      - pipelines/.check-project-settings.yaml
+      - pipelines/bazel-module.pipeline.yaml
+
+check-project-settings:
+  extends: .check-project-settings
+
+calculate-pipeline-version:
+  extends: .calculate-pipeline-version
+
+build-bazel-module:
+  extends: .build-bazel-module
+
+push-bazel-module:
+  extends: .push-bazel-module
+
+update-bazel-registry:
+  extends: .update-bazel-registry

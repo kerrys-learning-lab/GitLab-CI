@@ -1,0 +1,30 @@
+include:
+  - project: $GITLABCI_DEFAULT_PIPELINE_PROJECT
+    ref: $GITLABCI_DEFAULT_PIPELINE_REF
+    file:
+      - pipelines/.stages.yaml
+      - pipelines/.defaults.yaml
+      - pipelines/tarfile-package.pipeline.yaml
+
+.build-bazel-module:
+  extends: .build-tar-package
+
+.push-bazel-module:
+  extends: .push-tar-package
+
+.update-bazel-registry:
+  extends: .apply-downstream-project
+  variables:
+    DOWNSTREAM_COMMIT_BRANCH: main
+    DOWNSTREAM_PROJECT_NAME: bazel-registry
+    DOWNSTREAM_PROJECT_GROUP: kerrys-learning-lab/libraries
+  script:
+    - cd ${CI_PROJECT_DIR}/${DOWNSTREAM_PROJECT_NAME}
+    - gitlab-ci bazel
+                module
+                ${CI_PROJECT_NAME}
+                ${ARTIFACT_SEMANTIC_VERSION}
+                ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${ARTIFACT_SEMANTIC_VERSION}/${CI_PROJECT_NAME}-${ARTIFACT_SEMANTIC_VERSION}.tar.gz
+    - git add modules
+  needs:
+    - job: push-bazel-module
