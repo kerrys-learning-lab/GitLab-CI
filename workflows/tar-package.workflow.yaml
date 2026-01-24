@@ -25,7 +25,7 @@ spec:
         Additionally, a .tarignore file in the root directory of the project
         can be used.
       type: string
-      default: null
+      default: ""
     TARFILE_ROOT_DIR:
       description: |
         The root directory to use for the tar file.
