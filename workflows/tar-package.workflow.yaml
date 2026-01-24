@@ -11,8 +11,8 @@ spec:
       default: <default>
     TARFILE_EXCLUDES:
       description: |
-        List of files/directories to exclude from the tar file, in addition
-        to the default excludes.
+        White-space separated list of files/directories to exclude from the
+        tar file, in addition to the default excludes.
 
         Default excludes:
           - VCS files (e.g. .git*)
@@ -24,8 +24,8 @@ spec:
 
         Additionally, a .tarignore file in the root directory of the project
         can be used.
-      type: array
-      default: []
+      type: string
+      default: null
     TARFILE_ROOT_DIR:
       description: |
         The root directory to use for the tar file.
