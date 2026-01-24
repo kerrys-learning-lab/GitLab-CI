@@ -7,7 +7,7 @@
 .data
 .pytest_cache
 .venv
+artifacts
 images
 dist
 version.env
-
