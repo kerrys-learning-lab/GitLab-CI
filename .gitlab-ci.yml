@@ -3,13 +3,10 @@
 #
 #       Basically, we're dog-fooding the build pipeline using the current Git
 #       ref.
-
-stages:
-  - .pre
-  - build
-  - test
-  - publish
-  - .post
+include:
+  - local: pipelines/.stages.yaml
+  - local: pipelines/.defaults.yaml
+  - local: pipelines/tarfile-package.pipeline.yaml
 
 variables:
   PYTHONPATH: ./src
@@ -189,13 +186,11 @@ push-python-package:
 # ----------------------------------------------------------------------------
 # Test creating a tarfile of this project
 build-tar-package:
-  extends:
-    - .build-tar-package
+  extends: .build-tar-package
 
 
 # ----------------------------------------------------------------------------
 # Push this projects tarfile package to the package registry
 push-tar-package:
-  extends:
-    - .push-tar-package
+  extends: .push-tar-package
 
