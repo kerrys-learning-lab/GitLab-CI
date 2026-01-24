@@ -49,6 +49,7 @@ live_code:
   paths:
     - .gitlab-ci.yml
     - bin
+    - data
     - pipelines
     - pyproject.toml
     - src

@@ -1,7 +1,7 @@
 import enum
 import gzip
+import hashlib
 import logging
-import math
 import pathlib
 import re
 import select
@@ -65,3 +65,28 @@ class ProcessPrinter:
             logMethod = getattr(logger, 'error') if hasError else getattr(logger, method)
             logMethod(line)
       poll = proc.poll()
+
+
+def sha256_checksum(filepath, block_size=65536):
+    """
+    Calculates the SHA256 checksum of a file efficiently by reading it in
+    chunks.
+
+    Args:
+        filepath (str or pathlib.Path): The path to the file.
+        block_size (int): The size of chunks to read the file in bytes (default 65536).
+
+    Returns:
+        str: The hexadecimal representation of the file's SHA256 hash.
+    """
+    # Create a new SHA256 hash object
+    sha256 = hashlib.sha256()
+
+    # Open the file in binary mode ('rb')
+    with open(filepath, 'rb') as f:
+        # Read the file in chunks and update the hash object
+        for block in iter(lambda: f.read(block_size), b''):
+            sha256.update(block)
+
+    # Return the hexadecimal digest of the hash
+    return sha256.hexdigest()

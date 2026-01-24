@@ -5,6 +5,7 @@ import logging
 import rich_argparse
 import sys
 import gitlabci.api
+import gitlabci.bazel
 import gitlabci.helm
 import gitlabci.image
 import gitlabci.ml
@@ -20,6 +21,7 @@ LOGGER = logging.getLogger('gitlab-ci')
 CLI_STAKEHOLDERS = [
   gitlabci.utils.logging_utils,
   gitlabci.api,
+  gitlabci.bazel,
   gitlabci.helm,
   gitlabci.image,
   gitlabci.ml,

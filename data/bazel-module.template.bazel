@@ -1,0 +1,4 @@
+module(
+    name = "BAZEL_MODULE_NAME",
+    version = "BAZEL_MODULE_VERSION",
+)
