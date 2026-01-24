@@ -1,0 +1,84 @@
+include:
+  - project: $GITLABCI_DEFAULT_PIPELINE_PROJECT
+    ref: $GITLABCI_DEFAULT_PIPELINE_REF
+    file:
+      - pipelines/.stages.yaml
+      - pipelines/.defaults.yaml
+
+variables:
+  DEFAULT_TARFILE_EXCLUDES: |
+    .git*
+    artifacts
+  TARFILE_NAME: <default>
+  TARFILE_CONTENTS_PREFIX: <default>
+  TARFILE_EXTENSION: tar.gz
+
+.tar-package-prerequisites:
+  before_script:
+    - |
+      export DEFAULT_ARTIFACT_PREFIX=${CI_PROJECT_NAME}-${ARTIFACT_SEMANTIC_VERSION}
+
+      if [[ -z "${TARFILE_NAME}" || "${TARFILE_NAME}" == "<default>" ]]; then
+        export TARFILE_NAME=${DEFAULT_ARTIFACT_PREFIX}.${TARFILE_EXTENSION}
+      fi
+
+      export FULL_TAR_FILE_PATH=artifacts/${TARFILE_NAME}
+
+.build-tar-package:
+  extends: .tar-package-prerequisites
+  script:
+    # Build the exclude list for tar, including defaults and user-specified
+    # excludes (via TARFILE_EXCLUDES), if any
+    - |
+      TARCMD_TARFILE_EXCLUDES=--exclude-vcs
+      for excl in ${DEFAULT_TARFILE_EXCLUDES} ${TARFILE_EXCLUDES}; do
+        TARCMD_TARFILE_EXCLUDES="${TARCMD_TARFILE_EXCLUDES} --exclude=${TARFILE_CONTENTS}/${excl}"
+      done
+
+      if [[ -f .tarignore ]]; then
+        TARCMD_TARFILE_EXCLUDES="${TARCMD_TARFILE_EXCLUDES} --exclude-from=.tarignore"
+      fi
+
+    # Build the transform list for tar to make all contents relative to a
+    # directory (by default, this is based on the project name and semantic
+    # version
+    - |
+      TARCMD_TARFILE_TRANSFORM=
+      if [[ "${TARFILE_CONTENTS_PREFIX}" == "<default>" ]]; then
+        TARFILE_CONTENTS_PREFIX=${DEFAULT_ARTIFACT_PREFIX}
+      fi
+
+      if [[ -n "${TARFILE_CONTENTS_PREFIX,,}" ]]; then
+        TARCMD_TARFILE_TRANSFORM="--transform=s|^\.|${TARFILE_CONTENTS_PREFIX}/|S"
+        TARCMD_TARFILE_TRANSFORM="${TARCMD_TARFILE_TRANSFORM} --transform=s|//|/|g"
+      fi
+
+    # Create the tar file
+    - |
+      TARCMD_TARFILE_ROOT_DIR=${TARFILE_ROOT_DIR:-.}
+      TARCMD_TARFILE_CONTENTS=${TARFILE_CONTENTS:-.}
+
+      mkdir -p artifacts
+      tar --directory ${TARCMD_TARFILE_ROOT_DIR}  \
+          --create  \
+          --auto-compress  \
+          --file ${FULL_TAR_FILE_PATH} \
+          ${TARCMD_TARFILE_EXCLUDES}  \
+          ${TARCMD_TARFILE_TRANSFORM}  \
+          ${TARCMD_TARFILE_CONTENTS}
+  artifacts:
+    paths:
+      - artifacts
+    expire_in: 1 week
+
+.upload-tar-package:
+  extends: .tar-package-prerequisites
+  script:
+    - |
+      curl  --location  \
+            --header "JOB-TOKEN: ${CI_JOB_TOKEN}"  \
+            --upload-file ${FULL_TAR_FILE_PATH}  \
+            ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${ARTIFACT_SEMANTIC_VERSION}/${FULL_TAR_FILE_NAME}
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED =~ /true/
+    - if: $GITLABCI_UPLOAD_TAR_PACKAGE_FORCE =~ /true/

@@ -2,7 +2,7 @@
 # NOTE: Don't upgrade PODMAN_IMAGE_VERSION from v5.4 until they fix the
 #       /etc/machine-id bug!
 ARG PYTHON_VERSION=3.14
-ARG PODMAN_IMAGE_VERSION=v5.4
+ARG PODMAN_IMAGE_VERSION=v5.7.1
 FROM python:${PYTHON_VERSION} AS build
 
 COPY src/           /var/tmp/gitlab-ci/src
@@ -16,12 +16,11 @@ RUN curl -LsSf https://astral.sh/uv/install.sh | sh  && \
 
 
 # ---------------------------------------------------------------------------
-FROM quay.io/podman/stable:${PODMAN_IMAGE_VERSION} AS base
+FROM quay.io/containers/podman:${PODMAN_IMAGE_VERSION} AS base
 
 # Silence this warning: Emulate Docker CLI using podman...
 RUN touch /etc/containers/nodocker
 
-# In lieu of upgrading from v5.4 (see NOTE above), we do an update here:
 RUN dnf update  -y &&  \
     dnf install -y  awk  \
                     curl  \
@@ -33,10 +32,16 @@ RUN dnf update  -y &&  \
                     sponge  \
                     vim
 
+# Bazelisk/Bazel
+RUN dnf install -y dnf-plugins-core && \
+    dnf copr enable -y dcarp/bazelisk && \
+    dnf install -y bazelisk
+
 RUN curl -LsSf https://astral.sh/uv/install.sh | env UV_UNMANAGED_INSTALL="/bin" sh
 
 COPY --from=build   /var/tmp/gitlab-ci/dist /usr/local/gitlab-ci
 COPY                src/gitlab-ci.py        /opt/gitlab-ci/gitlab-ci.py
+COPY                data                    /opt/gitlab-ci/data
 
 WORKDIR /opt/gitlab-ci
 RUN pip3 install --root-user-action ignore /usr/local/gitlab-ci/*.whl

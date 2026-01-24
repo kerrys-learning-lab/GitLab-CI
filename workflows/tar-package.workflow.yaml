@@ -1,0 +1,81 @@
+spec:
+  inputs:
+    TARFILE_NAME:
+      description: |
+        The name of the tar file.  By default, this will be
+        ${CI_PROJECT_NAME}-${ARTIFACT_SEMANTIC_VERSION}.tar.gz.
+
+        NOTE: Tar will attempt to infer the compression tool (if any) from the
+              extension, so name accordingly.
+      type: string
+      default: <default>
+    TARFILE_EXCLUDES:
+      description: |
+        List of files/directories to exclude from the tar file, in addition
+        to the default excludes.
+
+        Default excludes:
+          - VCS files (e.g. .git*)
+          - Other git files (e.g. .gitignore, .gitlab-ci.yml, .gitlab-ci-local)
+          - bazel-*
+
+        To override default excludes, set DEFAULT_TARFILE_EXCLUDES variable
+        (i.e., if desired, can be set empty)
+
+        Additionally, a .tarignore file in the root directory of the project
+        can be used.
+      type: array
+      default: []
+    TARFILE_ROOT_DIR:
+      description: |
+        The root directory to use for the tar file.
+
+        Implemented as tar -C <TARFILE_ROOT_DIR> ...
+      type: string
+      default: .
+    TARFILE_CONTENTS:
+      description: |
+        The contents of the tar file.
+
+        Relative to TARFILE_ROOT_DIR.
+      type: string
+      default: .
+    TARFILE_CONTENTS_PREFIX:
+      description: |
+        Creates a prefix directory within the tar file.
+
+        By default, this will be ${CI_PROJECT_NAME}-${ARTIFACT_SEMANTIC_VERSION}.
+        Set empty do disable.
+      type: string
+      default: <default>
+
+---
+workflow:
+  name: Tarfile Package
+
+variables:
+  TARFILE_NAME: $[[ inputs.TARFILE_NAME ]]
+  TARFILE_EXCLUDES: $[[ inputs.TARFILE_EXCLUDES ]]
+  TARFILE_ROOT_DIR: $[[ inputs.TARFILE_ROOT_DIR ]]
+  TARFILE_CONTENTS: $[[ inputs.TARFILE_CONTENTS ]]
+  TARFILE_CONTENTS_PREFIX: $[[ inputs.TARFILE_CONTENTS_PREFIX ]]
+
+include:
+  - project: $GITLABCI_DEFAULT_PIPELINE_PROJECT
+    ref: $GITLABCI_DEFAULT_PIPELINE_REF
+    file:
+      - pipelines/.calculate-pipeline-version.yaml
+      - pipelines/.check-project-settings.yaml
+      - pipelines/tarfile-package.pipeline.yaml
+
+check-project-settings:
+  extends: .check-project-settings
+
+calculate-pipeline-version:
+  extends: .calculate-pipeline-version
+
+build-tar-package:
+  extends: .build-tar-package
+
+push-tar-package:
+  extends: .push-tar-package
