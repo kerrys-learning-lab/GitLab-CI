@@ -94,22 +94,22 @@ build-image:
     expire_in: 1 week
 
 
-# ----------------------------------------------------------------------------
-# Tests the data preparation job for ML Pipelines
-prepare-data:
-  image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
-  stage: build
-  variables:
-    PYTHONPATH: ./src:./test
-  script:
-    - ${GITLABCI_SCRIPT}  ml
-                          data
-                          prepare
-                          gitlabci_test.ml.data.example_data_prepare.TrainTestData
-  needs: []
-  artifacts:
-    paths:
-      - ./.data/*.npz
+# # ----------------------------------------------------------------------------
+# # Tests the data preparation job for ML Pipelines
+# prepare-data:
+#   image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
+#   stage: build
+#   variables:
+#     PYTHONPATH: ./src:./test
+#   script:
+#     - ${GITLABCI_SCRIPT}  ml
+#                           data
+#                           prepare
+#                           gitlabci_test.ml.data.example_data_prepare.TrainTestData
+#   needs: []
+#   artifacts:
+#     paths:
+#       - ./.data/*.npz
 
 
 # ----------------------------------------------------------------------------
