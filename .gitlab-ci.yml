@@ -169,7 +169,7 @@ push-image:
 
 
 # ----------------------------------------------------------------------------
-# Pushes this project's Python package to the container registry
+# Pushes this project's Python package to the package registry
 push-python-package:
   image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: publish
@@ -184,3 +184,16 @@ push-python-package:
   rules:
     - if: $CI_COMMIT_REF_PROTECTED =~ /true/
     - if: $GITLABCI_PUSH_PYTHON_FORCE =~ /true/
+
+
+# ----------------------------------------------------------------------------
+# Test creating a tarfile of this project
+build-tar-package:
+  extends: .build-tar-package
+
+
+# ----------------------------------------------------------------------------
+# Push this projects tarfile package to the package registry
+push-tar-package:
+  extends: .push-tar-package
+

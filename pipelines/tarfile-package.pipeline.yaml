@@ -8,6 +8,7 @@ include:
 variables:
   DEFAULT_TARFILE_EXCLUDES: |
     .git*
+    .vscode
     artifacts
   TARFILE_NAME: <default>
   TARFILE_CONTENTS_PREFIX: <default>
@@ -25,6 +26,7 @@ variables:
       export FULL_TAR_FILE_PATH=artifacts/${TARFILE_NAME}
 
 .build-tar-package:
+  stage: build
   extends: .tar-package-prerequisites
   script:
     # Build the exclude list for tar, including defaults and user-specified
@@ -66,12 +68,14 @@ variables:
           ${TARCMD_TARFILE_EXCLUDES}  \
           ${TARCMD_TARFILE_TRANSFORM}  \
           ${TARCMD_TARFILE_CONTENTS}
+  needs: []
   artifacts:
     paths:
       - artifacts
     expire_in: 1 week
 
-.upload-tar-package:
+.push-tar-package:
+  stage: publish
   extends: .tar-package-prerequisites
   script:
     - |
@@ -79,6 +83,8 @@ variables:
             --header "JOB-TOKEN: ${CI_JOB_TOKEN}"  \
             --upload-file ${FULL_TAR_FILE_PATH}  \
             ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${ARTIFACT_SEMANTIC_VERSION}/${FULL_TAR_FILE_NAME}
+  needs:
+    - build-tar-package
   rules:
     - if: $CI_COMMIT_REF_PROTECTED =~ /true/
     - if: $GITLABCI_UPLOAD_TAR_PACKAGE_FORCE =~ /true/
