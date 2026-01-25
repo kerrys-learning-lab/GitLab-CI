@@ -28,4 +28,6 @@ include:
                 ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${ARTIFACT_SEMANTIC_VERSION}/${CI_PROJECT_NAME}-${ARTIFACT_SEMANTIC_VERSION}.tar.gz
     - git add modules
   needs:
+    - job: calculate-pipeline-version
+      artifacts: true
     - job: push-bazel-module
