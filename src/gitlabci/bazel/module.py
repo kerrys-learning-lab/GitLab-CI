@@ -1,4 +1,5 @@
 import json
+import os
 import pathlib
 import requests
 import tempfile
@@ -34,7 +35,7 @@ class Module:
     if version_path.exists():
       raise RuntimeError(f'Version {version} already exists for module {self.name}')
 
-    with requests.get(url, stream=True) as response:
+    with requests.get(url, stream=True, auth=('GITLAB-TOKEN', os.environ['GITLAB_PAT'])) as response:
       response.raise_for_status()
       with tempfile.NamedTemporaryFile(mode='w+b',  delete=True, delete_on_close=False) as download_file:
           for chunk in response.iter_content(chunk_size=1024):
