@@ -2,6 +2,7 @@ include:
   - project: $GITLABCI_DEFAULT_PIPELINE_PROJECT
     ref: $GITLABCI_DEFAULT_PIPELINE_REF
     file:
+      - pipelines/.apply-downstream-project.yaml
       - pipelines/.stages.yaml
       - pipelines/.defaults.yaml
       - pipelines/tarfile-package.pipeline.yaml
