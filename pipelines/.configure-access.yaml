@@ -1,0 +1,28 @@
+.configure-http-access:
+  script:
+    - export NETRC_PATH=~/.netrc
+    - |
+      if [[ ! -f ${NETRC_PATH} ]]; then
+      cat > ${NETRC_PATH} <<EOF
+      machine ${CI_SERVER_HOST}
+      login gitlab-cicd-bot
+      password ${GITLAB_CICD_BOT_TOKEN}
+      EOF
+
+      chmod 600 ${NETRC_PATH}
+      fi
+
+
+.configure-podman-access:
+  script:
+    - export EPHEMERAL_REGISTRY_CONF_PATH=/etc/containers/registries.conf.d/ephemeral-registry.conf
+    - |
+      if [[ -n "${GITLABCI_EPHEMERAL_REGISTRY_URL}" && ! -f ${EPHEMERAL_REGISTRY_CONF_PATH} ]]; then
+        cat > ${EPHEMERAL_REGISTRY_CONF_PATH} <<__EOF
+          [[registry]]
+          location = "${GITLABCI_EPHEMERAL_REGISTRY_URL}"
+          insecure = true
+      __EOF
+      fi
+    - podman login ${CI_REGISTRY} --username ${CI_REGISTRY_USER}
+                                  --password ${CI_REGISTRY_PASSWORD}

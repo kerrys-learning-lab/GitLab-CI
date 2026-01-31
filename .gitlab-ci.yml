@@ -4,6 +4,7 @@
 #       Basically, we're dog-fooding the build pipeline using the current Git
 #       ref.
 include:
+  - local: pipelines/.configure-access.yaml
   - local: pipelines/.stages.yaml
   - local: pipelines/.defaults.yaml
   - local: pipelines/tarfile-package.pipeline.yaml
@@ -13,7 +14,7 @@ variables:
   GITLABCI_SCRIPT: uv run ./src/gitlab-ci.py
   LOCAL_HELM_DEPENDENCIES: ./data/helm-repo-dependencies.yaml
 
-.configure-registries:
+.configure-podman-access:
   script:
     - export EPHEMERAL_REGISTRY_CONF_PATH=/etc/containers/registries.conf.d/ephemeral-registry.conf
     - |
@@ -75,7 +76,7 @@ build-image:
   image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: build
   before_script:
-    - !reference ['.configure-registries', 'script']
+    - !reference ['.configure-podman-access', 'script']
   script:
     - mkdir -p ./.build/images
     - export PYTHONPATH=./src:${PYTHONPATH}
@@ -153,7 +154,7 @@ push-image:
   image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: publish
   before_script:
-    - !reference ['.configure-registries', 'script']
+    - !reference ['.configure-podman-access', 'script']
   script:
     - ${GITLABCI_SCRIPT} image push ./.build/images/*.yaml
   needs:

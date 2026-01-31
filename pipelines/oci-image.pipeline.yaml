@@ -2,29 +2,16 @@ include:
   - project: $GITLABCI_DEFAULT_PIPELINE_PROJECT
     ref: $GITLABCI_DEFAULT_PIPELINE_REF
     file:
+      - pipelines/.configure-access.yaml
       - pipelines/.stages.yaml
       - pipelines/.defaults.yaml
-
-.configure-registries:
-  script:
-    - export EPHEMERAL_REGISTRY_CONF_PATH=/etc/containers/registries.conf.d/ephemeral-registry.conf
-    - |
-      if [[ -n "${GITLABCI_EPHEMERAL_REGISTRY_URL}" && ! -f ${EPHEMERAL_REGISTRY_CONF_PATH} ]]; then
-        cat > ${EPHEMERAL_REGISTRY_CONF_PATH} <<__EOF
-          [[registry]]
-          location = "${GITLABCI_EPHEMERAL_REGISTRY_URL}"
-          insecure = true
-      __EOF
-      fi
-    - podman login ${CI_REGISTRY} --username ${CI_REGISTRY_USER}
-                                  --password ${CI_REGISTRY_PASSWORD}
 
 # ----------------------------------------------------------------------------
 # Builds and saves the OCI image for this project
 .build-image:
   stage: build
   before_script:
-    - !reference ['.configure-registries', 'script']
+    - !reference ['.configure-podman-access', 'script']
   script:
     - mkdir -p ./.build/images
     - export PUSH_REGISTRY_CLI_ARG=
@@ -54,7 +41,7 @@ include:
 .unittest-image:
   stage: test
   before_script:
-    - !reference ['.configure-registries', 'script']
+    - !reference ['.configure-podman-access', 'script']
   script:
     - mkdir -p ./.build/test-results
     - export TEST_IMAGE_NAME=$(gitlab-ci image build --target test --name-only)
@@ -81,7 +68,7 @@ include:
 .push-image:
   stage: publish
   before_script:
-    - !reference ['.configure-registries', 'script']
+    - !reference ['.configure-podman-access', 'script']
   script:
     - gitlab-ci image push ./.build/images/*.yaml
   needs:
