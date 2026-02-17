@@ -1,11 +1,11 @@
 helm:
   argo-cd:
-    project: 29
-  elasticsearch:
-    project: 34
-  helm-library:
-    project: 18
-  mysql:
-    project: 30
-  spyll:
     project: 32
+  elasticsearch:
+    project: 33
+  helm-library:
+    project: 34
+  mysql:
+    project: 37
+  spyll:
+    project: 10
