@@ -31,7 +31,7 @@
 .configure-ssh-access:
   script:
     - eval $(ssh-agent -s)
-    - chmod 400 "${SSH_PRIVATE_KEY}"
-    - ssh-add "${SSH_PRIVATE_KEY}"
+    - chmod 400 "${SSH_PRIVATE_KEY_FILE}"
+    - ssh-add "${SSH_PRIVATE_KEY_FILE}"
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
-    - cp "$SSH_KNOWN_HOSTS" ~/.ssh/known_hosts
+    - cp "${SSH_KNOWN_HOSTS_FILE}" ~/.ssh/known_hosts
