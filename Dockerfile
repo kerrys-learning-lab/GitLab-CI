@@ -17,6 +17,14 @@ RUN dnf update  -y &&  \
                     sponge  \
                     vim
 
+# Ansible
+RUN dnf install -y  ansible  \
+                    ansible-collection-ansible-posix  \
+                    ansible-collection-community-general  \
+                    ansible-collection-kubernetes-core  \
+                    openssh-clients
+
+
 # Bazelisk/Bazel
 RUN dnf install -y dnf-plugins-core && \
     dnf copr enable -y dcarp/bazelisk && \
@@ -32,10 +40,11 @@ COPY src/           /var/tmp/gitlab-ci/src
 COPY pyproject.toml /var/tmp/gitlab-ci/pyproject.toml
 COPY uv.lock        /var/tmp/gitlab-ci/uv.lock
 
-ENV PATH="${PATH}:~/.local/bin"
 RUN cd /var/tmp/gitlab-ci  && \
     uv build
 
+
+# ---------------------------------------------------------------------------
 FROM base AS final
 COPY --from=build   /var/tmp/gitlab-ci/dist /usr/local/gitlab-ci
 COPY                src/gitlab-ci.py        /opt/gitlab-ci/gitlab-ci.py
