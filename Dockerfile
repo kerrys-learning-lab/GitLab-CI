@@ -22,6 +22,7 @@ RUN dnf install -y  ansible  \
                     ansible-collection-ansible-posix  \
                     ansible-collection-community-general  \
                     ansible-collection-kubernetes-core  \
+                    ansible-lint  \
                     openssh-clients
 
 
