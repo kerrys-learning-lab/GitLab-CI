@@ -10,13 +10,28 @@ include:
 # Builds and saves a Python package for this project
 .build-python-package:
   stage: build
-  variables:
-    PYTHON_BUILD_TYPE: uv
-    PYTHON_PROJECT_ROOT: .
   script:
-    - gitlab-ci  python --project-root ${PYTHON_PROJECT_ROOT:-.}
-                        --build-type ${PYTHON_BUILD_TYPE}
+    - gitlab-ci  python --project-root ${GITLABCI_PYTHON_BUILD_CONTEXT:-.}
+                        --build-type ${GITLABCI_PYTHON_BUILD_TYPE:-uvs}
                         build
+  artifacts:
+    paths:
+      - ./dist
+    expire_in: 1 week
+
+
+# ----------------------------------------------------------------------------
+# Runs the unit tests for the Python package
+.test-python-package:
+  stage: test
+  script:
+    - gitlab-ci  python --project-root ${GITLABCI_PYTHON_BUILD_CONTEXT:-.}
+                        --build-type ${GITLABCI_PYTHON_BUILD_TYPE:-uv}
+                        test
+  rules:
+    - if: $GITLABCI_PYTHON_UNITTESTS =~ /false/
+      when: never
+  needs: []
   artifacts:
     paths:
       - ./dist
@@ -27,12 +42,9 @@ include:
 # Pushes this project's Python package to the container registry
 .push-python-package:
   stage: publish
-  variables:
-    PYTHON_BUILD_TYPE: uv
-    PYTHON_PROJECT_ROOT: .
   script:
-    - gitlab-ci  python --project-root ${PYTHON_PROJECT_ROOT}
-                        --build-type ${PYTHON_BUILD_TYPE}
+    - gitlab-ci  python --project-root ${GITLABCI_PYTHON_BUILD_CONTEXT:-.}
+                        --build-type ${GITLABCI_PYTHON_BUILD_TYPE:-uv}
                         push
   rules:
     - if: $CI_COMMIT_REF_PROTECTED =~ /true/
