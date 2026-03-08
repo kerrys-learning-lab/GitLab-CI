@@ -50,7 +50,7 @@ RUN cd /var/tmp/gitlab-ci  && \
 
 # ============================================================================
 FROM base AS final
-COPY --from=build   /var/tmp/gitlab-ci/dist /usr/local/gitlab-ci
+COPY --from=base    /var/tmp/gitlab-ci/dist /usr/local/gitlab-ci
 COPY                src/gitlab-ci.py        /opt/gitlab-ci/gitlab-ci.py
 COPY                data                    /opt/gitlab-ci/data
 
