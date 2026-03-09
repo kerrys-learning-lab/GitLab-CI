@@ -29,8 +29,7 @@ include:
                         --build-type ${GITLABCI_PYTHON_BUILD_TYPE:-uv}
                         test
   rules:
-    - if: $GITLABCI_PYTHON_UNITTESTS =~ /false/
-      when: never
+    - if: $GITLABCI_PYTHON_UNITTESTS == true
   needs: []
   artifacts:
     paths:
