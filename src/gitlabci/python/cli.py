@@ -84,6 +84,7 @@ class PythonProjectUv(PythonProject):
             re.compile(r'^--junitxml=(./.build/test-results/unit-tests.xml)$'),
             re.compile(r'^--cov=([\S]+)$'),
             re.compile(r'^--cov-report=(xml:./.build/test-results/coverage.xml)$'),
+            re.compile(r'^--cov-report=(term)$'),
         ]
     }
 
@@ -115,7 +116,7 @@ class PythonProjectUv(PythonProject):
 
         return self.artifacts
 
-    def test(self):
+    def test(self, validate_only=False, **kwargs):
         # NOTE: For uv-based project, the toml file is required
         #       Raises FileNotFoundError if the above is violated
         pyprojectToml = self._load_pyproject_toml()
@@ -127,11 +128,13 @@ class PythonProjectUv(PythonProject):
             tomlItem = pytest_ini.get(key)
             PythonProjectUv.assert_toml_setting(key, value, tomlItem)
 
+        if validate_only:
+            return
 
         command = [
             'uv',
             'run',
-            'pytest'
+            'pytest',
         ]
 
         with subprocess.Popen(command,
@@ -142,7 +145,7 @@ class PythonProjectUv(PythonProject):
             utils.ProcessPrinter.follow(proc, logger=LOGGER, method='info')
 
             if proc.returncode != 0:
-                raise PythonBuildError(f'Error occured while uploading {self.name}:{self.version.langPythonVersion}')
+                raise PythonBuildError(f'Error occured while testing {self.name}:{self.version.langPythonVersion}')
 
 
 
@@ -222,7 +225,7 @@ class PythonProjectBuiltIn(PythonProject):
 
         return self.artifacts
 
-    def test(self):
+    def test(self, **kwargs):
         raise RuntimeError('Not implemented')
 
     def push(self):
@@ -292,7 +295,7 @@ def test(args: argparse.Namespace):
                                             info=info,
                                             version=version)
 
-    project.test()
+    project.test(validate_only=args.validate_only)
 
 
 # ----------------------------------------------------------------------------
@@ -344,7 +347,9 @@ def add_cli_options(parser: argparse.ArgumentParser, **kwargs):
     # ----- test
     test_subparser = local_subparsers.add_parser('test',
                                                  formatter_class=rich_argparse.RichHelpFormatter)
-
+    test_subparser.add_argument('--validate-only',
+                                action='store_true',
+                                help='Only validate the pyproject.toml file, don\'t execute the unit tests')
     test_subparser.set_defaults(func=test)
 
 
