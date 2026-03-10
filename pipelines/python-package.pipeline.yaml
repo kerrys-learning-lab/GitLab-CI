@@ -34,7 +34,6 @@ include:
     - uv run pytest
   rules:
     - if: $GITLABCI_PYTHON_UNITTESTS == true
-      when: never
   needs: []
   artifacts:
     reports:
