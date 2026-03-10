@@ -1,9 +1,8 @@
 import argparse
 import enum
 import logging
-import os
 import pathlib
-import requests
+import re
 import rich_argparse
 import shutil
 import subprocess
@@ -18,6 +17,11 @@ LOGGER = logging.getLogger('gitlabci.python')
 # ----------------------------------------------------------------------------
 class PythonBuildError(RuntimeError):
     ''' Raised when an error occurs while building (packaging) a Python project '''
+
+
+# ----------------------------------------------------------------------------
+class PythonTestError(RuntimeError):
+    ''' Raised when an error occurs while testing a Python project '''
 
 
 # ----------------------------------------------------------------------------
@@ -71,6 +75,18 @@ class PythonProject:
 # ----------------------------------------------------------------------------
 class PythonProjectUv(PythonProject):
 
+    PYTEST_INI_REQUIREMENTS = {
+        'pythonpath': re.compile(r'^([\S]+)$'),
+        'testpaths':  re.compile(r'^([\S]+)$'),
+        'junit_family': re.compile(r'^(xunit2)$'),
+        'junit_suite_name': re.compile(r'^([A-Za-z0-9_ -]+)$'),
+        'addopts': [
+            re.compile(r'^--junitxml=(./.build/test-results/unit-tests.xml)$'),
+            re.compile(r'^--cov=([\S]+)$'),
+            re.compile(r'^--cov-report=(xml:./.build/test-results/coverage.xml)$'),
+        ]
+    }
+
     def build(self) -> list[pathlib.Path]:
         # NOTE: For uv-based project, the toml file is required
         #       Raises FileNotFoundError if the above is violated
@@ -92,12 +108,43 @@ class PythonProjectUv(PythonProject):
                               stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT,
                               encoding='utf-8') as proc:
-            utils.ProcessPrinter.follow(proc, logger=LOGGER, method='debug')
+            utils.ProcessPrinter.follow(proc, logger=LOGGER, method='info')
 
             if proc.returncode != 0:
                 raise PythonBuildError(f'Error occured while building {self.name}:{self.version.langPythonVersion}')
 
         return self.artifacts
+
+    def test(self):
+        # NOTE: For uv-based project, the toml file is required
+        #       Raises FileNotFoundError if the above is violated
+        pyprojectToml = self._load_pyproject_toml()
+        pytest_ini = pyprojectToml.get('tool', {}).get('pytest', {}).get('ini_options')
+        if not pytest_ini:
+            raise PythonTestError('Project is missing PyTest configuration required for CI/CD')
+
+        for key, value in PythonProjectUv.PYTEST_INI_REQUIREMENTS.items():
+            tomlItem = pytest_ini.get(key)
+            PythonProjectUv.assert_toml_setting(key, value, tomlItem)
+
+
+        command = [
+            'uv',
+            'run',
+            'pytest'
+        ]
+
+        with subprocess.Popen(command,
+                              cwd=self.project_root,
+                              stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT,
+                              encoding='utf-8') as proc:
+            utils.ProcessPrinter.follow(proc, logger=LOGGER, method='info')
+
+            if proc.returncode != 0:
+                raise PythonBuildError(f'Error occured while uploading {self.name}:{self.version.langPythonVersion}')
+
+
 
     def push(self):
         url: str = f'{self.info.apiUrl}/projects/{self.info.projectId}/packages/pypi'
@@ -116,10 +163,38 @@ class PythonProjectUv(PythonProject):
                               stdout=subprocess.PIPE,
                               stderr=subprocess.STDOUT,
                               encoding='utf-8') as proc:
-            utils.ProcessPrinter.follow(proc, logger=LOGGER, method='debug')
+            utils.ProcessPrinter.follow(proc, logger=LOGGER, method='info')
 
             if proc.returncode != 0:
                 raise PythonBuildError(f'Error occured while uploading {self.name}:{self.version.langPythonVersion}')
+
+    @staticmethod
+    def assert_toml_setting(settingName, expected, actual):
+        if not actual:
+            raise PythonTestError(f'Project TOML is missing required field: {settingName}')
+        if isinstance(expected, re.Pattern) and isinstance(actual, str):
+            PythonProjectUv._assert_toml_string_pattern(settingName, expected, actual)
+        elif isinstance(expected, list) and isinstance(actual, list):
+            PythonProjectUv._assert_toml_list(settingName, expected, actual)
+        else:
+            raise PythonTestError(f'Unexpected TOML field type: {type(actual)} (comparing to {type(expected)})')
+
+    @staticmethod
+    def _assert_toml_string_pattern(settingName, expected: re.Pattern, actual: str):
+        if not expected.search(actual):
+            raise PythonTestError(f'Expected {settingName} to match \'{expected.pattern}\' (actual: {actual})')
+        LOGGER.debug(f'Found match for {settingName}: \'{actual}\' (expected pattern: {expected.pattern})')
+
+    @staticmethod
+    def _assert_toml_list(settingName, expected: list[re.Pattern], actual: list[str]):
+        # Every item in 'expected' must somewhere be in 'actual'
+        for e in expected:
+            searchAll: list[re.Match] = [e.search(a) for a in actual]
+            match: re.Match = next(filter(None, searchAll), None)
+            if not match:
+                raise PythonTestError(f'Expected {settingName} to contain \'{e.pattern}\'')
+            LOGGER.debug(f'Found match for {settingName}: \'{match.group(1)}\' (expected pattern: {e.pattern})')
+
 
 
 # ----------------------------------------------------------------------------
@@ -146,6 +221,9 @@ class PythonProjectBuiltIn(PythonProject):
                 raise PythonBuildError(f'Error occured while building {self.name}:{self.version.langPythonVersion}')
 
         return self.artifacts
+
+    def test(self):
+        raise RuntimeError('Not implemented')
 
     def push(self):
         url: str = f'{self.info.apiUrl}/projects/{self.info.projectId}/packages/pypi'
@@ -204,6 +282,20 @@ def build(args: argparse.Namespace):
 
 
 # ----------------------------------------------------------------------------
+def test(args: argparse.Namespace):
+    info: Info = Info.create()
+    version: PipelineVersion = VersionFactory.create()
+
+    project = args.build_type.builder_class(args.project_name or info.projectName,
+                                            pathlib.Path(args.project_root),
+                                            pathlib.Path(args.output_dir),
+                                            info=info,
+                                            version=version)
+
+    project.test()
+
+
+# ----------------------------------------------------------------------------
 def push(args: argparse.Namespace):
     info: Info = Info.create()
     version: PipelineVersion = VersionFactory.create()
@@ -240,10 +332,23 @@ def add_cli_options(parser: argparse.ArgumentParser, **kwargs):
                               help='Location to write the Python distribution (whl/sdist).  Default: ./dist')
 
     local_subparsers =local_parser.add_subparsers()
+
+
+    # ----- build
     build_subparser = local_subparsers.add_parser('build',
                                                   formatter_class=rich_argparse.RichHelpFormatter)
 
     build_subparser.set_defaults(func=build)
+
+
+    # ----- test
+    test_subparser = local_subparsers.add_parser('test',
+                                                 formatter_class=rich_argparse.RichHelpFormatter)
+
+    test_subparser.set_defaults(func=test)
+
+
+    # ----- build
     push_subparser = local_subparsers.add_parser('push',
                                                  formatter_class=rich_argparse.RichHelpFormatter)
     push_subparser.set_defaults(func=push)

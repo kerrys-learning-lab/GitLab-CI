@@ -123,7 +123,7 @@ unittest:
   needs: []
   artifacts:
     paths:
-      - ./.build/test-results/pytest.log
+      - ./.build/test-results
     reports:
       coverage_report:
         coverage_format: cobertura
@@ -194,4 +194,3 @@ build-tar-package:
 # Push this projects tarfile package to the package registry
 push-tar-package:
   extends: .push-tar-package
-
