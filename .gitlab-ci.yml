@@ -121,17 +121,19 @@ unittest:
   script:
     - ${GITLABCI_SCRIPT} python --project-root .
                                 --build-type uv
-                                test
+                                test  --validate-only
+    - uv run pytest
   needs: []
   artifacts:
-    paths:
-      - ./.build/test-results
     reports:
       coverage_report:
         coverage_format: cobertura
         path: ./.build/test-results/coverage.xml
       junit: ./.build/test-results/unit-tests.xml
+    paths:
+      - ./.build/test-results
     expire_in: 1 week
+  coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
 
 
 # ----------------------------------------------------------------------------

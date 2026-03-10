@@ -30,7 +30,8 @@ include:
   script:
     - gitlab-ci  python --project-root ${GITLABCI_PYTHON_BUILD_CONTEXT:-.}
                         --build-type ${GITLABCI_PYTHON_BUILD_TYPE:-uv}
-                        test
+                        test  --validate-only
+    - uv run pytest
   rules:
     - if: $GITLABCI_PYTHON_UNITTESTS == true
       when: never
@@ -44,6 +45,7 @@ include:
     paths:
       - ./.build/test-results
     expire_in: 1 week
+  coverage: '/TOTAL.+ ([0-9]{1,3}%)/'
 
 
 # ----------------------------------------------------------------------------
