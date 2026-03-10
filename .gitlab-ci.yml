@@ -119,7 +119,9 @@ unittest:
   image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: test
   script:
-    - uv run pytest
+    - ${GITLABCI_SCRIPT} python --project-root .
+                                --build-type uv
+                                test
   needs: []
   artifacts:
     paths:
