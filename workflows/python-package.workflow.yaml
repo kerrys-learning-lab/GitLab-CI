@@ -9,7 +9,6 @@ spec:
     UNITTESTS:
       type: boolean
       default: true
-
 ---
 workflow:
   name: Python Package

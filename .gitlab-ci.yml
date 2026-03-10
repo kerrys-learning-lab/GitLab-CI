@@ -119,11 +119,13 @@ unittest:
   image: ${GITLABCI_DEFAULT_IMAGE_NAME}:${GITLABCI_DEFAULT_IMAGE_VERSION}
   stage: test
   script:
-    - uv run pytest
+    - ${GITLABCI_SCRIPT} python --project-root .
+                                --build-type uv
+                                test
   needs: []
   artifacts:
     paths:
-      - ./.build/test-results/pytest.log
+      - ./.build/test-results
     reports:
       coverage_report:
         coverage_format: cobertura
@@ -194,4 +196,3 @@ build-tar-package:
 # Push this projects tarfile package to the package registry
 push-tar-package:
   extends: .push-tar-package
-

@@ -24,16 +24,25 @@ include:
 # Runs the unit tests for the Python package
 .test-python-package:
   stage: test
+  before_script:
+    - uv add --dev  pytest
+                    pytest-cov
   script:
     - gitlab-ci  python --project-root ${GITLABCI_PYTHON_BUILD_CONTEXT:-.}
                         --build-type ${GITLABCI_PYTHON_BUILD_TYPE:-uv}
                         test
   rules:
     - if: $GITLABCI_PYTHON_UNITTESTS == true
+      when: never
   needs: []
   artifacts:
+    reports:
+      junit: .build/test-results/unit-tests.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: .build/test-results/coverage.xml
     paths:
-      - ./dist
+      - ./.build/test-results
     expire_in: 1 week
 
 

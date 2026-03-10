@@ -68,7 +68,6 @@ junit_log_passing_tests = true
 addopts = [
     "--capture=no",
     "--no-header",
-    "--quiet",
     '--asyncio-mode=auto',
     '--log-disable="testcontainers"',
     '--junitxml=./.build/test-results/unit-tests.xml',
