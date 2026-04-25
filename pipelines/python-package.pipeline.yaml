@@ -5,6 +5,10 @@ include:
       - pipelines/.stages.yaml
       - pipelines/.defaults.yaml
 
+variables:
+  UV_INDEX_WESTSIDESTREET_USERNAME: gitlab-ci-token
+  UV_INDEX_WESTSIDESTREET_PASSWORD: $CI_JOB_TOKEN
+
 
 # ----------------------------------------------------------------------------
 # Fails the Pipeline if the lockfile is stale
