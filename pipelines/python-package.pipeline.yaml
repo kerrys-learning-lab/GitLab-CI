@@ -48,7 +48,7 @@ check-uv-lockfile:
     - gitlab-ci  python --project-root ${GITLABCI_PYTHON_BUILD_CONTEXT:-.}
                         --build-type ${GITLABCI_PYTHON_BUILD_TYPE:-uv}
                         test  --validate-only
-    - uv run pytest
+    - uv run --no-sources pytest
   rules:
     - if: $GITLABCI_PYTHON_UNITTESTS == true
   needs: []
