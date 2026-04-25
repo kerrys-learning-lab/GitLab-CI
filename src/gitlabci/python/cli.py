@@ -100,6 +100,7 @@ class PythonProjectUv(PythonProject):
         command = [
             'uv',
             'build',
+            '--no-sources',
             '--out-dir', str(self.output_dir),
             str(self.project_root)
         ]

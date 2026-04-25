@@ -7,12 +7,23 @@ include:
 
 
 # ----------------------------------------------------------------------------
+# Fails the Pipeline if the lockfile is stale
+check-uv-lockfile:
+  stage: .pre
+  script:
+    - uv lock --check --no-sources
+  rules:
+    - exists:
+        - pyproject.toml
+
+
+# ----------------------------------------------------------------------------
 # Builds and saves a Python package for this project
 .build-python-package:
   stage: build
   script:
     - gitlab-ci  python --project-root ${GITLABCI_PYTHON_BUILD_CONTEXT:-.}
-                        --build-type ${GITLABCI_PYTHON_BUILD_TYPE:-uvs}
+                        --build-type ${GITLABCI_PYTHON_BUILD_TYPE:-uv}
                         build
   artifacts:
     paths:
@@ -31,6 +42,10 @@ include:
     - gitlab-ci  python --project-root ${GITLABCI_PYTHON_BUILD_CONTEXT:-.}
                         --build-type ${GITLABCI_PYTHON_BUILD_TYPE:-uv}
                         test  --validate-only
+    - |
+      if [[ -f pyproject.toml ]]; then
+        uv sync --frozen --no-sources
+      fi
     - uv run pytest
   rules:
     - if: $GITLABCI_PYTHON_UNITTESTS == true
