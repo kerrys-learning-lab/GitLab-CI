@@ -44,8 +44,6 @@ check-uv-lockfile:
       if [[ -f pyproject.toml ]]; then
         uv sync --no-sources
       fi
-    - uv add --dev  pytest
-                    pytest-cov
   script:
     - gitlab-ci  python --project-root ${GITLABCI_PYTHON_BUILD_CONTEXT:-.}
                         --build-type ${GITLABCI_PYTHON_BUILD_TYPE:-uv}
