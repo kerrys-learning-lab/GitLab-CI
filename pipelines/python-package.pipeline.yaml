@@ -42,7 +42,7 @@ check-uv-lockfile:
   before_script:
     - |
       if [[ -f pyproject.toml ]]; then
-        uv sync --frozen --no-sources
+        uv sync --no-sources
       fi
     - uv add --dev  pytest
                     pytest-cov
