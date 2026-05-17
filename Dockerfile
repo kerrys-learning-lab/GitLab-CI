@@ -20,11 +20,11 @@ RUN dnf update  -y &&  \
 # ----------------------------------------------------------------------------
 # Ansible
 RUN dnf install -y  ansible  \
-                    ansible-collection-ansible-posix  \
-                    ansible-collection-community-general  \
-                    ansible-collection-kubernetes-core  \
                     ansible-lint  \
-                    openssh-clients
+                    openssh-clients && \
+    ansible-galaxy collection install --force   ansible.posix \
+                                                community.general \
+                                                kubernetes.core
 
 
 # ----------------------------------------------------------------------------
