@@ -12,6 +12,11 @@ helm package test:
   script:
     - !reference [.helm-base,     before_script]
     - !reference [.helm-package,  script]
+  artifacts:
+    paths:
+      - .helm-package
+    when: always
+    expire_in: 1 week
 
 
 # ----------------------------------------------------------------------------
