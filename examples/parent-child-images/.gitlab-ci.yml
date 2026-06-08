@@ -10,8 +10,7 @@ include:
       image_build_dockerfile: Dockerfile.parent
       image_unit_test_enabled: false
       image_structure_test_enabled: true
-      image_structure_test_filenames:
-        - examples/parent-child-images/image-structure-tests/parent.yaml
+      image_structure_test_filenames: examples/parent-child-images/image-structure-tests/parent.yaml
 
 
   # --------------------------------------------------------------------------
@@ -26,5 +25,4 @@ include:
       image_unit_test_enabled: false
       image_build_needs:
         - image build (parent)
-      image_structure_test_filenames:
-        - examples/parent-child-images/image-structure-tests/child.yaml
+      image_structure_test_filenames: examples/parent-child-images/image-structure-tests/child.yaml
