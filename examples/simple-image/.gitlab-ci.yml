@@ -1,7 +1,7 @@
 include:
   - local: templates/image-pipeline.yml
     inputs:
-      image-name: gitlab-ci/examples/simple-image
-      image-build-context: examples/simple-image
-      image-unit-test-enabled: false
-      image-structure-test-enabled: false
+      image_name: gitlab-ci/examples/simple-image
+      image_build_context: examples/simple-image
+      image_unit_test_enabled: false
+      image_structure_test_enabled: false

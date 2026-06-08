@@ -4,13 +4,13 @@ include:
   # Parent/base image
   - local: templates/image-pipeline.yml
     inputs:
-      image-name: gitlab-ci/examples/parent
-      jobs-suffix: " (parent)"
-      image-build-context: examples/parent-child-images
-      image-build-dockerfile: Dockerfile.parent
-      image-unit-test-enabled: false
-      image-structure-test-enabled: true
-      image-structure-test-filenames:
+      image_name: gitlab-ci/examples/parent
+      jobs_suffix: " (parent)"
+      image_build_context: examples/parent-child-images
+      image_build_dockerfile: Dockerfile.parent
+      image_unit_test_enabled: false
+      image_structure_test_enabled: true
+      image_structure_test_filenames:
         - examples/parent-child-images/image-structure-tests/parent.yaml
 
 
@@ -18,13 +18,13 @@ include:
   # Child image:
   - local: templates/image-pipeline.yml
     inputs:
-      image-name: gitlab-ci/examples/child
-      jobs-suffix: " (child)"
-      image-build-context: examples/parent-child-images
-      image-build-dockerfile: Dockerfile.child
-      image-build-parent-image-name: gitlab-ci/examples/parent
-      image-unit-test-enabled: false
-      image-build-needs:
+      image_name: gitlab-ci/examples/child
+      jobs_suffix: " (child)"
+      image_build_context: examples/parent-child-images
+      image_build_dockerfile: Dockerfile.child
+      image_build_parent_image_name: gitlab-ci/examples/parent
+      image_unit_test_enabled: false
+      image_build_needs:
         - image build (parent)
-      image-structure-test-filenames:
+      image_structure_test_filenames:
         - examples/parent-child-images/image-structure-tests/child.yaml

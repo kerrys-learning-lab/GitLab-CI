@@ -3,4 +3,6 @@ stages:
   - build
   - test
   - publish
+  - trigger
+  - deploy
   - .post
