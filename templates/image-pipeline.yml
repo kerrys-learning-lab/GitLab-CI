@@ -1,0 +1,231 @@
+# ============================================================================
+spec:
+  inputs:
+    # ------------------------------------------------------------------------
+    # These settings affect the image artifact
+    image-name:
+      description: The short name of the image (defaults to the project name slug)
+      type: string
+      default: ''
+
+
+    # ------------------------------------------------------------------------
+    # These settings affect the building of the image
+    image-build-dockerfile:
+      description: Relative path to the Dockerfile used to build the image
+                   (default is "Dockerfile")
+      type: string
+      default: Dockerfile
+    image-build-context:
+      description: Relative path to the image build context (default is the
+                   root directory of the project)
+      type: string
+      default: .
+    image-build-target:
+      description: The image build target, if applicable
+      type: string
+      default: ''
+    image-build-ignorefile:
+      description: The relative path to the ignorefile, if applicable
+      type: string
+      default: .dockerignore
+    image-build-parent-image-name:
+      description: Set to the parent image's short-name if this image is a
+                   child image.  The parent image produced by this Pipeline
+                   will be injected into the child image's build process as
+                   the BASE_IMAGE build-arg.
+
+                   NOTE - Be sure and set this Job's 'image-build-needs' to
+                          the name of the Job which builds the parent!
+      type: string
+      default: ''
+    image-build-stage:
+      description: Assigns the Pipeline stage for the 'image build' Job
+      type: string
+      default: build
+    image-build-needs:
+      description: DAG specification for the 'image build' Job
+      type: array
+      default: []
+
+
+    # ------------------------------------------------------------------------
+    # These settings affect the unit testing of the image
+    #
+    # NOTE: Right now, there is an assumption that the 'unit-test' target uses
+    #       the same Dockerfile, ignorefile, and context as the default
+    #       build target.  This may need to be revisited.
+    image-unit-test-enabled:
+      description: If true, the image will be unit tested
+      type: boolean
+      default: true
+    image-unit-test-target:
+      description: If not empty, the image will be unit tested by building and
+                   executing the corresponding target
+      type: string
+      default: unittest
+    image-unit-test-output-dir:
+      description: The directory at which the image's unit test will write the
+                   the result xUnit file.  This Job will mount an empty directory
+                   at this location in order to receive the file
+      type: string
+      default: /var/tmp
+    image-unit-test-results-filename:
+      description: The filename (relative to 'image-unit-test-output-dir') to
+                   which the unit test results will be written.  The Job will
+                   capture this file as a JUnit artifact.
+      type: string
+      default: unit-test-results.xml
+    image-unit-test-stage:
+      description: Assigns the Pipeline stage for the 'image unit-test' Job
+      type: string
+      default: test
+
+
+    # ------------------------------------------------------------------------
+    # These settings affect the structure testing of the image
+    image-structure-test-enabled:
+      description: If true, the image will be structure tested
+      type: boolean
+      default: true
+    image-structure-test-filenames:
+      description: If not empty, the image will be unit tested by building and
+                   executing the corresponding target
+      type: array
+      default:
+        - test/image-structure-test.yaml
+    image-structure-test-stage:
+      description: Assigns the Pipeline stage for the 'image structure-test' Job
+      type: string
+      default: test
+
+
+    # ------------------------------------------------------------------------
+    # These settings affect the promoted image
+    image-promote-release-train:
+      description: If true, tag and push the Release Train version (only
+                   applicable if the commit has a corresponding Release Train)
+      type: boolean
+      default: true
+    image-promote-semantic-version:
+      description: If true, tag and push the Semantic Version for the image
+      type: boolean
+      default: true
+    image-promote-stage:
+      description: Assigns the Pipeline stage for the 'image push' Job
+      type: string
+      default: publish
+    image-promote-option:
+      description: By default, only protected refs are pushed to the container
+                   registry.  Specifying 'force' will push the image for
+                   non-protected refs.  Specifying 'skip' will not push
+                   protected refs.
+      type: string
+      options:
+        - protected
+        - skip
+        - force
+      default: protected
+
+
+    # ------------------------------------------------------------------------
+    # These settings affect Job names for all Jobs instantiated by the component
+    jobs-prefix:
+      description: Optional prefix for the Job names
+      type: string
+      default: ''
+    jobs-suffix:
+      description: Optional suffix for the Job names
+      type: string
+      default: ''
+
+
+  # --------------------------------------------------------------------------
+  # Propagate component metadata
+  component:
+    - name
+    - version
+    - reference
+
+---
+
+# ============================================================================
+workflow:
+  name: OCI Image
+
+
+include:
+  - local: jobs/.image.gitlab-ci.yml
+
+
+# ----------------------------------------------------------------------------
+"$[[ inputs.jobs-prefix ]]image build$[[ inputs.jobs-suffix ]]":
+  extends: .image-build
+  stage: $[[ inputs.image-build-stage ]]
+  variables:
+    IMAGE_BUILD_NAME: $[[ inputs.image-name ]]
+    IMAGE_BUILD_DOCKERFILE: $[[ inputs.image-build-dockerfile ]]
+    IMAGE_BUILD_CONTEXT:  $[[ inputs.image-build-context ]]
+    IMAGE_BUILD_IGNOREFILE: $[[ inputs.image-build-ignorefile ]]
+    IMAGE_BUILD_TARGET:  $[[ inputs.image-build-target ]]
+    IMAGE_BUILD_PARENT_IMAGE_NAME: $[[ inputs.image-build-parent-image-name ]]
+  needs: $[[ inputs.image-build-needs ]]
+
+
+# ----------------------------------------------------------------------------
+"$[[ inputs.jobs-prefix ]]image unit-test$[[ inputs.jobs-suffix ]]":
+  extends: .image-unit-test
+  stage: $[[ inputs.image-unit-test-stage ]]
+  variables:
+    IMAGE_BUILD_NAME: $[[ inputs.image-name ]]
+    IMAGE_BUILD_DOCKERFILE: $[[ inputs.image-build-dockerfile ]]
+    IMAGE_BUILD_CONTEXT:  $[[ inputs.image-build-context ]]
+    IMAGE_BUILD_IGNOREFILE: $[[ inputs.image-build-ignorefile ]]
+    IMAGE_BUILD_TARGET:  $[[ inputs.image-unit-test-target ]]
+    IMAGE_UNITTEST_OUTPUT_DIR: $[[ image-unit-test-output-dir ]]
+  rules:
+    - if: "'$[[ inputs.image-unit-test-enabled ]]' == 'false'"
+      when: never
+    - if: "'$[[ inputs.image-unit-test-enabled ]]' == 'true'"
+  artifacts:
+    paths:
+      - .image-unit-test/$[[ inputs.image-unit-test-results-filename ]]
+    reports:
+      junit: .image-unit-test/$[[ inputs.image-unit-test-results-filename ]]
+    when: always
+    expire_in: 1 week
+
+
+# ----------------------------------------------------------------------------
+"$[[ inputs.jobs-prefix ]]image structure-test$[[ inputs.jobs-suffix ]]":
+  extends: .image-structure-test
+  stage: $[[ inputs.image-structure-test-stage ]]
+  variables:
+    IMAGE_BUILD_NAME: $[[ inputs.image-name ]]
+    IMAGE_STRUCTURE_TEST_FILENAMES: $[[ inputs.image-structure-test-filenames ]]
+  rules:
+    - if: "'$[[ inputs.image-structure-test-enabled ]]' == 'false'"
+      when: never
+    - if: "'$[[ inputs.image-structure-test-enabled ]]' == 'true'"
+  artifacts:
+    paths:
+      - .image-structure-test/structure-test-results.${CI_JOB_ID}.xml
+    reports:
+      junit: .image-unit-test/structure-test-results.${CI_JOB_ID}.xml
+    when: always
+    expire_in: 1 week
+
+
+# ----------------------------------------------------------------------------
+"$[[ inputs.jobs-prefix ]]image promote$[[ inputs.jobs-suffix ]]":
+  extends: .image-promote
+  stage: $[[ inputs.image-promote-stage ]]
+  variables:
+    IMAGE_BUILD_NAME: $[[ inputs.image-name ]]
+    IMAGE_PROMOTE_RELEASE_TRAIN: $[[ inputs.image-promote-release-train ]]
+    IMAGE_PROMOTE_SEMANTIC_VERSION: $[[ inputs.image-promote-semantic-version ]]
+  rules:
+    - if: "'$[[ inputs.image-promote-option ]]' == 'skip'"
+      when: never
+    - if: "'$[[ inputs.image-promote-option ]]' == 'force'"
+    - if: "'$CI_COMMIT_REF_PROTECTED' == 'true'"

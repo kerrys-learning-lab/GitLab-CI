@@ -1,0 +1,17 @@
+
+
+# ----------------------------------------------------------------------------
+.utility//print-settings-table:
+  script:
+    - |
+      if [[ -n "${JOB_SETTINGS_TABLE[@]}" ]]; then
+        ROWS="==========;==========\n"
+        for row in "${JOB_SETTINGS_TABLE[@]}"; do
+          ROWS+="${row}"'\n'
+        done
+        printf "${ROWS}" | column --table  \
+                                  --separator ';' \
+                                  --output-separator ' | '  \
+                                  --table-column name=Setting \
+                                  --table-column name=Value
+      fi

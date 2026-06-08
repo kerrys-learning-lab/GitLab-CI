@@ -1,0 +1,96 @@
+include:
+  - local: jobs/.pipeline-version.gitlab-ci.yml
+
+
+# ----------------------------------------------------------------------------
+.helm-base:
+  before_script:
+    - !reference [.helm//add-repos, script]
+    - helm dependency update ${HELM_CHART_DIR:-.}
+
+
+# ----------------------------------------------------------------------------
+.helm-package:
+  stage: build
+  script:
+    - !reference [.pipeline-version,    script]
+    - mkdir -p .helm-package
+    - helm package  --app-version ${RELEASE_TRAIN:-${SEMANTIC_VERSION}}
+                    --version     ${SEMANTIC_VERSION}
+                    --destination .helm-package
+                    ${HELM_CHART_DIR:-.}
+
+
+# ----------------------------------------------------------------------------
+.helm-unit-test:
+  stage: test
+  script:
+    - mkdir -p .helm-unit-test
+    - helm unittest --file ${HELM_UNITTEST_FILE_GLOB:-'tests/*.tests.yaml'}
+                    --output-type JUnit
+                    --output-file .helm-unit-test/unit-test-results.${CI_JOB_ID}.xml
+                    ${HELM_CHART_DIR:-.}
+
+
+# ----------------------------------------------------------------------------
+.helm-push:
+  stage: publish
+  script:
+    - !reference [.pipeline-version,    script]
+    - HELM_CHART_NAME=$(helm show chart ${HELM_CHART_DIR} | grep -Po '^name:\s+\K.*')
+    - helm  cm-push   .helm-package/${HELM_CHART_NAME}-${SEMANTIC_VERSION}.tgz
+                      pipeline-push
+
+
+
+# ----------------------------------------------------------------------------
+.helm//add-repos:
+  script:
+    - |
+      if [[ -z "${HELM_REPO_PIPELINE_PUSH_URL}" ]]; then
+        HELM_REPO_PIPELINE_PUSH_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/stable
+      fi
+
+      if [[ -z "${HELM_REPO_PIPELINE_PUSH_USERNAME}" ]]; then
+        HELM_REPO_PIPELINE_PUSH_USERNAME=gitlab-ci-token
+      fi
+
+      if [[ -z "${HELM_REPO_PIPELINE_PUSH_PASSWORD}" ]]; then
+        HELM_REPO_PIPELINE_PUSH_PASSWORD=${CI_JOB_TOKEN}
+      fi
+
+      HELM_REPO_PIPELINE_PUSH_ALIAS_EXISTS=$(helm repo list | grep pipeline-push || true)
+      if [[ -n "${HELM_REPO_PIPELINE_PUSH_ALIAS_EXISTS}" ]]; then
+        helm repo remove pipeline-push
+      fi
+
+    - |
+      for repo_url_varname in $(compgen -v HELM_REPO_); do
+        if [[ "${repo_url_varname}" == *_URL ]]; then
+          repo_varname_stem=${repo_url_varname#HELM_REPO_}
+          repo_varname_stem=${repo_varname_stem/%_URL/}
+          repo_username_var=HELM_REPO_${repo_varname_stem}_USERNAME
+          repo_password_var=HELM_REPO_${repo_varname_stem}_PASSWORD
+
+          repo_url=${!repo_url_varname}
+          repo_alias=${repo_varname_stem,,}
+          repo_alias=${repo_alias//_/-}
+          repo_username=${!repo_username_var}
+          repo_password=${!repo_password_var}
+
+          helm_repo_add_cli_args=()
+
+          if [[ -n "${repo_username}" ]]; then
+            helm_repo_add_cli_args+=(--username ${repo_username})
+          fi
+          if [[ -n "${repo_password}" ]]; then
+            helm_repo_add_cli_args+=(--password ${repo_password})
+          fi
+
+          helm_repo_add_cli_args+=(${repo_alias})
+          helm_repo_add_cli_args+=(${repo_url})
+
+          echo "Adding Helm repo: ${repo_alias}"
+          helm repo add ${helm_repo_add_cli_args[@]}
+        fi
+      done

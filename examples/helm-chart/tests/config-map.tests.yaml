@@ -1,0 +1,15 @@
+suite: test helm unittest itself
+templates:
+  - config-map.yaml
+tests:
+  - it: should render the config map
+    asserts:
+      - equal:
+          path: metadata.name
+          value: test-configmap
+
+  - it: should render data values
+    asserts:
+      - equal:
+          path: data.foo
+          value: bar

@@ -1,0 +1,23 @@
+# ============================================================================
+ARG BASE_IMAGE=registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-runner/gitlab-runner-base:main
+FROM ${BASE_IMAGE}
+
+WORKDIR /opt/gitlab-ci
+COPY .pipeline-tests/hello-world.gitlab-ci.yml /opt/gitlab-ci/.gitlab-ci.yml
+RUN for file in /etc/group  \
+                /etc/passwd  \
+                /etc/subuid  \
+                /etc/shadow  \
+                /etc/subgid  \
+                /etc/gshadow; do  \
+        sed -i 's/podman/gitlab-ci/g' ${file};  \
+    done  && \
+    mv /home/podman /home/gitlab-ci  && \
+    chown -R gitlab-ci: /opt/gitlab-ci  && \
+    npm install -g gitlab-ci-local
+
+USER gitlab-ci
+RUN git config --global user.name "GitLab CI/CD Bot"  && \
+    git config --global user.email "gitlab-cicd-bot@westsidestreet.net"  && \
+    git config --global init.defaultBranch main  && \
+    gitlab-ci-local

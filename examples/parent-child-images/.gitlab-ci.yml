@@ -1,0 +1,30 @@
+include:
+
+  # --------------------------------------------------------------------------
+  # Parent/base image
+  - local: templates/image-pipeline.yml
+    inputs:
+      image-name: gitlab-ci/examples/parent
+      jobs-suffix: " (parent)"
+      image-build-context: examples/parent-child-images
+      image-build-dockerfile: Dockerfile.parent
+      image-unit-test-enabled: false
+      image-structure-test-enabled: true
+      image-structure-test-filenames:
+        - examples/parent-child-images/image-structure-tests/parent.yaml
+
+
+  # --------------------------------------------------------------------------
+  # Child image:
+  - local: templates/image-pipeline.yml
+    inputs:
+      image-name: gitlab-ci/examples/child
+      jobs-suffix: " (child)"
+      image-build-context: examples/parent-child-images
+      image-build-dockerfile: Dockerfile.child
+      image-build-parent-image-name: gitlab-ci/examples/parent
+      image-unit-test-enabled: false
+      image-build-needs:
+        - image build (parent)
+      image-structure-test-filenames:
+        - examples/parent-child-images/image-structure-tests/child.yaml

@@ -1,0 +1,4 @@
+include:
+  - local: templates/helm-pipeline.yml
+    inputs:
+      helm-chart-dir: examples/helm-chart

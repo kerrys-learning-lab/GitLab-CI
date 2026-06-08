@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: gitlab-runner-auto-config-map
-data:
-  {{- range $path, $_ :=  .Files.Glob  "conf.d/**.*" }}
-  {{ $path | trimPrefix "conf.d/" | replace "/" "--" }}: |-
-    {{- tpl ($.Files.Get $path) $ | nindent 4 }}
-  {{ end }}
