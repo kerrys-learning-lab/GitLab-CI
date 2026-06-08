@@ -91,9 +91,8 @@ spec:
     image_structure_test_filenames:
       description: If not empty, the image will be unit tested by building and
                    executing the corresponding target
-      type: array
-      default:
-        - test/image-structure-test.yaml
+      type: string
+      default: test/image-structure-test.yaml
     image_structure_test_stage:
       description: Assigns the Pipeline stage for the 'image structure-test' Job
       type: string
@@ -198,7 +197,7 @@ include:
   stage: $[[ inputs.image_structure_test_stage ]]
   variables:
     IMAGE_BUILD_NAME: $[[ inputs.image_name ]]
-    IMAGE_STRUCTURE_TEST_FILENAMES: $[[ inputs.image_structure_test_filenames ]]
+    IMAGE_STRUCTURE_TEST_FILENAMES: "$[[ inputs.image_structure_test_filenames ]]"
   rules:
     - if: "'$[[ inputs.image_structure_test_enabled ]]' == 'false'"
       when: never
