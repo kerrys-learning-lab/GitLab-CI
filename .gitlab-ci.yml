@@ -1,11 +1,11 @@
 include:
   # good:
   # - local: test/all-tests.gitlab-ci.yml
+  # - local: examples/simple-image/.gitlab-ci.yml
 
   # testing:
-  - local: examples/simple-image/.gitlab-ci.yml
+  - local: examples/parent-child-images/.gitlab-ci.yml
 
 
   # untested:
-  # - local: examples/parent-child-images/.gitlab-ci.yml
   # - local: examples/helm-chart/.gitlab-ci.yml
