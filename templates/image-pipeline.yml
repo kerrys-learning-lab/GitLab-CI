@@ -178,7 +178,7 @@ include:
     IMAGE_BUILD_CONTEXT:  $[[ inputs.image_build_context ]]
     IMAGE_BUILD_IGNOREFILE: $[[ inputs.image_build_ignorefile ]]
     IMAGE_BUILD_TARGET:  $[[ inputs.image_unit_test_target ]]
-    IMAGE_UNITTEST_OUTPUT_DIR: $[[ image_unit_test_output_dir ]]
+    IMAGE_UNITTEST_OUTPUT_DIR: $[[ inputs.image_unit_test_output_dir ]]
   rules:
     - if: "'$[[ inputs.image_unit_test_enabled ]]' == 'false'"
       when: never
