@@ -79,6 +79,13 @@ spec:
 
 
     # ------------------------------------------------------------------------
+    helm_release_stage:
+      description: Assigns the Pipeline stage for the 'helm release' Job
+      type: string
+      default: release
+
+
+    # ------------------------------------------------------------------------
     # These settings affect Job names for all Jobs instantiated by the component
     jobs_name_prefix:
       description: Optional prefix for the Job names
@@ -103,6 +110,7 @@ spec:
 include:
   - local: jobs/.defaults.gitlab-ci.yml
   - local: jobs/.helm.gitlab-ci.yml
+  - local: jobs/.release.gitlab-ci.yml
   - local: jobs/.utilities.gitlab-ci.yml
 
 
@@ -153,9 +161,19 @@ include:
     HELM_REPO_PIPELINE_PUSH_URL: $[[ inputs.helm_push_repo_url ]]
     HELM_REPO_PIPELINE_PUSH_USERNAME: $[[ inputs.helm_push_repo_username ]]
     HELM_REPO_PIPELINE_PUSH_PASSWORD: $[[ inputs.helm_push_repo_password ]]
+    HELM_REPO_PIPELINE_PUSH_CHANNEL: devel
   rules:
     - if: "'$[[ inputs.helm_push_option ]]' == 'skip'"
       when: never
     - if: "'$[[ inputs.helm_push_option ]]' == 'force'"
     - !reference [.utility//not-a-merge-request,  rules]
     - !reference [.utility//protected-ref,        rules]
+
+
+# ----------------------------------------------------------------------------
+"$[[ inputs.jobs_name_prefix ]]helm release$[[ inputs.jobs_name_suffix ]]":
+  extends: .release
+  stage: $[[ inputs.helm_release_stage ]]
+  rules:
+    - !reference [.utility//not-a-merge-request,  rules]
+    - !reference [.utility//protected-tag,        rules]

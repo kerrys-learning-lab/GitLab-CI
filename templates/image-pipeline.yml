@@ -128,6 +128,13 @@ spec:
 
 
     # ------------------------------------------------------------------------
+    image_release_stage:
+      description: Assigns the Pipeline stage for the 'image release' Job
+      type: string
+      default: release
+
+
+    # ------------------------------------------------------------------------
     # These settings affect Job names for all Jobs instantiated by the component
     jobs_name_prefix:
       description: Optional prefix for the Job names
@@ -150,7 +157,10 @@ spec:
 
 # ============================================================================
 include:
+  - local: jobs/.defaults.gitlab-ci.yml
   - local: jobs/.image.gitlab-ci.yml
+  - local: jobs/.release.gitlab-ci.yml
+  - local: jobs/.utilities.gitlab-ci.yml
 
 
 # ----------------------------------------------------------------------------
@@ -230,3 +240,12 @@ include:
     - if: "'$[[ inputs.image_promote_option ]]' == 'force'"
     - !reference [.utility//not-a-merge-request,  rules]
     - !reference [.utility//protected-ref,        rules]
+
+
+# ----------------------------------------------------------------------------
+"$[[ inputs.jobs_name_prefix ]]image release$[[ inputs.jobs_name_suffix ]]":
+  extends: .release
+  stage: $[[ inputs.image_release_stage ]]
+  rules:
+    - !reference [.utility//not-a-merge-request,  rules]
+    - !reference [.utility//protected-tag,        rules]

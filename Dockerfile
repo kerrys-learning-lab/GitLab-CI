@@ -50,3 +50,10 @@ ENV CST_VERSION=v1.22.1
 RUN curl -sSLO ${CST_URL}/releases/download/${CST_VERSION}/container-structure-test-linux-amd64 && \
     chmod +x container-structure-test-linux-amd64 && \
     sudo mv container-structure-test-linux-amd64 /usr/local/bin/container-structure-test
+
+
+# ----------------------------------------------------------------------------
+# GitLab CLI Tool (GLab)
+ENV GLAB_VERSION=1.102.0
+ENV GLAB_URL=https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_VERSION}/downloads/glab_${GLAB_VERSION}_linux_amd64.rpm
+RUN dnf install --assumeyes ${GLAB_URL}

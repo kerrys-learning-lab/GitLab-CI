@@ -1,5 +1,16 @@
 include:
+  - local: jobs/.release.gitlab-ci.yml
+  - local: jobs/.utilities.gitlab-ci.yml
   - local: test/all-tests.gitlab-ci.yml
   - local: examples/simple-image/.gitlab-ci.yml
   - local: examples/parent-child-images/.gitlab-ci.yml
   - local: examples/helm-chart/.gitlab-ci.yml
+
+
+# ----------------------------------------------------------------------------
+pipeline release:
+  extends: .release
+  stage: release
+  rules:
+    - !reference [.utility//not-a-merge-request,  rules]
+    - !reference [.utility//protected-tag,        rules]

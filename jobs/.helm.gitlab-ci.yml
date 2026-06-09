@@ -14,6 +14,7 @@ include:
 # ----------------------------------------------------------------------------
 .helm-package:
   stage: build
+  extends: .helm-base
   script:
     - !reference [.pipeline-version,    script]
     - mkdir -p .helm-package
@@ -26,6 +27,7 @@ include:
 # ----------------------------------------------------------------------------
 .helm-unit-test:
   stage: test
+  extends: .helm-base
   script:
     - mkdir -p .helm-unit-test
     - helm unittest --file ${HELM_UNITTEST_FILE_GLOB:-'tests/*.tests.yaml'}
@@ -37,12 +39,12 @@ include:
 # ----------------------------------------------------------------------------
 .helm-push:
   stage: publish
+  extends: .helm-base
   script:
     - !reference [.pipeline-version,    script]
     - HELM_CHART_NAME=$(helm show chart ${HELM_CHART_DIR} | grep -Po '^name:\s+\K.*')
     - helm  cm-push   .helm-package/${HELM_CHART_NAME}-${SEMANTIC_VERSION}.tgz
                       pipeline-push
-
 
 
 # ----------------------------------------------------------------------------
