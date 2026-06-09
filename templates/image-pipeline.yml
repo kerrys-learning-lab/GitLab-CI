@@ -199,9 +199,9 @@ include:
     when: always
     expire_in: 1 week
   rules:
+    - !reference [.utility//not-a-merge-request,  rules]
     - if: "'$[[ inputs.image_unit_test_enabled ]]' == 'false'"
       when: never
-    - !reference [.utility//not-a-merge-request,  rules]
     - when: on_success
 
 
@@ -220,9 +220,9 @@ include:
     when: always
     expire_in: 1 week
   rules:
+    - !reference [.utility//not-a-merge-request,  rules]
     - if: "'$[[ inputs.image_structure_test_enabled ]]' == 'false'"
       when: never
-    - !reference [.utility//not-a-merge-request,  rules]
     - when: on_success
 
 
@@ -235,10 +235,10 @@ include:
     IMAGE_PROMOTE_RELEASE_TRAIN: $[[ inputs.image_promote_release_train ]]
     IMAGE_PROMOTE_SEMANTIC_VERSION: $[[ inputs.image_promote_semantic_version ]]
   rules:
+    - !reference [.utility//not-a-merge-request,  rules]
     - if: "'$[[ inputs.image_promote_option ]]' == 'skip'"
       when: never
     - if: "'$[[ inputs.image_promote_option ]]' == 'force'"
-    - !reference [.utility//not-a-merge-request,  rules]
     - !reference [.utility//protected-ref,        rules]
 
 

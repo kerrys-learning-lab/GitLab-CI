@@ -146,9 +146,9 @@ include:
     when: always
     expire_in: 1 week
   rules:
+    - !reference [.utility//not-a-merge-request,  rules]
     - if: "'$[[ inputs.helm_unit_test_enabled ]]' == 'false'"
       when: never
-    - !reference [.utility//not-a-merge-request,  rules]
     - when: on_success
 
 
@@ -163,10 +163,10 @@ include:
     HELM_REPO_PIPELINE_PUSH_PASSWORD: $[[ inputs.helm_push_repo_password ]]
     HELM_REPO_PIPELINE_PUSH_CHANNEL: devel
   rules:
+    - !reference [.utility//not-a-merge-request,  rules]
     - if: "'$[[ inputs.helm_push_option ]]' == 'skip'"
       when: never
     - if: "'$[[ inputs.helm_push_option ]]' == 'force'"
-    - !reference [.utility//not-a-merge-request,  rules]
     - !reference [.utility//protected-ref,        rules]
 
 
