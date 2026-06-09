@@ -155,5 +155,5 @@ include:
     - if: "'$[[ inputs.helm_push_option ]]' == 'skip'"
       when: never
     - if: "'$[[ inputs.helm_push_option ]]' == 'force'"
-    - !reference [.utility//protected-ref,        rules]
     - !reference [.utility//not-a-merge-request,  rules]
+    - !reference [.utility//protected-ref,        rules]

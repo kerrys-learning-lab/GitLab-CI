@@ -225,5 +225,5 @@ include:
     - if: "'$[[ inputs.image_promote_option ]]' == 'skip'"
       when: never
     - if: "'$[[ inputs.image_promote_option ]]' == 'force'"
-    - !reference [.utility//protected-ref,        rules]
     - !reference [.utility//not-a-merge-request,  rules]
+    - !reference [.utility//protected-ref,        rules]
