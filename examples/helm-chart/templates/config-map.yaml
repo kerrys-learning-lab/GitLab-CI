@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test-configmap
+data:
+  {{- range $key, $value  := .Values.config_map | default dict }}
+  {{ $key }}: {{ $value }}
+  {{- end }}

@@ -1,10 +1,15 @@
 **/*.bak
 **/*.log
+**/*.tmp
 **/__pycache__
 **/*secret*
 .build
 .coverage
 .data
+.dotenv
+.gitlab-ci-local
+.helm*
+.image*
 .pytest_cache
 .venv
 artifacts

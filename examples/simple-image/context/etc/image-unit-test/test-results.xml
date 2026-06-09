@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Image Build" tests="2" failures="FAILED_COUNT" errors="0" skipped="0" time="1.234">
+  <testsuite name="Image Build Unittest" tests="2" failures="FAILED_COUNT" errors="0" skipped="0" timestamp="2026-06-03T12:00:00" time="1.234">
+
+    <testcase classname="Image.Build.Unittest" name="Build arguments (--build-arg)" time="0.456">
+      BUILD_ARG_FAILURE_MSG
+    </testcase>
+
+    <testcase classname="Image.Build.Unittest" name="Build secrets (--secret)" time="0.456">
+      SECRET_FAILURE_MSG
+    </testcase>
+
+  </testsuite>
+</testsuites>
