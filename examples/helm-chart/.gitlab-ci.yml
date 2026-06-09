@@ -1,5 +1,6 @@
 include:
   - local: templates/helm-pipeline.yml
     inputs:
+      jobs_prefix: "[example] "
       helm_chart_dir: examples/helm-chart
       helm_unit_test_chart_dir: examples/helm-chart

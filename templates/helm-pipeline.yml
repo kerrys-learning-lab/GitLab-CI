@@ -101,7 +101,9 @@ spec:
 
 # ============================================================================
 include:
+  - local: jobs/.defaults.gitlab-ci.yml
   - local: jobs/.helm.gitlab-ci.yml
+  - local: jobs/.utilities.gitlab-ci.yml
 
 
 # ----------------------------------------------------------------------------
@@ -116,6 +118,8 @@ include:
     when: always
     expire_in: 1 week
   needs: $[[ inputs.helm_package_needs ]]
+  rules:
+    - !reference [.utility//not-a-merge-request,  rules]
 
 
 # ----------------------------------------------------------------------------
@@ -125,10 +129,6 @@ include:
   variables:
     HELM_CHART_DIR:  $[[ inputs.helm_unit_test_chart_dir ]]
     HELM_UNITTEST_FILE_GLOB: $[[ inputs.helm_unit_test_file_glob ]]
-  rules:
-    - if: "'$[[ inputs.helm_unit_test_enabled ]]' == 'false'"
-      when: never
-    - if: "'$[[ inputs.helm_unit_test_enabled ]]' == 'true'"
   artifacts:
     paths:
       - .helm-unit-test
@@ -136,6 +136,10 @@ include:
       junit: .helm-unit-test/unit-test-results.${CI_JOB_ID}.xml
     when: always
     expire_in: 1 week
+  rules:
+    - if: "'$[[ inputs.helm_unit_test_enabled ]]' == 'false'"
+      when: never
+    - !reference [.utility//not-a-merge-request,  rules]
 
 
 # ----------------------------------------------------------------------------
@@ -151,4 +155,5 @@ include:
     - if: "'$[[ inputs.helm_push_option ]]' == 'skip'"
       when: never
     - if: "'$[[ inputs.helm_push_option ]]' == 'force'"
-    - if: "'$CI_COMMIT_REF_PROTECTED' == 'true'"
+    - !reference [.utility//protected-ref,        rules]
+    - !reference [.utility//not-a-merge-request,  rules]

@@ -1,5 +1,3 @@
-
-
 # ----------------------------------------------------------------------------
 .utility//print-settings-table:
   script:
@@ -15,3 +13,21 @@
                                   --table-column name=Setting \
                                   --table-column name=Value
       fi
+
+# ----------------------------------------------------------------------------
+.utility//protected-ref:
+  rules:
+    - if: "'$CI_COMMIT_REF_PROTECTED' == 'true'"
+
+
+# ----------------------------------------------------------------------------
+.utility//not-a-merge-request:
+  rules:
+    - if: "'$CI_PIPELINE_SOURCE' == 'merge_request_event'"
+      when: never
+    - if: "'$CI_PIPELINE_SOURCE' == 'api'"
+    - if: "'$CI_PIPELINE_SOURCE' == 'pipeline'"
+    - if: "'$CI_PIPELINE_SOURCE' == 'push'"
+    - if: "'$CI_PIPELINE_SOURCE' == 'schedule'"
+    - if: "'$CI_PIPELINE_SOURCE' == 'trigger'"
+    - if: "'$CI_PIPELINE_SOURCE' == 'web'"

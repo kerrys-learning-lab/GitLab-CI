@@ -2,7 +2,6 @@ include:
   - local: jobs/.defaults.gitlab-ci.yml
   - local: jobs/.pipeline-version.gitlab-ci.yml
   - local: jobs/.stages.gitlab-ci.yml
-  - local: jobs/.utilities.gitlab-ci.yml
 
 
 # ----------------------------------------------------------------------------
