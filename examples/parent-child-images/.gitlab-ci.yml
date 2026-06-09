@@ -4,8 +4,8 @@ include:
   # Parent/base image
   - local: templates/image-pipeline.yml
     inputs:
-      jobs_prefix: "[example] "
-      jobs_suffix: " (parent)"
+      jobs_name_prefix: "[example] "
+      jobs_name_suffix: " (parent)"
       image_name: gitlab-ci/examples/parent
       image_build_context: examples/parent-child-images
       image_build_dockerfile: Dockerfile.parent
@@ -18,8 +18,8 @@ include:
   # Child image:
   - local: templates/image-pipeline.yml
     inputs:
-      jobs_prefix: "[example] "
-      jobs_suffix: " (child)"
+      jobs_name_prefix: "[example] "
+      jobs_name_suffix: " (child)"
       image_name: gitlab-ci/examples/child
       image_build_context: examples/parent-child-images
       image_build_dockerfile: Dockerfile.child

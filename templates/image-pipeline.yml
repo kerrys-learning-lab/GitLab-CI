@@ -129,11 +129,11 @@ spec:
 
     # ------------------------------------------------------------------------
     # These settings affect Job names for all Jobs instantiated by the component
-    jobs_prefix:
+    jobs_name_prefix:
       description: Optional prefix for the Job names
       type: string
       default: ''
-    jobs_suffix:
+    jobs_name_suffix:
       description: Optional suffix for the Job names
       type: string
       default: ''
@@ -154,7 +154,7 @@ include:
 
 
 # ----------------------------------------------------------------------------
-"$[[ inputs.jobs_prefix ]]image build$[[ inputs.jobs_suffix ]]":
+"$[[ inputs.jobs_name_prefix ]]image build$[[ inputs.jobs_name_suffix ]]":
   extends: .image-build
   stage: $[[ inputs.image_build_stage ]]
   variables:
@@ -171,7 +171,7 @@ include:
 
 
 # ----------------------------------------------------------------------------
-"$[[ inputs.jobs_prefix ]]image unit-test$[[ inputs.jobs_suffix ]]":
+"$[[ inputs.jobs_name_prefix ]]image unit-test$[[ inputs.jobs_name_suffix ]]":
   extends: .image-unit-test
   stage: $[[ inputs.image_unit_test_stage ]]
   variables:
@@ -196,7 +196,7 @@ include:
 
 
 # ----------------------------------------------------------------------------
-"$[[ inputs.jobs_prefix ]]image structure-test$[[ inputs.jobs_suffix ]]":
+"$[[ inputs.jobs_name_prefix ]]image structure-test$[[ inputs.jobs_name_suffix ]]":
   extends: .image-structure-test
   stage: $[[ inputs.image_structure_test_stage ]]
   variables:
@@ -217,7 +217,7 @@ include:
 
 
 # ----------------------------------------------------------------------------
-"$[[ inputs.jobs_prefix ]]image promote$[[ inputs.jobs_suffix ]]":
+"$[[ inputs.jobs_name_prefix ]]image promote$[[ inputs.jobs_name_suffix ]]":
   extends: .image-promote
   stage: $[[ inputs.image_promote_stage ]]
   variables:

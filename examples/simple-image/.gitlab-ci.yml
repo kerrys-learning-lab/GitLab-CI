@@ -1,9 +1,13 @@
 include:
   - local: templates/image-pipeline.yml
     inputs:
-      jobs_prefix: "[example] "
-      jobs_suffix: " (simple)"
+      jobs_name_prefix: "[example] "
+      jobs_name_suffix: " (simple)"
       image_name: gitlab-ci/examples/simple-image
       image_build_context: examples/simple-image
       image_unit_test_enabled: false
       image_structure_test_enabled: false
+      # As part of exercising the Pipeline, we force this image to be pushed
+      # (but, the image is not actually a "deliverable artifact" of the
+      # Pipeline)
+      image_promote_option: force
