@@ -120,6 +120,7 @@ include:
   needs: $[[ inputs.helm_package_needs ]]
   rules:
     - !reference [.utility//not-a-merge-request,  rules]
+    - when: on_success
 
 
 # ----------------------------------------------------------------------------
@@ -140,6 +141,7 @@ include:
     - if: "'$[[ inputs.helm_unit_test_enabled ]]' == 'false'"
       when: never
     - !reference [.utility//not-a-merge-request,  rules]
+    - when: on_success
 
 
 # ----------------------------------------------------------------------------

@@ -167,6 +167,7 @@ include:
   needs: $[[ inputs.image_build_needs ]]
   rules:
     - !reference [.utility//not-a-merge-request,  rules]
+    - when: on_success
 
 
 # ----------------------------------------------------------------------------
@@ -191,6 +192,7 @@ include:
     - if: "'$[[ inputs.image_unit_test_enabled ]]' == 'false'"
       when: never
     - !reference [.utility//not-a-merge-request,  rules]
+    - when: on_success
 
 
 # ----------------------------------------------------------------------------
@@ -211,6 +213,7 @@ include:
     - if: "'$[[ inputs.image_structure_test_enabled ]]' == 'false'"
       when: never
     - !reference [.utility//not-a-merge-request,  rules]
+    - when: on_success
 
 
 # ----------------------------------------------------------------------------
