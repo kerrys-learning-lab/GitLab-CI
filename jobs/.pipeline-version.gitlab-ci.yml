@@ -1,0 +1,137 @@
+# ----------------------------------------------------------------------------
+# Calculates this pipeline's Semantic Version information
+.pipeline-version:
+  script:
+    - set -e
+
+    - !reference [.pipeline-version//process-ci-commit-tag,     script]
+    - !reference [.pipeline-version//process-ci-commit-branch,  script]
+    - !reference [.pipeline-version//process-ci-commit-ref,     script]
+
+
+# ----------------------------------------------------------------------------
+.pipeline-version//release-tag-regex:
+  script:
+      #                          +------------------------------------- Major (group 1)
+      #                          |
+      #                          |              +---------------------- Minor (group 2)
+      #                          |              |
+      #                          |              |                +----- Patch (group 3)
+      #                          |              |                |
+      #                    vvvvvvvvvvvv    vvvvvvvvvvvv    vvvvvvvvvvvv
+    - RELEASE_TAG_REGEX='v([[:digit:]]+)\.([[:digit:]]+)\.([[:digit:]]+)'
+
+
+# ----------------------------------------------------------------------------
+.pipeline-version//process-ci-commit-tag:
+  script:
+    - !reference [.pipeline-version//release-tag-regex, script]
+    - |
+      if [[ -n "${CI_COMMIT_TAG}" ]]; then
+        if [[ ${CI_COMMIT_TAG} =~ ${RELEASE_TAG_REGEX} ]]; then
+          if [[ -n "${CI_COMMIT_REF_PROTECTED}" ]]; then
+            SEMANTIC_VERSION_MAJOR=${BASH_REMATCH[1]}
+            SEMANTIC_VERSION_MINOR=${BASH_REMATCH[2]}
+            SEMANTIC_VERSION_PATCH=${BASH_REMATCH[3]}
+
+            RELEASE_TRAIN=${SEMANTIC_VERSION_MAJOR}.${SEMANTIC_VERSION_MINOR}
+            SEMANTIC_VERSION=${RELEASE_TRAIN}.${SEMANTIC_VERSION_PATCH}
+          else
+            echo "ERROR:  Release tags (vX.Y.Z) should be protected"
+
+            exit -3
+          fi
+        elif [[ "${CI_COMMIT_REF_PROTECTED}" == true ]]; then
+            echo "ERROR:  Protected tag (${CI_COMMIT_TAG}) is not valid"
+            echo "        Expected a valid SemVer (vX.Y.Z)"
+
+            exit -3
+        fi
+      fi
+
+
+
+# ----------------------------------------------------------------------------
+.pipeline-version//release-branch-regex:
+  script:
+      #                                   +---------------------------- major (group 1)
+      #                                   |
+      #                                   |               +------------ minor (group 2)
+      #                                   |               |
+      #                                   |               |
+      #                                   |               |
+      #                                   |               |
+      #                              vvvvvvvvvvvv    vvvvvvvvvvvv
+    - RELEASE_BRANCH_REGEX='release/([[:digit:]]+)\.([[:digit:]]+)'
+
+
+# ----------------------------------------------------------------------------
+.pipeline-version//process-ci-commit-branch:
+  script:
+    - !reference [.pipeline-version//release-branch-regex, script]
+
+    - |
+      if [[ -n "${CI_COMMIT_BRANCH}" ]]; then
+        if [[ ${CI_COMMIT_BRANCH} =~ ${RELEASE_BRANCH_REGEX} ]]; then
+          if [[ -n "${CI_COMMIT_REF_PROTECTED}" ]]; then
+            SEMANTIC_VERSION_MAJOR=${BASH_REMATCH[1]}
+            SEMANTIC_VERSION_MINOR=${BASH_REMATCH[2]}
+
+            RELEASE_TRAIN=${SEMANTIC_VERSION_MAJOR}.${SEMANTIC_VERSION_MINOR}
+
+            # NOTE: TAGS_FOR_RELEASE_TRAIN will only ever be pre-defined when testing
+            TAGS_FOR_RELEASE_TRAIN=${TAGS_FOR_RELEASE_TRAIN:-$(git tag -l "v${RELEASE_TRAIN}.*")}
+            if [[ -n "${TAGS_FOR_RELEASE_TRAIN}" ]]; then
+              for tag in ${TAGS_FOR_RELEASE_TRAIN}; do
+                if [[ ${tag} =~ ${SEMANTIC_VERSION_RE} ]]; then
+                  tag_patch_level=${BASH_REMATCH[6]}
+                  if [[ ${tag_patch_level} -gt ${SEMANTIC_VERSION_PATCH} ]]; then
+                    SEMANTIC_VERSION_PATCH=${tag_patch_level}
+                  fi
+                fi
+              done
+
+              # But, this is a release candidate for the *next* patch:
+              SEMANTIC_VERSION_PATCH=$((${SEMANTIC_VERSION_PATCH} + 1))
+            else
+              SEMANTIC_VERSION_PATCH=0
+            fi
+
+            SEMANTIC_VERSION=${RELEASE_TRAIN}.${SEMANTIC_VERSION_PATCH}-rc+${CI_PIPELINE_IID}
+          else
+            echo "ERROR:  Release branches (release/X.Y) should be protected"
+
+            exit -3
+          fi
+        elif [[ "${CI_COMMIT_REF_PROTECTED}" == true && ${CI_COMMIT_BRANCH} != ${CI_DEFAULT_BRANCH} ]]; then
+            echo "ERROR:  Protected branch (${CI_COMMIT_BRANCH}) is not valid"
+            echo "        Expected: 'release/X.Y'"
+
+            exit -3
+        fi
+      fi
+
+
+# ----------------------------------------------------------------------------
+.pipeline-version//process-ci-commit-ref:
+  script:
+    - !reference [.pipeline-version//release-tag-regex, script]
+    - |
+      if [[ -z "${SEMANTIC_VERSION}" ]]; then
+        if [[ ${DEFAULT_SEMVER_PREFIX:-v0.0.0} =~ ${RELEASE_TAG_REGEX} ]]; then
+          SEMANTIC_VERSION_MAJOR=${BASH_REMATCH[1]}
+          SEMANTIC_VERSION_MINOR=${BASH_REMATCH[2]}
+          SEMANTIC_VERSION_PATCH=${BASH_REMATCH[3]}
+
+          SEMANTIC_VERSION=${SEMANTIC_VERSION_MAJOR}.${SEMANTIC_VERSION_MINOR}.${SEMANTIC_VERSION_PATCH}-${CI_COMMIT_REF_SLUG}+${CI_PIPELINE_IID}
+
+          if [[ ${CI_COMMIT_REF_PROTECTED} == true ]]; then
+            RELEASE_TRAIN=${CI_COMMIT_REF_SLUG}
+          fi
+        else
+          echo "ERROR:  Expected: DEFAULT_SEMVER_PREFIX should match the semver regex: ${RELEASE_TAG_REGEX}"
+          echo "        Actual:   ${DEFAULT_SEMVER_PREFIX}"
+
+          exit -6
+        fi
+      fi

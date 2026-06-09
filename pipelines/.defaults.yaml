@@ -1,4 +1,0 @@
-default:
-  image:
-    name: $GITLABCI_DEFAULT_IMAGE_NAME:$GITLABCI_DEFAULT_IMAGE_VERSION
-    pull_policy: always

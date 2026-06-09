@@ -1,0 +1,10 @@
+include:
+  - local: templates/helm-pipeline.yml
+    inputs:
+      jobs_name_prefix: "[example] "
+      helm_chart_dir: examples/helm-chart
+      helm_unit_test_chart_dir: examples/helm-chart
+      # As part of exercising the Pipeline, we force this Chart to be pushed
+      # (but, the Chart is not actually a "deliverable artifact" of the
+      # Pipeline)
+      helm_push_option: force

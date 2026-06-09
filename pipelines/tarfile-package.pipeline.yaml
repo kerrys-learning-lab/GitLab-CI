@@ -81,10 +81,11 @@ variables:
   stage: publish
   extends: .tar-package-prerequisites
   script:
-    - !reference ['.configure-http-access', 'script']
     - |
-      curl  --location  \
-            --netrc  \
+      curl  --silent \
+            --show-error \
+            --location  \
+            --netrc-file ${NETRC}  \
             --upload-file ${FULL_TAR_FILE_PATH}  \
             ${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/${CI_PROJECT_NAME}/${ARTIFACT_SEMANTIC_VERSION}/${FULL_TAR_FILE_NAME}
   rules:

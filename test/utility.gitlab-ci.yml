@@ -1,0 +1,24 @@
+.test-case//setup:
+  before_script:
+    - |
+      test_case_assert() {
+
+        if [[ -n "${EXPECTED_VALUES[@]}" ]]; then
+          for key in ${!EXPECTED_VALUES[@]}; do
+            if [[ "${!key}" != "${EXPECTED_VALUES[$key]}" ]]; then
+              echo "ERROR:  Assertion failed in job: '${CI_JOB_NAME}'"
+              echo "        Expected: ${key}=${EXPECTED_VALUES[$key]}"
+              echo "        Actual:   ${!key}"
+              exit -100
+            fi
+          done
+        fi
+
+      }
+
+      trap  test_case_assert  EXIT
+
+.test-case:
+  stage: test
+  before_script:
+    - !reference [.test-case//setup,  before_script]
