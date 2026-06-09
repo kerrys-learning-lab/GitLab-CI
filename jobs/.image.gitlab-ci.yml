@@ -53,9 +53,15 @@ include:
 
       IMAGE_BUILD_CLI_ARGS+=(--tag ${IMAGE_AS_BUILT_URI})
 
-      # --- Custom Dockerfile, if applicable:
-      JOB_SETTINGS_TABLE+=("Dockerfile;${IMAGE_BUILD_DOCKERFILE:-Dockerfile}")
-      IMAGE_BUILD_CLI_ARGS+=(--file ${IMAGE_BUILD_DOCKERFILE:-Dockerfile})
+      IMAGE_BUILD_CONTEXT=${IMAGE_BUILD_CONTEXT:-.}
+      IMAGE_BUILD_DOCKERFILE=${IMAGE_BUILD_DOCKERFILE:-Dockerfile}
+
+      # --- Dockerfile:
+      if [[ -f ${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_DOCKERFILE} ]]; then
+        IMAGE_BUILD_DOCKERFILE=${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_DOCKERFILE}
+      fi
+      JOB_SETTINGS_TABLE+=("Dockerfile;${IMAGE_BUILD_DOCKERFILE}")
+      IMAGE_BUILD_CLI_ARGS+=(--file ${IMAGE_BUILD_DOCKERFILE})
 
       # --- Custom build target, if applicable:
       if [[ -n "${IMAGE_BUILD_TARGET}" ]]; then
@@ -63,7 +69,10 @@ include:
         IMAGE_BUILD_CLI_ARGS+=(--target ${IMAGE_BUILD_TARGET})
       fi
 
-      # --- Custom ignorefile, if applicable:
+      # --- Ignorefile:
+      if [[ -f ${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_IGNOREFILE} ]]; then
+        IMAGE_BUILD_IGNOREFILE=${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_IGNOREFILE}
+      fi
       if [[ -f ${IMAGE_BUILD_IGNOREFILE} ]]; then
         JOB_SETTINGS_TABLE+=("Ignorefile;${IMAGE_BUILD_IGNOREFILE}")
         IMAGE_BUILD_CLI_ARGS+=(--ignorefile ${IMAGE_BUILD_IGNOREFILE})
@@ -81,7 +90,7 @@ include:
     - !reference [.image//labels,  script]
 
     # Should be the last argument (it's positional)
-    - IMAGE_BUILD_CLI_ARGS+=(${IMAGE_BUILD_CONTEXT:-.})
+    - IMAGE_BUILD_CLI_ARGS+=(${IMAGE_BUILD_CONTEXT})
   script:
     - !reference [.image-base,  script]
     - |
