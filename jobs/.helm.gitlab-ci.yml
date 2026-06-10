@@ -74,18 +74,18 @@ include:
       REPO_URL=${HELM_REPO_PIPELINE_PUSH_URL}
       CHART_ALIAS=${REPO_ALIAS}/${HELM_CHART_NAME}
 
-      echo "### Helm Chart: ${HELM_CHART_NAME}"                             >> ${RELEASE_README_FILEPATH}
-      echo ""                                                               >> ${RELEASE_README_FILEPATH}
+      echo "### Helm Chart: ${HELM_CHART_NAME}"                           >> ${RELEASE_README_FILEPATH}
+      echo ""                                                             >> ${RELEASE_README_FILEPATH}
       echo "\`\`\`bash"                                                   >> ${RELEASE_README_FILEPATH}
       echo "# Add the Helm repository:"                                   >> ${RELEASE_README_FILEPATH}
       echo "helm repo add ${REPO_ALIAS} ${REPO_URL}"                      >> ${RELEASE_README_FILEPATH}
-      echo ""                                                               >> ${RELEASE_README_FILEPATH}
+      echo ""                                                             >> ${RELEASE_README_FILEPATH}
       echo "# Verify the new version (${SEMANTIC_VERSION}) is available:" >> ${RELEASE_README_FILEPATH}
       echo "helm search repo --versions ${CHART_ALIAS}"                   >> ${RELEASE_README_FILEPATH}
-      echo ""                                                               >> ${RELEASE_README_FILEPATH}
+      echo ""                                                             >> ${RELEASE_README_FILEPATH}
       echo "# If the latest version isn't available, update the repo:"    >> ${RELEASE_README_FILEPATH}
       echo "helm repo update ${REPO_ALIAS}"                               >> ${RELEASE_README_FILEPATH}
-      echo ""                                                               >> ${RELEASE_README_FILEPATH}
+      echo ""                                                             >> ${RELEASE_README_FILEPATH}
       echo "# Customize your values, then install the Chart:"             >> ${RELEASE_README_FILEPATH}
       echo "helm install  --namespace <NAMESPACE>  \\"                    >> ${RELEASE_README_FILEPATH}
       echo "              --values <CONFIG_VALUES_FILE>  \\"              >> ${RELEASE_README_FILEPATH}

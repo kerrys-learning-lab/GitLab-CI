@@ -250,12 +250,12 @@ include:
         image_tag_human_readable_label=${image_tag_human_readable_label//_/ }
         image_tag_human_readable_label=$(title_case ${image_tag_human_readable_label})
 
-        echo "- ${image_tag_human_readable_label}"      >> ${RELEASE_README_FILEPATH}
-        echo ""                                         >> ${RELEASE_README_FILEPATH}
-        echo "\`\`\`bash"                             >> ${RELEASE_README_FILEPATH}
-        echo "podman image pull ${IMAGE_PUSH_URI}"    >> ${RELEASE_README_FILEPATH}
-        echo "\`\`\`"                                 >> ${RELEASE_README_FILEPATH}
-        echo ""                                         >> ${RELEASE_README_FILEPATH}
+        echo "- ${image_tag_human_readable_label}"  >> ${RELEASE_README_FILEPATH}
+        echo ""                                     >> ${RELEASE_README_FILEPATH}
+        echo "\`\`\`bash"                           >> ${RELEASE_README_FILEPATH}
+        echo "podman image pull ${IMAGE_PUSH_URI}"  >> ${RELEASE_README_FILEPATH}
+        echo "\`\`\`"                               >> ${RELEASE_README_FILEPATH}
+        echo ""                                     >> ${RELEASE_README_FILEPATH}
       done
   artifacts:
     paths:
