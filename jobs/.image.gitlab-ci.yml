@@ -262,7 +262,7 @@ include:
       fi
 
       if [[ "${IMAGE_PROMOTE_SEMANTIC_VERSION}" == "true" ]]; then
-        IMAGE_TAG_VARS+=(SEMANTIC_VERSION_SLUG)
+        IMAGE_TAG_VARS+=(SEMANTIC_VERSION)
       fi
 
       for tag_var in ${IMAGE_TAG_VARS[@]}; do

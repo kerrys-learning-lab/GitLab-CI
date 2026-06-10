@@ -22,7 +22,7 @@ include:
         md_file_list=$(ls -1 .release/${type}.*.md 2> /dev/null || true)
         if [[ -n "${md_file_list}" ]]; then
           artifact_type_label=${type//-/ }
-          artifact_type_lable=$(title_case ${artifact_type_label})
+          artifact_type_label=$(title_case ${artifact_type_label})
 
           echo "## ${artifact_type_label}(s)" >> ${RELEASE_README_FILEPATH}
           echo ""                             >> ${RELEASE_README_FILEPATH}
