@@ -1,7 +1,33 @@
+# ----------------------------------------------------------------------------
 .release:
   script:
     - |
-      echo "Creating release: ${CI_COMMIT_TAG}"
+      echo "# --- release ---------------------------------------------------"
+      echo "  Creating release: ${CI_COMMIT_TAG}"
+
+      RELEASE_README_FILEPATH=RELEASE.md
+      echo "# Release ${CI_COMMIT_TAG}"   >> ${RELEASE_README_FILEPATH}
+      echo ""                             >> ${RELEASE_README_FILEPATH}
+
+      FILES=$(ls -1 .release/image.*.md || "")
+      if [[ -n "${FILES}" ]]; then
+        echo "## Image(s)"                >> ${RELEASE_README_FILEPATH}
+        echo ""                           >> ${RELEASE_README_FILEPATH}
+        for file in ${FILES}; do
+          cat ${file}                     >> ${RELEASE_README_FILEPATH}
+          echo ""                         >> ${RELEASE_README_FILEPATH}
+        done
+      fi
+
+      FILES=$(ls -1 .release/helm-chart.*.md || "")
+      if [[ -n "${FILES}" ]]; then
+        echo "## Helm Chart(s)"           >> ${RELEASE_README_FILEPATH}
+        echo ""                           >> ${RELEASE_README_FILEPATH}
+        for file in ${FILES}; do
+          cat ${file}                     >> ${RELEASE_README_FILEPATH}
+          echo ""                         >> ${RELEASE_README_FILEPATH}
+        done
+      fi
   release:
     tag_name: $CI_COMMIT_TAG
-    description: $CI_COMMIT_TAG
+    description: RELEASE.md

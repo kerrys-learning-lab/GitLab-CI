@@ -198,13 +198,6 @@ include:
     IMAGE_BUILD_IGNOREFILE: $[[ inputs.image_build_ignorefile ]]
     IMAGE_BUILD_TARGET:  $[[ inputs.image_unit_test_target ]]
     IMAGE_UNITTEST_OUTPUT_DIR: $[[ inputs.image_unit_test_output_dir ]]
-  artifacts:
-    paths:
-      - .image-unit-test/$[[ inputs.image_unit_test_results_filename ]]
-    reports:
-      junit: .image-unit-test/$[[ inputs.image_unit_test_results_filename ]]
-    when: always
-    expire_in: 1 week
   rules:
     - !reference [.utility//not-a-merge-request,  rules]
     - if: "'$[[ inputs.image_unit_test_enabled ]]' == 'false'"
@@ -219,13 +212,6 @@ include:
   variables:
     IMAGE_BUILD_NAME: $[[ inputs.image_name ]]
     IMAGE_STRUCTURE_TEST_FILENAMES: "$[[ inputs.image_structure_test_filenames ]]"
-  artifacts:
-    paths:
-      - .image-structure-test/structure-test-results.${CI_JOB_ID}.xml
-    reports:
-      junit: .image-structure-test/structure-test-results.${CI_JOB_ID}.xml
-    when: always
-    expire_in: 1 week
   rules:
     - !reference [.utility//not-a-merge-request,  rules]
     - if: "'$[[ inputs.image_structure_test_enabled ]]' == 'false'"

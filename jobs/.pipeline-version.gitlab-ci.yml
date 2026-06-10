@@ -3,7 +3,6 @@
 .pipeline-version:
   script:
     - set -e
-
     - !reference [.pipeline-version//process-ci-commit-tag,     script]
     - !reference [.pipeline-version//process-ci-commit-branch,  script]
     - !reference [.pipeline-version//process-ci-commit-ref,     script]
@@ -19,7 +18,9 @@
       #                          |              |                +----- Patch (group 3)
       #                          |              |                |
       #                    vvvvvvvvvvvv    vvvvvvvvvvvv    vvvvvvvvvvvv
-    - RELEASE_TAG_REGEX='v([[:digit:]]+)\.([[:digit:]]+)\.([[:digit:]]+)'
+    - |
+      # pipeline-version//release-tag-regex
+      RELEASE_TAG_REGEX='v([[:digit:]]+)\.([[:digit:]]+)\.([[:digit:]]+)'
 
 
 # ----------------------------------------------------------------------------
@@ -27,6 +28,7 @@
   script:
     - !reference [.pipeline-version//release-tag-regex, script]
     - |
+      # pipeline-version//process-ci-commit-tag
       if [[ -n "${CI_COMMIT_TAG}" ]]; then
         if [[ ${CI_COMMIT_TAG} =~ ${RELEASE_TAG_REGEX} ]]; then
           if [[ -n "${CI_COMMIT_REF_PROTECTED}" ]]; then
@@ -62,7 +64,9 @@
       #                                   |               |
       #                                   |               |
       #                              vvvvvvvvvvvv    vvvvvvvvvvvv
-    - RELEASE_BRANCH_REGEX='release/([[:digit:]]+)\.([[:digit:]]+)'
+    - |
+      # pipeline-version//release-branch-regex
+      RELEASE_BRANCH_REGEX='release/([[:digit:]]+)\.([[:digit:]]+)'
 
 
 # ----------------------------------------------------------------------------
@@ -71,6 +75,7 @@
     - !reference [.pipeline-version//release-branch-regex, script]
 
     - |
+      # pipeline-version//process-ci-commit-branch
       if [[ -n "${CI_COMMIT_BRANCH}" ]]; then
         if [[ ${CI_COMMIT_BRANCH} =~ ${RELEASE_BRANCH_REGEX} ]]; then
           if [[ -n "${CI_COMMIT_REF_PROTECTED}" ]]; then
@@ -83,7 +88,7 @@
             TAGS_FOR_RELEASE_TRAIN=${TAGS_FOR_RELEASE_TRAIN:-$(git tag -l "v${RELEASE_TRAIN}.*")}
             if [[ -n "${TAGS_FOR_RELEASE_TRAIN}" ]]; then
               for tag in ${TAGS_FOR_RELEASE_TRAIN}; do
-                if [[ ${tag} =~ ${SEMANTIC_VERSION_RE} ]]; then
+                if [[ ${tag} =~ ${RELEASE_TAG_REGEX} ]]; then
                   tag_patch_level=${BASH_REMATCH[6]}
                   if [[ ${tag_patch_level} -gt ${SEMANTIC_VERSION_PATCH} ]]; then
                     SEMANTIC_VERSION_PATCH=${tag_patch_level}
@@ -117,6 +122,7 @@
   script:
     - !reference [.pipeline-version//release-tag-regex, script]
     - |
+      # pipeline-version//process-ci-commit-ref
       if [[ -z "${SEMANTIC_VERSION}" ]]; then
         if [[ ${DEFAULT_SEMVER_PREFIX:-v0.0.0} =~ ${RELEASE_TAG_REGEX} ]]; then
           SEMANTIC_VERSION_MAJOR=${BASH_REMATCH[1]}

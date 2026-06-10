@@ -32,3 +32,13 @@
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
       when: never
+
+
+# ----------------------------------------------------------------------------
+.utility//functions:
+  script:
+    - |
+      # utility//functions (declarations)
+      function title_case() {
+        echo "$*" | sed -E 's/(.)/\L\1/g; s/\b(.)/\U\1/g'
+      }
