@@ -132,6 +132,13 @@ spec:
       description: Assigns the Pipeline stage for the 'image release' Job
       type: string
       default: release
+    image_release_enabled:
+      description: If true, and this Pipeline is for a protected tag, a
+                   Release will be created.
+
+                   NOTE -  Only one Job in a Pipeline should create a Release.
+      type: boolean
+      default: true
 
 
     # ------------------------------------------------------------------------
@@ -247,5 +254,7 @@ include:
   extends: .release
   stage: $[[ inputs.image_release_stage ]]
   rules:
+    - if: "'$[[ inputs.image_release_enabled ]]' == 'false'"
+      when: never
     - !reference [.utility//not-a-merge-request,  rules]
     - !reference [.utility//protected-tag,        rules]

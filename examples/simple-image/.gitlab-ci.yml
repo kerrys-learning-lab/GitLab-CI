@@ -11,3 +11,6 @@ include:
       # (but, the image is not actually a "deliverable artifact" of the
       # Pipeline)
       image_promote_option: force
+      # Only one job in the Pipeline can create a Release... we defer to the
+      # 'main' Pipeline:
+      image_release_enabled: false
