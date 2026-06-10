@@ -8,3 +8,6 @@ include:
       # (but, the Chart is not actually a "deliverable artifact" of the
       # Pipeline)
       helm_push_option: force
+      # Only one job in the Pipeline can create a Release... we defer to the
+      # 'main' Pipeline:
+      helm_release_enabled: false

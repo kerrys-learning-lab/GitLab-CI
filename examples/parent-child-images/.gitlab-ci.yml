@@ -12,7 +12,9 @@ include:
       image_unit_test_enabled: false
       image_structure_test_enabled: true
       image_structure_test_filenames: examples/parent-child-images/image-structure-tests/parent.yaml
-
+      # Only one job in the Pipeline can create a Release... we defer to the
+      # 'main' Pipeline:
+      image_release_enabled: false
 
   # --------------------------------------------------------------------------
   # Child image:
@@ -28,3 +30,6 @@ include:
       image_build_needs:
         - "[example] image build (parent)"
       image_structure_test_filenames: examples/parent-child-images/image-structure-tests/child.yaml
+      # Only one job in the Pipeline can create a Release... we defer to the
+      # 'main' Pipeline:
+      image_release_enabled: false
