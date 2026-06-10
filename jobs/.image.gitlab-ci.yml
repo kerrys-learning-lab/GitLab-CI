@@ -255,7 +255,7 @@ include:
       echo "### Image: ${IMAGE_BUILD_NAME}" >> ${RELEASE_README_FILEPATH}
 
       IMAGE_TAG_VARS=()
-      IMAGE_TAG_VARS+=(CI_COMMIT_REF_SLUG)
+      IMAGE_TAG_VARS+=(CI_COMMIT_REF)
 
       if [[ "${IMAGE_PROMOTE_RELEASE_TRAIN}" == "true" ]]; then
         IMAGE_TAG_VARS+=(RELEASE_TRAIN)
@@ -275,11 +275,10 @@ include:
         # Image tags may not contain the '+' character (from SemVer build metadata)
         image_tag=${image_tag//+/.}
 
-
         image_tag_description=${tag_var#CI_}
-        image_tag_description=${image_tag_description%_SLUG}
         image_tag_description=${image_tag_description,,}
         image_tag_description=${image_tag_description//_/ }
+        image_tag_description=${image_tag_description//\//-}
         image_tag_description=$(title_case ${image_tag_description})
 
         image_push_uri=${IMAGE_AS_BUILT_URI/%${IMAGE_AS_BUILT_VERSION}/${image_tag}}
