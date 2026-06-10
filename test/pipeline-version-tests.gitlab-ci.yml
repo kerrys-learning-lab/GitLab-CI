@@ -130,7 +130,6 @@ pipeline version developer branch:
       EXPECTED_VALUES[SEMANTIC_VERSION_PATCH]=0
 
     - !reference [.pipeline-version, script]
-  # - protected release/X.Y with existing vX.Y.* tags (via the TAGS_FOR_RELEASE_TRAIN test hook on line 83) → exercises line 86
 
 
 # ----------------------------------------------------------------------------

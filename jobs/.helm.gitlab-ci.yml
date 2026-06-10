@@ -67,7 +67,7 @@ include:
                       pipeline-push
 
       RELEASE_README_FILEPATH=.release/helm-chart.${CI_JOB_ID}.md
-      mkdir $(dirname ${RELEASE_README_FILEPATH})
+      mkdir -p $(dirname ${RELEASE_README_FILEPATH})
 
       # Convenience variables to make the code-block below a bit more readable:
       REPO_ALIAS=${CI_PROJECT_NAME}

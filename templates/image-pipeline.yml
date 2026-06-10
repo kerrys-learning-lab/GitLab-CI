@@ -64,7 +64,7 @@ spec:
                    executing the corresponding target
       type: string
       default: unittest
-    image_unit_test_output_dir:
+    image_unit_test_container_output_dir:
       description: The directory at which the image's unit test will write the
                    the result xUnit file *within the running container*.
                    This Job will mount an empty directory at this location in
@@ -72,7 +72,7 @@ spec:
       type: string
       default: /var/tmp
     image_unit_test_results_filename:
-      description: The filename (relative to 'image_unit_test_output_dir') to
+      description: The filename (relative to 'image_unit_test_container_output_dir') to
                    which the unit test results will be written.  The Job will
                    capture this file as a JUnit artifact.
       type: string
@@ -198,8 +198,8 @@ include:
     IMAGE_BUILD_CONTEXT:  $[[ inputs.image_build_context ]]
     IMAGE_BUILD_IGNOREFILE: $[[ inputs.image_build_ignorefile ]]
     IMAGE_BUILD_TARGET:  $[[ inputs.image_unit_test_target ]]
-    IMAGE_UNITTEST_OUTPUT_DIR: $[[ inputs.image_unit_test_output_dir ]]
-    IMAGE_UNITTEST_OUTPUT_FILE: $[[ inputs.image_unit_test_results_filename ]]
+    IMAGE_UNITTEST_CONTAINER_OUTPUT_DIR: $[[ inputs.image_unit_test_container_output_dir ]]
+    IMAGE_UNITTEST_CONTAINER_OUTPUT_FILE: $[[ inputs.image_unit_test_results_filename ]]
   rules:
     - !reference [.utility//not-a-merge-request,  rules]
     - if: "'$[[ inputs.image_unit_test_enabled ]]' == 'false'"

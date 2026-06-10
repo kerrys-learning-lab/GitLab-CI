@@ -244,16 +244,12 @@ image unit-test test:
     IMAGE_BUILD_TARGET: unittest
     IMAGE_BUILD_ARG_FLOBBER: blam
     IMAGE_BUILD_SECRET_STRING_FOO_PASSWORD: foo-is-the-password
-    IMAGE_UNITTEST_OUTPUT_FILE: test-results.xml
+    IMAGE_UNITTEST_CONTAINER_OUTPUT_FILE: test-results.xml
+    IMAGE_UNITTEST_LOCAL_OUTPUT_DIR: .image-unit-test
+    IMAGE_UNITTEST_LOCAL_FILE: unit-test-results.${CI_JOB_ID}.xml
   script:
     - !reference [.image-build,     before_script]
     - !reference [.image-unit-test,  script]
-  artifacts:
-    paths:
-      - .image/test-results.xml
-    reports:
-      junit: .image/test-results.xml
-    expire_in: 1 week
 
 
 # ----------------------------------------------------------------------------
