@@ -9,7 +9,7 @@ include:
   before_script:
     - !reference [.helm//add-repos, script]
     - |
-      echo "# --- helm-base -------------------------------------------------"
+      # --- helm-base --------------------------------------------------------
       helm dependency update ${HELM_CHART_DIR:-.}
 
 
@@ -20,7 +20,7 @@ include:
   script:
     - !reference [.pipeline-version,    script]
     - |
-      echo "# --- helm-package ----------------------------------------------"
+      # --- helm-package -----------------------------------------------------
       mkdir -p .helm-package
       helm package  --app-version ${RELEASE_TRAIN:-${SEMANTIC_VERSION}}  \
                     --version     ${SEMANTIC_VERSION}  \
@@ -39,7 +39,7 @@ include:
   extends: .helm-base
   script:
     - |
-      echo "# --- helm-unit-test --------------------------------------------"
+      # --- helm-unit-test ---------------------------------------------------
       mkdir -p .helm-unit-test
       helm unittest --file ${HELM_UNITTEST_FILE_GLOB:-'tests/*.tests.yaml'}  \
                     --output-type JUnit  \
@@ -61,7 +61,7 @@ include:
   script:
     - !reference [.pipeline-version,    script]
     - |
-      echo "# --- helm-push -------------------------------------------------"
+      # --- helm-push --------------------------------------------------------
       HELM_CHART_NAME=$(helm show chart ${HELM_CHART_DIR} | grep -Po '^name:\s+\K.*')
       helm  cm-push   .helm-package/${HELM_CHART_NAME}-${SEMANTIC_VERSION}.tgz  \
                       pipeline-push
@@ -76,22 +76,22 @@ include:
 
       echo "### Helm Chart: ${HELM_CHART_NAME}"                             >> ${RELEASE_README_FILEPATH}
       echo ""                                                               >> ${RELEASE_README_FILEPATH}
-      echo "  \`\`\`bash"                                                   >> ${RELEASE_README_FILEPATH}
-      echo "  # Add the Helm repository:"                                   >> ${RELEASE_README_FILEPATH}
-      echo "  helm repo add ${REPO_ALIAS} ${REPO_URL}"                      >> ${RELEASE_README_FILEPATH}
+      echo "\`\`\`bash"                                                   >> ${RELEASE_README_FILEPATH}
+      echo "# Add the Helm repository:"                                   >> ${RELEASE_README_FILEPATH}
+      echo "helm repo add ${REPO_ALIAS} ${REPO_URL}"                      >> ${RELEASE_README_FILEPATH}
       echo ""                                                               >> ${RELEASE_README_FILEPATH}
-      echo "  # Verify the new version (${SEMANTIC_VERSION}) is available:" >> ${RELEASE_README_FILEPATH}
-      echo "  helm search repo --versions ${CHART_ALIAS}"                   >> ${RELEASE_README_FILEPATH}
+      echo "# Verify the new version (${SEMANTIC_VERSION}) is available:" >> ${RELEASE_README_FILEPATH}
+      echo "helm search repo --versions ${CHART_ALIAS}"                   >> ${RELEASE_README_FILEPATH}
       echo ""                                                               >> ${RELEASE_README_FILEPATH}
-      echo "  # If the latest version isn't available, update the repo:"    >> ${RELEASE_README_FILEPATH}
-      echo "  helm repo update ${REPO_ALIAS}"                               >> ${RELEASE_README_FILEPATH}
+      echo "# If the latest version isn't available, update the repo:"    >> ${RELEASE_README_FILEPATH}
+      echo "helm repo update ${REPO_ALIAS}"                               >> ${RELEASE_README_FILEPATH}
       echo ""                                                               >> ${RELEASE_README_FILEPATH}
-      echo "  # Customize your values, then install the Chart:"             >> ${RELEASE_README_FILEPATH}
-      echo "  helm install  --namespace <NAMESPACE>  \\"                    >> ${RELEASE_README_FILEPATH}
-      echo "                --values <CONFIG_VALUES_FILE>  \\"              >> ${RELEASE_README_FILEPATH}
-      echo "                <NAME>  \\"                                     >> ${RELEASE_README_FILEPATH}
-      echo "                ${CHART_ALIAS}"                                 >> ${RELEASE_README_FILEPATH}
-      echo "  \`\`\`"                                                       >> ${RELEASE_README_FILEPATH}
+      echo "# Customize your values, then install the Chart:"             >> ${RELEASE_README_FILEPATH}
+      echo "helm install  --namespace <NAMESPACE>  \\"                    >> ${RELEASE_README_FILEPATH}
+      echo "              --values <CONFIG_VALUES_FILE>  \\"              >> ${RELEASE_README_FILEPATH}
+      echo "              <NAME>  \\"                                     >> ${RELEASE_README_FILEPATH}
+      echo "              ${CHART_ALIAS}"                                 >> ${RELEASE_README_FILEPATH}
+      echo "\`\`\`"                                                       >> ${RELEASE_README_FILEPATH}
   artifacts:
     paths:
       - .release
@@ -101,7 +101,7 @@ include:
 .helm//add-repos:
   script:
     - |
-      echo "# --- helm//add-repos -------------------------------------------"
+      # --- helm//add-repos --------------------------------------------------
       if [[ -z "${HELM_REPO_PIPELINE_PUSH_URL}" ]]; then
         HELM_REPO_PIPELINE_PUSH_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/helm/stable
       fi
@@ -119,7 +119,6 @@ include:
         helm repo remove pipeline-push
       fi
 
-    - |
       for repo_url_varname in $(compgen -v HELM_REPO_); do
         if [[ "${repo_url_varname}" == *_URL ]]; then
           repo_varname_stem=${repo_url_varname#HELM_REPO_}
@@ -145,7 +144,7 @@ include:
           helm_repo_add_cli_args+=(${repo_alias})
           helm_repo_add_cli_args+=(${repo_url})
 
-          echo "  Adding Helm repo: ${repo_alias} (${repo_url})"
+          echo "Adding Helm repo: ${repo_alias} (${repo_url})"
           helm repo add ${helm_repo_add_cli_args[@]}
         fi
       done

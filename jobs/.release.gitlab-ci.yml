@@ -2,8 +2,8 @@
 .release:
   script:
     - |
-      echo "# --- release ---------------------------------------------------"
-      echo "  Creating release: ${CI_COMMIT_TAG}"
+      # --- release ----------------------------------------------------------
+      echo "Creating release: ${CI_COMMIT_TAG}"
 
       RELEASE_README_FILEPATH=RELEASE.md
       echo "# Release ${CI_COMMIT_TAG}"   >> ${RELEASE_README_FILEPATH}

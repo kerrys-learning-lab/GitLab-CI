@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: block-banned-string
+        name: Check for forbidden strings
+        entry: 'set\s+-x'
+        language: pygrep
+        types:
+          - text

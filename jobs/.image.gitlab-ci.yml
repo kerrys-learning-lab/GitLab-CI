@@ -9,7 +9,7 @@ include:
 .image//auth:
   script:
     - |
-      echo "# --- image//auth -----------------------------------------------"
+      # --- image//auth ------------------------------------------------------
       echo "# Logging in to the CI_REGISTRY: ${CI_REGISTRY}..."
 
       podman login ${CI_REGISTRY} --username ${CI_REGISTRY_USER}  \
@@ -21,7 +21,7 @@ include:
   before_script:
     - !reference [.image//auth, script]
     - |
-      echo "# --- image-base ------------------------------------------------"
+      # --- image-base -------------------------------------------------------
       set -e
       JOB_SETTINGS_TABLE=()
       # --- Custom image name, if applicable:
@@ -54,7 +54,7 @@ include:
   before_script:
     - !reference [.image-base,  before_script]
     - |
-      echo "# --- image-build (before_script) -------------------------------"
+      # --- image-build (before_script) --------------------------------------
       IMAGE_BUILD_CLI_ARGS=()
 
       IMAGE_BUILD_CLI_ARGS+=(--tag ${IMAGE_AS_BUILT_URI})
@@ -97,12 +97,12 @@ include:
     # Should be the last argument (it's positional)
     - IMAGE_BUILD_CLI_ARGS+=(${IMAGE_BUILD_CONTEXT})
   script:
-    - !reference [.image-base,  script]
+    - !reference [.image-base,          script]
     - |
-      echo "# --- image-build (before) --------------------------------------"
-      echo "  Building image..."
+      # --- image-build (before) ---------------------------------------------
+      echo "Building image..."
       podman image build "${IMAGE_BUILD_CLI_ARGS[@]}"
-      echo "  Pushing image build artifact: ${IMAGE_AS_BUILT_URI}"
+      echo "Pushing image build artifact: ${IMAGE_AS_BUILT_URI}"
       podman image push --quiet ${IMAGE_AS_BUILT_URI}
 
 
@@ -111,22 +111,30 @@ include:
 .image-unit-test:
   extends: .image-build
   stage: test
+  variables:
+    IMAGE_UNITTEST_OUTPUT_DIR: /var/tmp
+    IMAGE_UNITTEST_OUTPUT_FILE: unit-test-results.xml
   script:
     - |
-      echo "# --- image-unit-test -------------------------------------------"
+      # --- image-unit-test -------------------------------------------
+      IMAGE_UNITTEST_OUTPUT_DIR=${IMAGE_UNITTEST_OUTPUT_DIR:-/var/tmp}
+      IMAGE_UNITTEST_OUTPUT_FILE=${IMAGE_UNITTEST_OUTPUT_FILE:-unit-test-results.xml}
+
       mkdir -p ./.image-unit-test
-      echo "  Building unittest target..."
+      echo "Building unittest target..."
       podman image build "${IMAGE_BUILD_CLI_ARGS[@]}"
-      echo "  Running unittest..."
+      echo "Running unittest..."
       podman run  --rm  \
                   --tty  \
-                  --volume .image-unit-test:/var/tmp  \
+                  --volume .image-unit-test:${IMAGE_UNITTEST_OUTPUT_DIR}  \
                   ${IMAGE_AS_BUILT_URI}
+
+      mv .image-unit-test/${IMAGE_UNITTEST_OUTPUT_FILE} .image-unit-test/unit-test-results.${CI_JOB_ID}.xml
   artifacts:
     paths:
-      - .image-unit-test/$[[ inputs.image_unit_test_results_filename ]]
+      - .image-unit-test/unit-test-results.${CI_JOB_ID}.xml
     reports:
-      junit: .image-unit-test/$[[ inputs.image_unit_test_results_filename ]]
+      junit: .image-unit-test/unit-test-results.${CI_JOB_ID}.xml
     when: always
     expire_in: 1 week
 
@@ -136,33 +144,44 @@ include:
 .image-structure-test:
   extends: .image-base
   stage: test
+  variables:
+      CST_REPORT_FILEPATH: .image-structure-test/structure-test-results.${CI_JOB_ID}.xml
   before_script:
     - !reference [.image-base,  before_script]
     - |
-      echo "# --- image-structure-test (before_script) ----------------------"
-      echo "  Running Podman service..."
-      export DOCKER_HOST=unix:///var/tmp/podman-${CI_JOB_ID}.sock
+      # --- image-structure-test (before_script) -----------------------------
+      echo "Running Podman service..."
+      PODMAN_CI_JOB_SOCKET_RETRIES=5
+      PODMAN_CI_JOB_SOCKET=/var/tmp/podman-${CI_JOB_ID}.sock
+      export DOCKER_HOST=unix://${PODMAN_CI_JOB_SOCKET}
       podman system service --time=30 ${DOCKER_HOST} &
 
-      for i in {1..3}; do
-        if [[ -e ${DOCKER_HOST} ]]; then
+      for i in {1..${PODMAN_CI_JOB_SOCKET_RETRIES}}; do
+        if [[ -e ${PODMAN_CI_JOB_SOCKET} ]]; then
           break
         fi
 
         sleep 1
       done
 
-      echo "  Pulling as-built image..."
+      if [[ ! -e ${PODMAN_CI_JOB_SOCKET} ]]; then
+        echo "❌  Podman socket not created after ${PODMAN_CI_JOB_SOCKET_RETRIES}s"
+        exit 1
+      fi
+
+      echo "Pulling as-built image..."
       podman image pull --quiet ${IMAGE_AS_BUILT_URI}
   script:
     - |
-      echo "# --- image-structure-test (script) -----------------------------"
-      echo "  Running Container Structure Test..."
-      mkdir -p .image-structure-test
+      # --- image-structure-test (script) ------------------------------------
+      echo "Running Container Structure Test..."
+
+      mkdir -p $(dirname ${CST_REPORT_FILEPATH})
+
       CST_CLI_ARGS=()
       CST_CLI_ARGS+=(test)
       CST_CLI_ARGS+=(--output junit)
-      CST_CLI_ARGS+=(--test-report .image-structure-test/structure-test-results.${CI_JOB_ID}.xml)
+      CST_CLI_ARGS+=(--test-report ${CST_REPORT_FILEPATH})
 
       for file in ${IMAGE_STRUCTURE_TEST_FILENAMES}; do
         CST_CLI_ARGS+=(--config ${file})
@@ -170,12 +189,20 @@ include:
 
       CST_CLI_ARGS+=(--image ${IMAGE_AS_BUILT_URI})
 
-      container-structure-test ${CST_CLI_ARGS[@]}
+      set +e
+      container-structure-test "${CST_CLI_ARGS[@]}"
+      cst_exit_code=$?
+      set -e
+      if [[ ${cst_exit_code} -ne 0 ]] ; then
+        echo "❌  container-structure-test FAILED"
+        xq --color ${CST_REPORT_FILEPATH}
+        exit ${cst_exit_code}
+      fi
   artifacts:
     paths:
-      - .image-structure-test/structure-test-results.${CI_JOB_ID}.xml
+      - ${CST_REPORT_FILEPATH}
     reports:
-      junit: .image-structure-test/structure-test-results.${CI_JOB_ID}.xml
+      junit: ${CST_REPORT_FILEPATH}
     when: always
     expire_in: 1 week
 
@@ -191,7 +218,7 @@ include:
     - !reference [.pipeline-version,    script]
     - !reference [.utility//functions,  script]
     - |
-      echo "# --- image-promote ----------------------------------------------"
+      # --- image-promote ----------------------------------------------------
 
       RELEASE_README_FILEPATH=.release/image.${CI_JOB_ID}.md
       mkdir $(dirname ${RELEASE_README_FILEPATH})
@@ -214,7 +241,7 @@ include:
       for tag in ${IMAGE_TAGS[@]}; do
         IMAGE_PUSH_URI=${IMAGE_AS_BUILT_URI/%${IMAGE_AS_BUILT_VERSION}/${tag}}
 
-        echo "  Copying image to ${IMAGE_PUSH_URI}..."
+        echo "Copying image to ${IMAGE_PUSH_URI}..."
         skopeo copy --quiet docker://${IMAGE_AS_BUILT_URI}  docker://${IMAGE_PUSH_URI}
 
         image_tag_human_readable_label=${tag#CI_}
@@ -225,9 +252,9 @@ include:
 
         echo "- ${image_tag_human_readable_label}"      >> ${RELEASE_README_FILEPATH}
         echo ""                                         >> ${RELEASE_README_FILEPATH}
-        echo "  \`\`\`bash"                             >> ${RELEASE_README_FILEPATH}
-        echo "  podman image pull ${IMAGE_PUSH_URI}"    >> ${RELEASE_README_FILEPATH}
-        echo "  \`\`\`"                                 >> ${RELEASE_README_FILEPATH}
+        echo "\`\`\`bash"                             >> ${RELEASE_README_FILEPATH}
+        echo "podman image pull ${IMAGE_PUSH_URI}"    >> ${RELEASE_README_FILEPATH}
+        echo "\`\`\`"                                 >> ${RELEASE_README_FILEPATH}
         echo ""                                         >> ${RELEASE_README_FILEPATH}
       done
   artifacts:
@@ -240,7 +267,7 @@ include:
 .image//labels:
   script:
     - |
-      echo "# --- image//labels ---------------------------------------------"
+      # --- image//labels ----------------------------------------------------
       declare -A IMAGE_LABELS
       if [[ -z "${IMAGE_BUILD_NO_LABELS}" ]]; then
         IMAGE_LABELS[org.opencontainers.image.title]="${CI_PROJECT_TITLE}"
@@ -252,7 +279,7 @@ include:
       fi
 
       for key in ${!IMAGE_LABELS[@]}; do
-        IMAGE_BUILD_CLI_ARGS+=(--label "${key}='${IMAGE_LABELS[$key]}'")
+        IMAGE_BUILD_CLI_ARGS+=(--label "${key}=${IMAGE_LABELS[$key]}")
         JOB_SETTINGS_TABLE+=("Label: ${key};${IMAGE_LABELS[$key]}")
       done
 
@@ -260,8 +287,9 @@ include:
 # ----------------------------------------------------------------------------
 .image//build-args:
   script:
+    - !reference [.pipeline-version,    script]
     - |
-      echo "# --- image//build-args -----------------------------------------"
+      # --- image//build-args ------------------------------------------------
       for var_name in CI_COMMIT_REF_SLUG  CI_PIPELINE_IID  SEMANTIC_VERSION  RELEASE_TRAIN; do
         if [[ -n "${!var_name}" ]]; then
           IMAGE_BUILD_CLI_ARGS+=(--build-arg "${var_name}=${!var_name}")
@@ -282,7 +310,7 @@ include:
 .image//secrets:
   script:
     - |
-      echo "# --- image//secrets --------------------------------------------"
+      # --- image//secrets ---------------------------------------------------
       for var_name in $(compgen -v IMAGE_BUILD_SECRET_FILE_); do
         id=${var_name#IMAGE_BUILD_SECRET_FILE_}
         id=${id//_/-}

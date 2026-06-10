@@ -66,8 +66,9 @@ spec:
       default: unittest
     image_unit_test_output_dir:
       description: The directory at which the image's unit test will write the
-                   the result xUnit file.  This Job will mount an empty directory
-                   at this location in order to receive the file
+                   the result xUnit file *within the running container*.
+                   This Job will mount an empty directory at this location in
+                   order to receive the file.
       type: string
       default: /var/tmp
     image_unit_test_results_filename:
@@ -198,6 +199,7 @@ include:
     IMAGE_BUILD_IGNOREFILE: $[[ inputs.image_build_ignorefile ]]
     IMAGE_BUILD_TARGET:  $[[ inputs.image_unit_test_target ]]
     IMAGE_UNITTEST_OUTPUT_DIR: $[[ inputs.image_unit_test_output_dir ]]
+    IMAGE_UNITTEST_OUTPUT_FILE: $[[ inputs.image_unit_test_results_filename ]]
   rules:
     - !reference [.utility//not-a-merge-request,  rules]
     - if: "'$[[ inputs.image_unit_test_enabled ]]' == 'false'"

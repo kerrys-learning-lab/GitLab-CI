@@ -38,7 +38,7 @@
 .utility//functions:
   script:
     - |
-      # utility//functions (declarations)
+      # --- utility//functions (declarations) --------------------------------
       function title_case() {
         echo "$*" | sed -E 's/(.)/\L\1/g; s/\b(.)/\U\1/g'
       }
