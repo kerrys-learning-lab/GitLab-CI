@@ -37,7 +37,6 @@ helm push test:
   variables:
     HELM_CHART_DIR: examples/helm-chart
   script:
-    - set -x
     - !reference [.helm-base,   before_script]
     - !reference [.helm-push,   script]
   needs:
