@@ -11,4 +11,4 @@ fileExistenceTests:
 metadataTest:
   labels:
     - key: org.opencontainers.image.title
-      value: "'GitLab CI'"
+      value: GitLab CI
