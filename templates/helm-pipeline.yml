@@ -118,7 +118,8 @@ include:
   - local: jobs/.defaults.gitlab-ci.yml
   - local: jobs/.helm.gitlab-ci.yml
   - local: jobs/.release.gitlab-ci.yml
-  - local: jobs/.utilities.gitlab-ci.yml
+  - local: lib/rules.gitlab-ci.yml
+  - local: lib/utilities.gitlab-ci.yml
 
 
 # ----------------------------------------------------------------------------
@@ -129,7 +130,7 @@ include:
     HELM_CHART_DIR:  $[[ inputs.helm_chart_dir ]]
   needs: $[[ inputs.helm_package_needs ]]
   rules:
-    - !reference [.utility//not-a-merge-request,  rules]
+    - !reference [.rules//not-a-merge-request,  rules]
     - when: on_success
 
 
@@ -141,7 +142,7 @@ include:
     HELM_CHART_DIR:  $[[ inputs.helm_unit_test_chart_dir ]]
     HELM_UNITTEST_FILE_GLOB: $[[ inputs.helm_unit_test_file_glob ]]
   rules:
-    - !reference [.utility//not-a-merge-request,  rules]
+    - !reference [.rules//not-a-merge-request,  rules]
     - if: "'$[[ inputs.helm_unit_test_enabled ]]' == 'false'"
       when: never
     - when: on_success
@@ -158,11 +159,11 @@ include:
     HELM_REPO_PIPELINE_PUSH_PASSWORD: $[[ inputs.helm_push_repo_password ]]
     HELM_REPO_PIPELINE_PUSH_CHANNEL: devel
   rules:
-    - !reference [.utility//not-a-merge-request,  rules]
+    - !reference [.rules//not-a-merge-request,  rules]
     - if: "'$[[ inputs.helm_push_option ]]' == 'skip'"
       when: never
     - if: "'$[[ inputs.helm_push_option ]]' == 'force'"
-    - !reference [.utility//protected-ref,        rules]
+    - !reference [.rules//protected-ref,        rules]
 
 
 # ----------------------------------------------------------------------------
@@ -172,5 +173,5 @@ include:
   rules:
     - if: "'$[[ inputs.helm_release_enabled ]]' == 'false'"
       when: never
-    - !reference [.utility//not-a-merge-request,  rules]
-    - !reference [.utility//protected-tag,        rules]
+    - !reference [.rules//not-a-merge-request,  rules]
+    - !reference [.rules//protected-tag,        rules]

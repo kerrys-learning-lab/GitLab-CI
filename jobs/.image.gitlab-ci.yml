@@ -1,112 +1,60 @@
 include:
   - local: jobs/.defaults.gitlab-ci.yml
-  - local: jobs/.pipeline-version.gitlab-ci.yml
   - local: jobs/.stages.gitlab-ci.yml
-  - local: jobs/.utilities.gitlab-ci.yml
+  - local: lib/pipeline-version.gitlab-ci.yml
+  - local: lib/utilities.gitlab-ci.yml
 
 
-# ----------------------------------------------------------------------------
-.image//auth:
-  script:
-    - |
-      # --- image//auth ------------------------------------------------------
-      echo "# Logging in to the CI_REGISTRY: ${CI_REGISTRY}..."
-
-      podman login ${CI_REGISTRY} --username ${CI_REGISTRY_USER}  \
-                                  --password ${CI_REGISTRY_PASSWORD}
-
-
-# ----------------------------------------------------------------------------
+# ============================================================================
 .image-base:
   before_script:
-    - !reference [.image//auth, script]
+    - !reference [.image//functions,    script]
     - |
       # --- image-base -------------------------------------------------------
+
+      # Default is to exit on any shell error:
       set -e
-      JOB_SETTINGS_TABLE=()
-      # --- Custom image name, if applicable:
-      if [[ -n "${IMAGE_BUILD_NAME}" ]]; then
-        IMAGE_AS_BUILT_FULL_NAME=${CI_REGISTRY_IMAGE/%${CI_PROJECT_NAME}/${IMAGE_BUILD_NAME}}
-      else
-        IMAGE_AS_BUILT_FULL_NAME=${CI_REGISTRY_IMAGE}
-      fi
-      JOB_SETTINGS_TABLE+=("Image full-name;${IMAGE_AS_BUILT_FULL_NAME}")
 
 
-      # --- Image tag
-      #     (tag for the *interim* build artifact.. the *actual* tag will be
-      #     applied at the end of the Pipeline, if successful)
-      IMAGE_AS_BUILT_VERSION=build.${CI_PIPELINE_IID}
-      JOB_SETTINGS_TABLE+=("Image version (commit ref);${CI_COMMIT_REF_SLUG}")
-      JOB_SETTINGS_TABLE+=("Image version (as-built);${IMAGE_AS_BUILT_VERSION}")
+      # Authenticate to CI_REGISTRY:
+      fn_image_ci_registry_auth
 
 
-      # --- We have the full URI now (name and tag)
-      IMAGE_AS_BUILT_URI=${IMAGE_AS_BUILT_FULL_NAME}:${IMAGE_AS_BUILT_VERSION}
-  script:
-    - !reference [.utility//print-settings-table, script]
+      # Calculate the image name, as-built version, and full URI:
+      fn_image_as_built_name_components
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 .image-build:
   stage: build
   extends: .image-base
-  before_script:
-    - !reference [.image-base,  before_script]
+  script:
     - |
-      # --- image-build (before_script) --------------------------------------
-      IMAGE_BUILD_CLI_ARGS=()
+      # --- image-build ------------------------------------------------------
 
-      IMAGE_BUILD_CLI_ARGS+=(--tag ${IMAGE_AS_BUILT_URI})
 
-      IMAGE_BUILD_CONTEXT=${IMAGE_BUILD_CONTEXT:-.}
-      IMAGE_BUILD_DOCKERFILE=${IMAGE_BUILD_DOCKERFILE:-Dockerfile}
-
-      # --- Dockerfile:
-      if [[ -f ${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_DOCKERFILE} ]]; then
-        IMAGE_BUILD_DOCKERFILE=${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_DOCKERFILE}
-      fi
-      JOB_SETTINGS_TABLE+=("Dockerfile;${IMAGE_BUILD_DOCKERFILE}")
-      IMAGE_BUILD_CLI_ARGS+=(--file ${IMAGE_BUILD_DOCKERFILE})
-
-      # --- Custom build target, if applicable:
-      if [[ -n "${IMAGE_BUILD_TARGET}" ]]; then
-        JOB_SETTINGS_TABLE+=("Target;${IMAGE_BUILD_TARGET}")
-        IMAGE_BUILD_CLI_ARGS+=(--target ${IMAGE_BUILD_TARGET})
-      fi
-
-      # --- Ignorefile:
-      if [[ -f ${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_IGNOREFILE} ]]; then
-        IMAGE_BUILD_IGNOREFILE=${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_IGNOREFILE}
-      fi
-      if [[ -f ${IMAGE_BUILD_IGNOREFILE} ]]; then
-        JOB_SETTINGS_TABLE+=("Ignorefile;${IMAGE_BUILD_IGNOREFILE}")
-        IMAGE_BUILD_CLI_ARGS+=(--ignorefile ${IMAGE_BUILD_IGNOREFILE})
-      fi
-
+      # --- Parent image build-arg, if applicable:
       if [[ -n "${IMAGE_BUILD_PARENT_IMAGE_NAME}" ]]; then
         PARENT_IMAGE_AS_BUILT_FULL_NAME=${CI_REGISTRY_IMAGE/%${CI_PROJECT_NAME}/${IMAGE_BUILD_PARENT_IMAGE_NAME}}
         PARENT_IMAGE_AS_BUILT_URI=${PARENT_IMAGE_AS_BUILT_FULL_NAME}:${IMAGE_AS_BUILT_VERSION}
         IMAGE_BUILD_ARG_BASE_IMAGE=${PARENT_IMAGE_AS_BUILT_URI}
       fi
 
-    - !reference [.image//secrets,      script]
-    - !reference [.image//build-args,   script]
-    - !reference [.image//labels,  script]
 
-    # Should be the last argument (it's positional)
-    - IMAGE_BUILD_CLI_ARGS+=(${IMAGE_BUILD_CONTEXT})
-  script:
-    - !reference [.image-base,          script]
-    - |
-      # --- image-build (before) ---------------------------------------------
-      echo "Building image..."
+      # --- Calculate the image build CLI args:
+      fn_image_build_cli
+
+
+      # --- Build the image
+      fn_log_building ${IMAGE_AS_BUILT_URI}
       podman image build "${IMAGE_BUILD_CLI_ARGS[@]}"
-      echo "Pushing image build artifact: ${IMAGE_AS_BUILT_URI}"
+
+
+      # --- Push the interim build artifact
       podman image push --quiet ${IMAGE_AS_BUILT_URI}
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 # Unit tests this image
 .image-unit-test:
   extends: .image-build
@@ -118,7 +66,21 @@ include:
     IMAGE_UNITTEST_LOCAL_FILE: unit-test-results.${CI_JOB_ID}.xml
   script:
     - |
-      # --- image-unit-test -------------------------------------------
+      # --- image-unit-test --------------------------------------------------
+
+
+      # --- Calculate the image build CLI args:
+      fn_image_build_cli
+
+
+      # --- Build the unit test target:
+      fn_log_building "unittest target"
+      podman image build "${IMAGE_BUILD_CLI_ARGS[@]}"
+
+
+      # --- Prepare to capture the unit test output from the container
+      #   - We mount a host directory into the container at the specified
+      #     destination
       IMAGE_UNITTEST_CONTAINER_OUTPUT_DIR=${IMAGE_UNITTEST_CONTAINER_OUTPUT_DIR:-/var/tmp}
       IMAGE_UNITTEST_CONTAINER_OUTPUT_FILE=${IMAGE_UNITTEST_CONTAINER_OUTPUT_FILE:-unit-test-results.xml}
       IMAGE_UNITTEST_LOCAL_OUTPUT_DIR=${IMAGE_UNITTEST_LOCAL_OUTPUT_DIR:-.image-unit-test}
@@ -126,10 +88,13 @@ include:
       IMAGE_UNITTEST_LOCAL_FILEPATH=${IMAGE_UNITTEST_LOCAL_OUTPUT_DIR}/${IMAGE_UNITTEST_LOCAL_FILE}
 
       mkdir -p ${IMAGE_UNITTEST_LOCAL_OUTPUT_DIR}
-      echo "Building unittest target..."
-      podman image build "${IMAGE_BUILD_CLI_ARGS[@]}"
 
-      echo "Running unittest..."
+
+      # --- Run the unit test:
+      #   - We disable the "exit on any error" logic, but capture the exit code
+      #   - This allows us to print additional failure information to the Job
+      #     log to make the failure investigation easier
+      fn_log_testing ${IMAGE_AS_BUILT_URI}
       set +e
       podman run  --rm  \
                   --tty  \
@@ -138,12 +103,18 @@ include:
       exit_code=$?
       set -e
 
+
+      # --- Save the unit test artifact to the correct location for the Job:
       if [[ -f ${IMAGE_UNITTEST_LOCAL_OUTPUT_DIR}/${IMAGE_UNITTEST_CONTAINER_OUTPUT_FILE} ]]; then
         mv  ${IMAGE_UNITTEST_LOCAL_OUTPUT_DIR}/${IMAGE_UNITTEST_CONTAINER_OUTPUT_FILE}  ${IMAGE_UNITTEST_LOCAL_FILEPATH}
       fi
 
+
+      # --- If the unit test failed, provide additional information to the Job
+      #     output log
+      #   - This is in-addition to the test report
       if [[ ${exit_code} -ne 0 ]] ; then
-        echo "❌  unit test FAILED"
+        fn_log_error "${EMOJI_REDX} unit test FAILED"
 
         if [[ -f ${IMAGE_UNITTEST_LOCAL_FILEPATH} ]]; then
           xq --color ${IMAGE_UNITTEST_LOCAL_FILEPATH}
@@ -160,27 +131,30 @@ include:
     expire_in: 1 week
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 # Use Google Container Structure Test to validate this image
 .image-structure-test:
   extends: .image-base
   stage: test
   variables:
       CST_REPORT_FILEPATH: .image-structure-test/structure-test-results.${CI_JOB_ID}.xml
-  before_script:
-    - !reference [.image-base,  before_script]
+  script:
     - |
-      # --- image-structure-test (before_script) -----------------------------
-      echo "Running Podman service..."
+      # --- image-structure-test (script) ------------------------------------
+      fn_log_info "Running Podman service..."
 
-      # NOTE: Since the podman service is run in the background, the socket
-      #       may not be ready immediately.  Below, we perform a few waits
-      #       to allow the service to start.
-      PODMAN_CI_JOB_SOCKET_MAX_WAIT_RETRIES=5
+
+      # --- Start Podman API service
+      #   - CST requires a Docker-like daemon
       PODMAN_CI_JOB_SOCKET=/var/tmp/podman-${CI_JOB_ID}.sock
       export DOCKER_HOST=unix://${PODMAN_CI_JOB_SOCKET}
       podman system service --time=30 ${DOCKER_HOST} &
 
+      # --- Wait for the Podman API service to be ready
+      #   - Since the podman service is run in the background, the socket may
+      #     not be ready immediately
+      #   - Below, we perform a few waits to allow the service to start
+      PODMAN_CI_JOB_SOCKET_MAX_WAIT_RETRIES=5
       for i in $(seq 1 ${PODMAN_CI_JOB_SOCKET_MAX_WAIT_RETRIES}); do
         if [[ -e ${PODMAN_CI_JOB_SOCKET} ]]; then
           break
@@ -189,18 +163,19 @@ include:
         sleep 1
       done
 
+
+      # --- Detect failure condition for the Podman API service:
       if [[ ! -e ${PODMAN_CI_JOB_SOCKET} ]]; then
-        echo "❌  Podman socket not created after ${PODMAN_CI_JOB_SOCKET_MAX_WAIT_RETRIES}s"
+        fn_log_error "${EMOJI_REDX} Podman socket not created after ${PODMAN_CI_JOB_SOCKET_MAX_WAIT_RETRIES}s"
         exit 1
       fi
 
-      echo "Pulling as-built image..."
-      podman image pull --quiet ${IMAGE_AS_BUILT_URI}
-  script:
-    - |
-      # --- image-structure-test (script) ------------------------------------
-      echo "Running Container Structure Test..."
 
+      # --- Pull the image that's about to be tested
+      podman image pull --quiet ${IMAGE_AS_BUILT_URI}
+
+
+      # --- Prepare the CLI
       mkdir -p $(dirname ${CST_REPORT_FILEPATH})
 
       CST_CLI_ARGS=()
@@ -214,12 +189,23 @@ include:
 
       CST_CLI_ARGS+=(--image ${IMAGE_AS_BUILT_URI})
 
+
+      # --- Run the structure test:
+      #   - We disable the "exit on any error" logic, but capture the exit code
+      #   - This allows us to print additional failure information to the Job
+      #     log to make the failure investigation easier
+      fn_log_testing "Container Structure Test"
       set +e
       container-structure-test "${CST_CLI_ARGS[@]}"
       exit_code=$?
       set -e
+
+
+      # --- If the structure test failed, provide additional information to the
+      #     Job output log
+      #   - This is in-addition to the test report
       if [[ ${exit_code} -ne 0 ]] ; then
-        echo "❌  container-structure-test FAILED"
+        fn_log_error "${EMOJI_REDX} container-structure-test FAILED"
 
         if [[ -f ${CST_REPORT_FILEPATH} ]]; then
           xq --color ${CST_REPORT_FILEPATH}
@@ -237,34 +223,41 @@ include:
 
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 # Promotes this project's image by renaming from the interim build tag to the
-# appropriate refs (e.g., CI_COMMIT_REF_SLUG, RELEASE_TRAIN, SEMANTIC_VERSION_SLUG)
+# appropriate refs (e.g., CI_COMMIT_REF_NAME, RELEASE_TRAIN, SEMANTIC_VERSION_SLUG)
 .image-promote:
   extends: .image-base
   stage: publish
   script:
-    - !reference [.pipeline-version,    script]
-    - !reference [.utility//functions,  script]
     - |
       # --- image-promote ----------------------------------------------------
 
+      # --- Prepare the Release Notes:
       RELEASE_README_FILEPATH=.release/image.${CI_JOB_ID}.md
       mkdir -p $(dirname ${RELEASE_README_FILEPATH})
 
       echo "### Image: ${IMAGE_BUILD_NAME}" >> ${RELEASE_README_FILEPATH}
 
-      IMAGE_TAG_VARS=()
-      IMAGE_TAG_VARS+=(CI_COMMIT_REF)
 
+      # --- Determine the tags to push
+      IMAGE_TAG_VARS=()
+
+      #   - The original commit ref (branch or tag)
+      IMAGE_TAG_VARS+=(CI_COMMIT_REF_NAME)
+
+      #   - The RELEASE_TRAIN, if enabled
       if [[ "${IMAGE_PROMOTE_RELEASE_TRAIN}" == "true" ]]; then
         IMAGE_TAG_VARS+=(RELEASE_TRAIN)
       fi
 
+      #   - The SEMANTIC_VERSION, if enabled
       if [[ "${IMAGE_PROMOTE_SEMANTIC_VERSION}" == "true" ]]; then
         IMAGE_TAG_VARS+=(SEMANTIC_VERSION)
       fi
 
+
+      # --- Process each tag:
       for tag_var in ${IMAGE_TAG_VARS[@]}; do
         image_tag=${!tag_var}
 
@@ -272,20 +265,24 @@ include:
           continue
         fi
 
-        # Image tags may not contain the '+' character (from SemVer build metadata)
-        image_tag=${image_tag//+/.}
+        # --- Image tags CANNOT contain the '+' character
+        #     (from SemVer build metadata)
+        image_tag=$(fn_str_slug ${image_tag})
 
+        # --- The 'description' is the human-readable name for the Release Notes
+        #   - Remove the CI_ prefix, if present
+        #   - Then convert to title case
         image_tag_description=${tag_var#CI_}
-        image_tag_description=${image_tag_description,,}
-        image_tag_description=${image_tag_description//_/ }
-        image_tag_description=${image_tag_description//\//-}
-        image_tag_description=$(title_case ${image_tag_description})
+        image_tag_description=$(fn_str_title_case ${image_tag_description})
 
         image_push_uri=${IMAGE_AS_BUILT_URI/%${IMAGE_AS_BUILT_VERSION}/${image_tag}}
 
-        echo "Copying image to ${image_push_uri}..."
+        # --- Re-tag
+        fn_log_publishing ${image_push_uri}
         skopeo copy --quiet docker://${IMAGE_AS_BUILT_URI}  docker://${image_push_uri}
 
+
+        # --- Append the tag information to the Release Notes:
         echo "- ${image_tag_description}"             >> ${RELEASE_README_FILEPATH}
         echo ""                                       >> ${RELEASE_README_FILEPATH}
         echo "  \`\`\`bash"                           >> ${RELEASE_README_FILEPATH}
@@ -298,72 +295,185 @@ include:
       - .release
 
 
-
-# ----------------------------------------------------------------------------
-.image//labels:
+# ============================================================================
+.image//functions:
   script:
-    - |
-      # --- image//labels ----------------------------------------------------
-      declare -A IMAGE_LABELS
-      if [[ -z "${IMAGE_BUILD_NO_LABELS}" ]]; then
-        IMAGE_LABELS[org.opencontainers.image.title]="${CI_PROJECT_TITLE}"
-        IMAGE_LABELS[org.opencontainers.image.description]="${CI_PROJECT_DESCRIPTION}"
-        IMAGE_LABELS[org.opencontainers.image.created]="$(date --rfc-3339 seconds)"
-        IMAGE_LABELS[org.opencontainers.image.url]="${CI_PROJECT_URL}"
-        IMAGE_LABELS[org.opencontainers.image.version]="${CI_COMMIT_REF_SLUG}"
-        IMAGE_LABELS[org.opencontainers.image.revision]="${CI_COMMIT_SHA}"
-      fi
-
-      for key in ${!IMAGE_LABELS[@]}; do
-        IMAGE_BUILD_CLI_ARGS+=(--label "${key}=${IMAGE_LABELS[$key]}")
-        JOB_SETTINGS_TABLE+=("Label: ${key};${IMAGE_LABELS[$key]}")
-      done
-
-
-# ----------------------------------------------------------------------------
-.image//build-args:
-  script:
+    - !reference [.utilities//load-all, script]
     - !reference [.pipeline-version,    script]
     - |
-      # --- image//build-args ------------------------------------------------
-      for var_name in CI_COMMIT_REF_SLUG  CI_PIPELINE_IID  SEMANTIC_VERSION  RELEASE_TRAIN; do
-        if [[ -n "${!var_name}" ]]; then
-          IMAGE_BUILD_CLI_ARGS+=(--build-arg "${var_name}=${!var_name}")
+      # --- image//functions -------------------------------------------------
 
-          JOB_SETTINGS_TABLE+=("Build arg: ${var_name};${!var_name}")
+
+      # ----------------------------------------------------------------------
+      # Authenticates to the CI image registry
+      function fn_image_ci_registry_auth() {
+        fn_log_info "Logging in to the CI_REGISTRY: ${CI_REGISTRY}..."
+
+        podman login ${CI_REGISTRY} --username ${CI_REGISTRY_USER}  \
+                                    --password ${CI_REGISTRY_PASSWORD}
+      }
+
+
+      # ----------------------------------------------------------------------
+      # Calculates the image name components.
+      #
+      # Defines/declares the following outputs:
+      #   - IMAGE_AS_BUILT_FULL_NAME: The full name of the image, including
+      #                               the registry, group, and project BUT
+      #                               excluding the version
+      #   - IMAGE_AS_BUILT_VERSION:   The as-built version.  This version will
+      #                               be applied during the build process to
+      #                               identify the interim build artifact prior
+      #                               to "promotion" during the Publish stage
+      #   - IMAGE_AS_BUILT_URI:       The combination of IMAGE_AS_BUILT_FULL_NAME
+      #                               and IMAGE_AS_BUILT_VERSION, suitable for
+      #                               pushing and pulling the interim image
+      #                               build artifact
+      function fn_image_as_built_name_components() {
+        # --- Calculate the SemVer of this Pipeline
+        fn_pipeline_version
+
+
+        IMAGE_AS_BUILT_FULL_NAME=${CI_REGISTRY_IMAGE}
+
+        # --- The caller may have specified a custom image name
+        #     (but in all cases, it's relative to this Pipeline's Project)
+        if [[ -n "${IMAGE_BUILD_NAME}" ]]; then
+          IMAGE_AS_BUILT_FULL_NAME+=/${IMAGE_BUILD_NAME}
         fi
-      done
-
-      for var_name in $(compgen -v IMAGE_BUILD_ARG_); do
-        arg=${var_name#IMAGE_BUILD_ARG_}
-        IMAGE_BUILD_CLI_ARGS+=(--build-arg "${arg}=${!var_name}")
-
-        JOB_SETTINGS_TABLE+=("Build arg: ${arg};${!var_name}")
-      done
 
 
-# ----------------------------------------------------------------------------
-.image//secrets:
-  script:
-    - |
-      # --- image//secrets ---------------------------------------------------
-      for var_name in $(compgen -v IMAGE_BUILD_SECRET_FILE_); do
-        id=${var_name#IMAGE_BUILD_SECRET_FILE_}
-        id=${id//_/-}
-        id=${id,,}
-        IMAGE_BUILD_CLI_ARGS+=(--secret id=${id},src=${!var_name})
+        # --- Image tag
+        #     (tag for the *interim* build artifact.. the *actual* tag will be
+        #     applied at the end of the Pipeline, if successful)
+        IMAGE_AS_BUILT_VERSION=build.${CI_PIPELINE_IID}
 
-        JOB_SETTINGS_TABLE+=("Secret (file): ${id};${!var_name}")
-      done
 
-      mkdir -p .image-build/secrets
-      for var_name in $(compgen -v IMAGE_BUILD_SECRET_STRING_); do
-        id=${var_name#IMAGE_BUILD_SECRET_STRING_}
-        id=${id//_/-}
-        id=${id,,}
+        # --- We have the full URI now (name and tag)
+        IMAGE_AS_BUILT_URI=${IMAGE_AS_BUILT_FULL_NAME}:${IMAGE_AS_BUILT_VERSION}
+      }
 
-        echo "${!var_name}" > .image-build/secrets/${id}
-        IMAGE_BUILD_CLI_ARGS+=(--secret id=${id},src=.image-build/secrets/${id})
 
-        JOB_SETTINGS_TABLE+=("Secret (string): ${id};<masked>")
-      done
+      # ----------------------------------------------------------------------
+      # Calculates the Podman CLI arguments for building the image.
+      #
+      # Defines/declares the following outputs:
+      #   - IMAGE_BUILD_CLI_ARGS: A Bash *array* containing the Podman CLI
+      #                           arguments suitable for passing to
+      #                           'podman image build ...'
+      function fn_image_build_cli() {
+        IMAGE_BUILD_CLI_ARGS=()
+        IMAGE_BUILD_CLI_ARGS+=(--tag ${IMAGE_AS_BUILT_URI})
+
+        IMAGE_BUILD_CONTEXT=${IMAGE_BUILD_CONTEXT:-.}
+
+        # --- Dockerfile:
+        IMAGE_BUILD_DOCKERFILE=${IMAGE_BUILD_DOCKERFILE:-Dockerfile}
+        if [[ -f ${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_DOCKERFILE} ]]; then
+          IMAGE_BUILD_DOCKERFILE=${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_DOCKERFILE}
+        fi
+        IMAGE_BUILD_CLI_ARGS+=(--file ${IMAGE_BUILD_DOCKERFILE})
+
+
+        # --- Custom build target, if applicable:
+        if [[ -n "${IMAGE_BUILD_TARGET}" ]]; then
+          IMAGE_BUILD_CLI_ARGS+=(--target ${IMAGE_BUILD_TARGET})
+        fi
+
+
+        # --- Ignorefile:
+        if [[ -f ${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_IGNOREFILE} ]]; then
+          IMAGE_BUILD_IGNOREFILE=${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_IGNOREFILE}
+        fi
+        if [[ -f ${IMAGE_BUILD_IGNOREFILE} ]]; then
+          IMAGE_BUILD_CLI_ARGS+=(--ignorefile ${IMAGE_BUILD_IGNOREFILE})
+        fi
+
+
+        # --- Labels;
+        declare -A IMAGE_LABELS
+        if [[ -z "${IMAGE_BUILD_NO_LABELS}" ]]; then
+          IMAGE_LABELS[org.opencontainers.image.title]="'${CI_PROJECT_TITLE}'"
+          IMAGE_LABELS[org.opencontainers.image.description]="'${CI_PROJECT_DESCRIPTION}'"
+          IMAGE_LABELS[org.opencontainers.image.created]="'$(date --rfc-3339 seconds)'"
+          IMAGE_LABELS[org.opencontainers.image.url]="${CI_PROJECT_URL}"
+          IMAGE_LABELS[org.opencontainers.image.version]="$(fn_str_slug ${CI_COMMIT_REF_NAME})"
+          IMAGE_LABELS[org.opencontainers.image.revision]="${CI_COMMIT_SHA}"
+        fi
+
+        for key in ${!IMAGE_LABELS[@]}; do
+          IMAGE_BUILD_CLI_ARGS+=(--label ${key}="${IMAGE_LABELS[$key]}")
+        done
+
+
+        # --- Build args:
+        for var_name in  CI_COMMIT_REF_NAME  CI_PIPELINE_IID  SEMANTIC_VERSION  RELEASE_TRAIN; do
+          if [[ -n "${!var_name}" ]]; then
+            IMAGE_BUILD_CLI_ARGS+=(--build-arg ${var_name}="${!var_name}")
+          fi
+        done
+
+        for var_name in $(compgen -v IMAGE_BUILD_ARG_); do
+          arg=${var_name#IMAGE_BUILD_ARG_}
+          IMAGE_BUILD_CLI_ARGS+=(--build-arg ${arg}="${!var_name}")
+        done
+
+
+        # --- Secrets (file):
+        for var_name in $(compgen -v IMAGE_BUILD_SECRET_FILE_); do
+          id=${var_name#IMAGE_BUILD_SECRET_FILE_}
+          id=${id//_/-}
+          id=${id,,}
+          IMAGE_BUILD_CLI_ARGS+=(--secret id=${id},src=${!var_name})
+        done
+
+        # --- Secrets (string):
+        mkdir -p .image-build/secrets
+        for var_name in $(compgen -v IMAGE_BUILD_SECRET_STRING_); do
+          id=${var_name#IMAGE_BUILD_SECRET_STRING_}
+          id=${id//_/-}
+          id=${id,,}
+
+          echo "${!var_name}" > .image-build/secrets/${id}
+          IMAGE_BUILD_CLI_ARGS+=(--secret id=${id},src=.image-build/secrets/${id})
+        done
+
+
+        # --- Context:
+        # Should be the last argument (it's positional)
+        IMAGE_BUILD_CLI_ARGS+=(${IMAGE_BUILD_CONTEXT})
+
+        fn_image_build_cli_print_table
+      }
+
+
+      # ----------------------------------------------------------------------
+      # Displays the IMAGE_BUILD_CLI_ARGS in tabular format
+      function fn_image_build_cli_print_table() {
+        JOB_SETTINGS_TABLE=()
+
+        local cli_args_copy=("${IMAGE_BUILD_CLI_ARGS[@]}")
+        while (( ${#cli_args_copy[@]} )); do
+          cli_key="${cli_args_copy[0]}"
+          cli_value="${cli_args_copy[1]}"
+
+          if [[ "${cli_key}" == "--"* ]]; then
+            # Strip off the prefix from the beginning
+            cli_key="${cli_key#--}"
+            cli_args_copy=("${cli_args_copy[@]:2}")
+          else
+            # The only positional argument (not a switch prefixed by "--") is
+            # the build context
+            cli_value=${cli_key}
+            cli_key="context"
+            cli_args_copy=("${cli_args_copy[@]:1}")
+          fi
+
+          cli_key=$(fn_str_title_case ${cli_key})
+
+          JOB_SETTINGS_TABLE+=("${cli_key};${cli_value}")
+
+        done
+
+        fn_print_settings_table "${JOB_SETTINGS_TABLE[@]}"
+      }

@@ -178,9 +178,9 @@ The pipeline derives a SemVer from the ref:
 | ------------------------------ | ---------------------------------------------- |
 | Protected tag `vX.Y.Z`         | `X.Y.Z` (release)                              |
 | Protected branch `release/X.Y` | `X.Y.<next>-rc+<pipeline>` (release candidate) |
-| Any other ref                  | `0.0.0-<ref-slug>+<pipeline>` (dev build)      |
+| Any other ref                  | `0.0.0-<ref-str_slug>+<pipeline>` (dev build)      |
 
-Promoted images are tagged with the commit ref slug, and (where applicable) the
+Promoted images are tagged with the commit ref str_slug, and (where applicable) the
 release-train `X.Y` and the full SemVer.
 
 > Release tags and `release/X.Y` branches are expected to be **protected**.

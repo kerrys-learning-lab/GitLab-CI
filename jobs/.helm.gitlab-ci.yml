@@ -1,6 +1,6 @@
 include:
   - local: jobs/.defaults.gitlab-ci.yml
-  - local: jobs/.pipeline-version.gitlab-ci.yml
+  - local: lib/pipeline-version.gitlab-ci.yml
   - local: jobs/.stages.gitlab-ci.yml
 
 
@@ -21,8 +21,16 @@ include:
     - !reference [.pipeline-version,    script]
     - |
       # --- helm-package -----------------------------------------------------
+      HELM_CHART_APP_VERSION=${RELEASE_TRAIN:-${SEMANTIC_VERSION}}
+
+      JOB_SETTINGS_TABLE=()
+      JOB_SETTINGS_TABLE+=("App version;${HELM_CHART_APP_VERSION}")
+      JOB_SETTINGS_TABLE+=("Version;${SEMANTIC_VERSION}")
+
+      fn_print_settings_table "${JOB_SETTINGS_TABLE[@]}"
+
       mkdir -p .helm-package
-      helm package  --app-version ${RELEASE_TRAIN:-${SEMANTIC_VERSION}}  \
+      helm package  --app-version ${HELM_CHART_APP_VERSION}  \
                     --version     ${SEMANTIC_VERSION}  \
                     --destination .helm-package  \
                     ${HELM_CHART_DIR:-.}

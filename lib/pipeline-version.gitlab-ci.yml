@@ -1,0 +1,172 @@
+include:
+  - local: lib/utilities.gitlab-ci.yml
+
+
+# ----------------------------------------------------------------------------
+# Calculates this pipeline's Semantic Version information
+.pipeline-version:
+  script:
+    - !reference [.utilities//load-all, script]
+    - |
+      # --- pipeline-version -------------------------------------------------
+
+      if [[ -z "${PIPELINE_VERSION__DEFINED}" ]]; then
+        #                                  +------------------------------------- Major (group 1)
+        #                                  |
+        #                                  |              +---------------------- Minor (group 2)
+        #                                  |              |
+        #                                  |              |                +----- Patch (group 3)
+        #                                  |              |                |
+        #                             vvvvvvvvvvvv    vvvvvvvvvvvv    vvvvvvvvvvvv
+        readonly RELEASE_TAG_REGEX='v([[:digit:]]+)\.([[:digit:]]+)\.([[:digit:]]+)'
+
+
+        #                                            +---------------------------- major (group 1)
+        #                                            |
+        #                                            |               +------------ minor (group 2)
+        #                                            |               |
+        #                                            |               |
+        #                                            |               |
+        #                                            |               |
+        #                                       vvvvvvvvvvvv    vvvvvvvvvvvv
+        readonly RELEASE_BRANCH_REGEX='release/([[:digit:]]+)\.([[:digit:]]+)'
+
+
+        # ----------------------------------------------------------------------
+        # When CI_COMMIT_TAG is defined, returns the SemVer corresponding to the
+        # tag.
+        #
+        # NOTE: It is considered an error for a *protected* CI_COMMIT_TAG to
+        #       NOT match the SemVer regex above.
+        function fn_pipeline_version__process_ci_commit_tag () {
+          if [[ -z "${CI_COMMIT_TAG}" ]]; then
+            return
+          fi
+
+          if [[ ${CI_COMMIT_TAG} =~ ${RELEASE_TAG_REGEX} ]]; then
+            if [[ "${CI_COMMIT_REF_PROTECTED}" == "false" ]]; then
+              fn_log_error "❌  Release tags (vX.Y.Z) should be protected"
+              exit 3
+            fi
+
+            SEMANTIC_VERSION_MAJOR=${BASH_REMATCH[1]}
+            SEMANTIC_VERSION_MINOR=${BASH_REMATCH[2]}
+            SEMANTIC_VERSION_PATCH=${BASH_REMATCH[3]}
+
+            RELEASE_TRAIN=${SEMANTIC_VERSION_MAJOR}.${SEMANTIC_VERSION_MINOR}
+            SEMANTIC_VERSION=${RELEASE_TRAIN}.${SEMANTIC_VERSION_PATCH}
+          elif [[ "${CI_COMMIT_REF_PROTECTED}" == "true" ]]; then
+            fn_log_error "❌  Protected tag (${CI_COMMIT_TAG}) is not a valid SemVer"
+            fn_log_error "    Expected vX.Y.Z"
+            exit 3
+          fi
+        }
+
+
+        # ----------------------------------------------------------------------
+        # When CI_COMMIT_BRANCH is defined, returns the SemVer corresponding to
+        # the branch.
+        #
+        # NOTE: It is considered an error for a *protected* CI_COMMIT_BRANCH to
+        #       NOT match the SemVer regex above, unless the CI_COMMIT_BRANCH
+        #       is the DEFAULT branch (a special case).
+        function fn_pipeline_version__process_ci_commit_branch () {
+          if [[ -z "${CI_COMMIT_BRANCH}" ]]; then
+            return
+          fi
+
+          if [[ ${CI_COMMIT_BRANCH} =~ ${RELEASE_BRANCH_REGEX} ]]; then
+            if [[ "${CI_COMMIT_REF_PROTECTED}" == "false" ]]; then
+              fn_log_error "❌  Release branches (release/X.Y) should be protected"
+              exit 3
+            fi
+
+            SEMANTIC_VERSION_MAJOR=${BASH_REMATCH[1]}
+            SEMANTIC_VERSION_MINOR=${BASH_REMATCH[2]}
+            SEMANTIC_VERSION_PATCH=0
+
+            RELEASE_TRAIN=${SEMANTIC_VERSION_MAJOR}.${SEMANTIC_VERSION_MINOR}
+
+            # NOTE: TAGS_FOR_RELEASE_TRAIN will only ever be pre-defined when testing
+            TAGS_FOR_RELEASE_TRAIN=${TAGS_FOR_RELEASE_TRAIN:-$(git tag -l "v${RELEASE_TRAIN}.*")}
+            if [[ -n "${TAGS_FOR_RELEASE_TRAIN}" ]]; then
+              for tag in ${TAGS_FOR_RELEASE_TRAIN}; do
+                if [[ ${tag} =~ ${RELEASE_TAG_REGEX} ]]; then
+                  tag_patch_level=${BASH_REMATCH[3]}
+                  if [[ ${tag_patch_level} -gt ${SEMANTIC_VERSION_PATCH} ]]; then
+                    SEMANTIC_VERSION_PATCH=${tag_patch_level}
+                  fi
+                fi
+              done
+
+              # But, this is a release candidate for the *next* patch:
+              SEMANTIC_VERSION_PATCH=$((${SEMANTIC_VERSION_PATCH} + 1))
+            fi
+
+            SEMANTIC_VERSION=${RELEASE_TRAIN}.${SEMANTIC_VERSION_PATCH}-rc+${CI_PIPELINE_IID}
+          elif [[ "${CI_COMMIT_REF_PROTECTED}" == true && ${CI_COMMIT_BRANCH} != ${CI_DEFAULT_BRANCH} ]]; then
+              fn_log_error "❌  Protected branch (${CI_COMMIT_BRANCH}) is not valid"
+              fn_log_error "    Expected: 'release/X.Y'"
+              exit 3
+          fi
+        }
+
+
+        # ----------------------------------------------------------------------
+        # Processes CI_COMMIT_REFs that do not match the SemVer regexes above.
+        function fn_pipeline_version__process_ci_commit_ref() {
+          if [[ -n "${SEMANTIC_VERSION}" ]]; then
+            return
+          fi
+
+          if [[ ${DEFAULT_SEMVER_PREFIX:-v0.0.0} =~ ${RELEASE_TAG_REGEX} ]]; then
+            SEMANTIC_VERSION_MAJOR=${BASH_REMATCH[1]}
+            SEMANTIC_VERSION_MINOR=${BASH_REMATCH[2]}
+            SEMANTIC_VERSION_PATCH=${BASH_REMATCH[3]}
+
+            SEMANTIC_VERSION_COMMIT_SLUG=$(fn_str_slug ${CI_COMMIT_REF_NAME})
+            SEMANTIC_VERSION=${SEMANTIC_VERSION_MAJOR}.${SEMANTIC_VERSION_MINOR}.${SEMANTIC_VERSION_PATCH}-${SEMANTIC_VERSION_COMMIT_SLUG}+${CI_PIPELINE_IID}
+
+            if [[ ${CI_COMMIT_REF_PROTECTED} == true ]]; then
+              RELEASE_TRAIN=${SEMANTIC_VERSION_COMMIT_SLUG}
+            fi
+          else
+            fn_log_error "❌  Expected: DEFAULT_SEMVER_PREFIX should match the semver regex: ${RELEASE_TAG_REGEX}"
+            fn_log_error "    Actual:   ${DEFAULT_SEMVER_PREFIX}"
+            exit 6
+          fi
+        }
+
+
+        # ----------------------------------------------------------------------
+        # From the current CI_COMMIT_REF (whether CI_COMMIT_TAG or
+        # CI_COMMIT_BRANCH), determines a corresponding SemVer.
+        #
+        # Defines/declares the following outputs:
+        #   - RELEASE_TRAIN:          The release train (first two digits of the
+        #                             SemVer)
+        #   - SEMANTIC_VERSION:       The full SemVer, possibly including release
+        #                             candidate information and build metadata
+        #   - SEMANTIC_VERSION_MAJOR: The major component of the SemVer
+        #   - SEMANTIC_VERSION_MINOR: The minor component of the SemVer
+        #   - SEMANTIC_VERSION_PATCH: The patch component of the SemVer
+        function fn_pipeline_version() {
+          SEMANTIC_VERSION=
+
+          if [[ -n "${CI_COMMIT_TAG}" ]]; then
+            fn_pipeline_version__process_ci_commit_tag
+          else
+            fn_pipeline_version__process_ci_commit_branch
+          fi
+
+          # If neither of the two functions above produced a SemVer based on the
+          # corresponding regex, this will produce a fall-back SemVer:
+          if [[ -z "${SEMANTIC_VERSION}" ]]; then
+            fn_pipeline_version__process_ci_commit_ref
+          fi
+        }
+
+        PIPELINE_VERSION__DEFINED=true
+      fi
+
+      fn_pipeline_version
