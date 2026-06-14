@@ -118,9 +118,10 @@
   script:
     - |
       # --- ansible-playbook-run ---------------------------------------------
+      set -x
 
       if [[ -n "${ANSIBLE_REQUIREMENTS_FILE}" ]]; then
-        ansible-galaxy install --requirements-file ${ANSIBLE_DIR}/${ANSIBLE_REQUIREMENTS_FILE}
+        ansible-galaxy collection install --requirements-file ${ANSIBLE_DIR}/${ANSIBLE_REQUIREMENTS_FILE}
       fi
 
       if [[ -n "${ANSIBLE_INVENTORY_PATH}" ]]; then
@@ -135,6 +136,7 @@
         ANSIBLE_CLI_ARGS+=(--user ${ANSIBLE_REMOTE_USER})
       fi
 
+      export ANSIBLE_LOG_PATH
       mkdir -p $(dirname ${ANSIBLE_LOG_PATH})
       ansible-playbook  ${ANSIBLE_CLI_ARGS[@]}  ${ANSIBLE_DIR}/${ANSIBLE_FILE}
   artifacts:
