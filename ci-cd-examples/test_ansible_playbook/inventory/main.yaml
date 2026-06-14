@@ -1,0 +1,7 @@
+all:
+  hosts:
+    asus:
+    elitedesk:
+    gitlab01:
+    infrastructure01:
+    nvidia-5080:

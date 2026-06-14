@@ -1,0 +1,178 @@
+# ============================================================================
+spec:
+  inputs:
+
+    # ------------------------------------------------------------------------
+    playbook_dir:
+      description: Relative path to the playbook directory
+      type: string
+      default: .
+    playbook_file:
+      description: Path to the playbook, relative to 'playbook_dir'
+      type: string
+    playbook_inventory_dir:
+      description: Path to the inventory, relative to 'playbook_dir'.  Leave
+                   blank if ansible.cfg already contains the inventory
+                   configuration
+      type: string
+      default: ''
+    playbook_requirements_file:
+      description: Path to requirements, relative to 'playbook_dir'
+      type: string
+      default: ''
+    playbook_ansible_cfg_file:
+      description: Path for ansible.cfg, relative to 'playbook_dir'
+      type: string
+      default: ansible.cfg
+    playbook_host_filter:
+      description: Limit selected hosts using a pattern
+      type: string
+      default: ''
+    playbook_remote_user:
+      description: Assigns the remote username to be used by Ansible
+      type: string
+      default: gitlab-runner
+
+
+    # ------------------------------------------------------------------------
+    playbook_test_ssh_connection_stage:
+      description: Assigns the Pipeline stage for the 'playbook test ssh connection build'
+                   Job
+      type: string
+      default: .pre
+
+
+    # ------------------------------------------------------------------------
+    playbook_lint_stage:
+      description: Assigns the Pipeline stage for the 'ansible lint' Job
+      type: string
+      default: test
+    playbook_lint_strict:
+      description: If true, enables '--strict' mode
+      type: boolean
+      default: true
+
+
+    # ------------------------------------------------------------------------
+    playbook_dry_run_stage:
+      description: Assigns the Pipeline stage for the 'playbook dry-run' Job
+      type: string
+      default: test
+
+
+    # ------------------------------------------------------------------------
+    playbook_run_stage:
+      description: Assigns the Pipeline stage for the 'playbook run' Job
+      type: string
+      default: publish
+
+
+    # ------------------------------------------------------------------------
+    playbook_release_stage:
+      description: Assigns the Pipeline stage for the 'playbook release' Job
+      type: string
+      default: release
+    playbook_release_enabled:
+      description: If true, and this Pipeline is for a protected tag, a
+                   Release will be created.
+
+                   NOTE -  Only one Job in a Pipeline should create a Release.
+      type: boolean
+      default: true
+
+
+    # ------------------------------------------------------------------------
+    # These settings affect Job names for all Jobs instantiated by the component
+    jobs_name_prefix:
+      description: Optional prefix for the Job names
+      type: string
+      default: ''
+    jobs_name_suffix:
+      description: Optional suffix for the Job names
+      type: string
+      default: ''
+
+
+  # --------------------------------------------------------------------------
+  # Propagate component metadata
+  component:
+    - name
+    - version
+    - reference
+
+
+---
+
+
+# ============================================================================
+include:
+  - local: .gitlab-ci/lib/defaults.gitlab-ci.yml
+  - local: .gitlab-ci/jobs/.ansible.gitlab-ci.yml
+  - local: .gitlab-ci/jobs/.release.gitlab-ci.yml
+  - local: .gitlab-ci/lib/stages.gitlab-ci.yml
+  - local: .gitlab-ci/lib/rules.gitlab-ci.yml
+  - local: templates/pipeline-version.job.yml
+
+
+# ============================================================================
+# Validate that the GitLab Runner can SSH to remote hosts
+"$[[ inputs.jobs_name_prefix ]]test ssh connection$[[ inputs.jobs_name_suffix ]]":
+  extends: .ansible-test-ssh-connection
+  stage: $[[ inputs.playbook_test_ssh_connection_stage ]]
+  variables:
+    ANSIBLE_PLAYBOOK_DIR: $[[ inputs.playbook_dir ]]
+    PLAYBOOK_INVENTORY_DIR: $[[ inputs.playbook_inventory_dir ]]
+    ANSIBLE_HOST_FILTER: $[[ inputs.playbook_host_filter ]]
+    ANSIBLE_REMOTE_USER: $[[ inputs.playbook_remote_user ]]
+
+
+# ============================================================================
+"$[[ inputs.jobs_name_prefix ]]ansible lint$[[ inputs.jobs_name_suffix ]]":
+  extends: .ansible-lint
+  stage: $[[ inputs.playbook_lint_stage ]]
+  variables:
+    ANSIBLE_LINTABLE_PATH: $[[ inputs.playbook_dir ]]/$[[ inputs.playbook_file ]]
+    ANSIBLE_LINT_STRICT: $[[ inputs.playbook_lint_strict ]]
+
+
+# ============================================================================
+"$[[ inputs.jobs_name_prefix ]]playbook dry run$[[ inputs.jobs_name_suffix ]]":
+  extends: .ansible-playbook-run
+  stage: $[[ inputs.playbook_dry_run_stage ]]
+  variables:
+    ANSIBLE_PLAYBOOK_DIR: $[[ inputs.playbook_dir ]]
+    ANSIBLE_PLAYBOOK_PATH: $[[ inputs.playbook_file ]]
+    PLAYBOOK_INVENTORY_DIR: $[[ inputs.playbook_inventory_dir ]]
+    ANSIBLE_HOST_FILTER: $[[ inputs.playbook_host_filter ]]
+    ANSIBLE_REMOTE_USER: $[[ inputs.playbook_remote_user ]]
+    ANSIBLE_DRY_RUN: true
+  rules:
+    - !reference [.rules//not-a-merge-request,  rules]
+    - !reference [.rules//not-default-branch,   rules]
+
+
+# ============================================================================
+"$[[ inputs.jobs_name_prefix ]]playbook run$[[ inputs.jobs_name_suffix ]]":
+  extends: .ansible-playbook-run
+  stage: $[[ inputs.playbook_run_stage ]]
+  variables:
+    ANSIBLE_PLAYBOOK_DIR: $[[ inputs.playbook_dir ]]
+    ANSIBLE_PLAYBOOK_PATH: $[[ inputs.playbook_file ]]
+    PLAYBOOK_INVENTORY_DIR: $[[ inputs.playbook_inventory_dir ]]
+    ANSIBLE_HOST_FILTER: $[[ inputs.playbook_host_filter ]]
+    ANSIBLE_DRY_RUN: false
+    ANSIBLE_REMOTE_USER: $[[ inputs.playbook_remote_user ]]
+  rules:
+    - !reference [.rules//not-a-merge-request,  rules]
+    - !reference [.rules//default-branch,        rules]
+
+
+# ============================================================================
+"$[[ inputs.jobs_name_prefix ]]playbook release$[[ inputs.jobs_name_suffix ]]":
+  extends: .release
+  stage: $[[ inputs.playbook_release_stage ]]
+  rules:
+    - if: "'$[[ inputs.playbook_release_enabled ]]' == 'false'"
+      when: never
+    - !reference [.rules//not-a-merge-request,  rules]
+    - !reference [.rules//protected-tag,        rules]
