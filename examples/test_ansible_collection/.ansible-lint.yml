@@ -1,0 +1,9 @@
+---
+# Collection roles use FQCN underscores, so the home-lab `role-name` skip is
+# intentionally NOT carried over here.
+skip_list:
+  - name[template]   # Jinja in task names is used deliberately
+  - var-naming       # Roles namespace vars as <role>_defaults, not <role>_
+
+exclude_paths:
+  - artifacts

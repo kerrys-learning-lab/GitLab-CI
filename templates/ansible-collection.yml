@@ -1,0 +1,102 @@
+# ============================================================================
+spec:
+  inputs:
+    # ------------------------------------------------------------------------
+    collection_dir:
+      description: Relative path to the collection contents
+      type: string
+      default: .
+
+
+    # ------------------------------------------------------------------------
+    collection_build_stage:
+      description: Assigns the Pipeline stage for the 'ansible-galaxy build'
+                   Job
+      type: string
+      default: build
+
+
+    # ------------------------------------------------------------------------
+    collection_lint_stage:
+      description: Assigns the Pipeline stage for the 'ansible-lint' Job
+      type: string
+      default: test
+    collection_lint_strict:
+      description: If true, enables '--strict' mode
+      type: boolean
+      default: true
+
+
+    # ------------------------------------------------------------------------
+    collection_release_stage:
+      description: Assigns the Pipeline stage for the 'collection release' Job
+      type: string
+      default: release
+    collection_release_enabled:
+      description: If true, and this Pipeline is for a protected tag, a
+                   Release will be created.
+
+                   NOTE -  Only one Job in a Pipeline should create a Release.
+      type: boolean
+      default: true
+
+
+    # ------------------------------------------------------------------------
+    # These settings affect Job names for all Jobs instantiated by the component
+    jobs_name_prefix:
+      description: Optional prefix for the Job names
+      type: string
+      default: ''
+    jobs_name_suffix:
+      description: Optional suffix for the Job names
+      type: string
+      default: ''
+
+
+  # --------------------------------------------------------------------------
+  # Propagate component metadata
+  component:
+    - name
+    - version
+    - reference
+
+
+---
+
+
+# ============================================================================
+include:
+  - local: jobs/.defaults.gitlab-ci.yml
+  - local: jobs/.ansible-collection.gitlab-ci.yml
+  - local: jobs/.release.gitlab-ci.yml
+  - local: lib/rules.gitlab-ci.yml
+  - local: templates/pipeline-version.gitlab-ci.yml
+
+
+# ============================================================================
+# Validate that the collection metadata is well-formed and assembles cleanly.
+"$[[ inputs.jobs_name_prefix ]]ansible collection build$[[ inputs.jobs_name_suffix ]]":
+  extends: .ansible-collection-build
+  stage: $[[ inputs.collection_build_stage ]]
+  variables:
+    ANSIBLE_COLLECTION_DIR: $[[ inputs.collection_dir ]]
+
+
+# ============================================================================
+"$[[ inputs.jobs_name_prefix ]]ansible lint$[[ inputs.jobs_name_suffix ]]":
+  extends: .ansible-lint
+  stage: $[[ inputs.collection_lint_stage ]]
+  variables:
+    ANSIBLE_COLLECTION_DIR: $[[ inputs.collection_dir ]]
+    ANSIBLE_LINT_STRICT: $[[ inputs.collection_lint_strict ]]
+
+
+# ============================================================================
+"$[[ inputs.jobs_name_prefix ]]collection release$[[ inputs.jobs_name_suffix ]]":
+  extends: .release
+  stage: $[[ inputs.collection_release_stage ]]
+  rules:
+    - if: "'$[[ inputs.collection_release_enabled ]]' == 'false'"
+      when: never
+    - !reference [.rules//not-a-merge-request,  rules]
+    - !reference [.rules//protected-tag,        rules]
