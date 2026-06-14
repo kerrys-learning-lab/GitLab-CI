@@ -167,13 +167,13 @@ spec:
 
 # ============================================================================
 include:
-  - local: jobs/.defaults.gitlab-ci.yml
-  - local: jobs/.image.gitlab-ci.yml
-  - local: jobs/.release.gitlab-ci.yml
-  - local: jobs/.stages.gitlab-ci.yml
-  - local: lib/utilities.gitlab-ci.yml
-  - local: lib/rules.gitlab-ci.yml
-  - local: templates/pipeline-version.gitlab-ci.yml
+  - local: .gitlab-ci/lib/defaults.gitlab-ci.yml
+  - local: .gitlab-ci/jobs/.image.gitlab-ci.yml
+  - local: .gitlab-ci/jobs/.release.gitlab-ci.yml
+  - local: .gitlab-ci/lib/stages.gitlab-ci.yml
+  - local: .gitlab-ci/lib/utilities.gitlab-ci.yml
+  - local: .gitlab-ci/lib/rules.gitlab-ci.yml
+  - local: templates/pipeline-version.job.yml
 
 
 # ============================================================================

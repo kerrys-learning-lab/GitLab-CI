@@ -3,7 +3,7 @@ FROM docker.io/bash:5.3.12-alpine3.23 AS base
 
 FROM base AS unittest
 
-ENV IMAGE_UNIT_TEST_WORKING_DIR=/var/lib/image-unit-test
+ENV IMAGE_UNIT_TEST_WORKING_DIR=/var/.gitlab-ci/lib/image-unit-test
 ENV BUILD_ARG_FAILURE_FILE=${IMAGE_UNIT_TEST_WORKING_DIR}/build-arg-test-failed
 ENV SECRET_FAILURE_FILE=${IMAGE_UNIT_TEST_WORKING_DIR}/secret-test-failed
 

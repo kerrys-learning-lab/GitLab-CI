@@ -20,8 +20,8 @@ tags:
   - nvidia
   - certbot
 
-repository: https://gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/examples/ansible-collection
-issues: https://gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/examples/ansible-collection/-/issues
+repository: https://gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/ci-cd-examples/ansible-collection
+issues: https://gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/ci-cd-examples/ansible-collection/-/issues
 
 # Composed at the playbook layer — no inter-collection dependencies.
 # See ADR 0001 (devsecops/ansible) §5.
