@@ -1,7 +1,3 @@
-include:
-  - local: .gitlab-ci/lib/auth.gitlab-ci.yml
-
-
 # ============================================================================
 .ansible-test-ssh-connection:
   image: $GITLABCI_DEFAULT_ANSIBLE_BUILDER_IMAGE:$GITLABCI_DEFAULT_ANSIBLE_BUILDER_IMAGE_REF
