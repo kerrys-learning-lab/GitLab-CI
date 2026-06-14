@@ -11,6 +11,7 @@ include:
     inputs:
       jobs_name_prefix: "[example] "
       playbook_dir: ci-cd-examples/test_ansible_playbook
+      playbook_inventory_dir: inventory
       playbook_file: ping.playbook.yml
       playbook_requirements_file: requirements.yaml
       # Can't trust that my Asus laptop is on/available when CI/CD runs

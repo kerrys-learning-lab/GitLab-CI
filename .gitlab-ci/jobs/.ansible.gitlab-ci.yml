@@ -9,7 +9,8 @@
     SSH_TEST_COMMAND: uname -a
     SSH_TEST_OPTIONS: -o BatchMode=yes
   before_script:
-    - !reference [.auth//ssh-remote-access,  script]
+    - !reference [.utilities//load-all,     script]
+    - !reference [.auth//ssh-remote-access, script]
   script:
     - |
       set -x
