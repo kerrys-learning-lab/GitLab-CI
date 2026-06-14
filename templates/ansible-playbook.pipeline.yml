@@ -3,32 +3,32 @@ spec:
   inputs:
 
     # ------------------------------------------------------------------------
-    playbook_dir:
+    ansible_dir:
       description: Relative path to the playbook directory
       type: string
       default: .
-    playbook_file:
-      description: Path to the playbook, relative to 'playbook_dir'
+    ansible_file:
+      description: Path to the playbook, relative to 'ansible_dir'
       type: string
-    playbook_inventory_dir:
-      description: Path to the inventory, relative to 'playbook_dir'.  Leave
+    ansible_inventory_path:
+      description: Path to the inventory, relative to 'ansible_dir'.  Leave
                    blank if ansible.cfg already contains the inventory
                    configuration
       type: string
       default: ''
-    playbook_requirements_file:
-      description: Path to requirements, relative to 'playbook_dir'
+    ansible_requirements_file:
+      description: Path to requirements, relative to 'ansible_dir'
       type: string
       default: ''
-    playbook_ansible_cfg_file:
-      description: Path for ansible.cfg, relative to 'playbook_dir'
+    ansible_cfg_file:
+      description: Path for ansible.cfg, relative to 'ansible_dir'
       type: string
       default: ansible.cfg
-    playbook_host_filter:
+    ansible_host_filter:
       description: Limit selected hosts using a pattern
       type: string
       default: ''
-    playbook_remote_user:
+    ansible_remote_user:
       description: Assigns the remote username to be used by Ansible
       type: string
       default: gitlab-runner
@@ -121,10 +121,10 @@ include:
   extends: .ansible-test-ssh-connection
   stage: $[[ inputs.playbook_test_ssh_connection_stage ]]
   variables:
-    ANSIBLE_PLAYBOOK_DIR: $[[ inputs.playbook_dir ]]
-    PLAYBOOK_INVENTORY_DIR: $[[ inputs.playbook_inventory_dir ]]
-    ANSIBLE_HOST_FILTER: $[[ inputs.playbook_host_filter ]]
-    ANSIBLE_REMOTE_USER: $[[ inputs.playbook_remote_user ]]
+    ANSIBLE_DIR: $[[ inputs.ansible_dir ]]
+    ANSIBLE_INVENTORY_PATH: $[[ inputs.ansible_inventory_path ]]
+    ANSIBLE_HOST_FILTER: $[[ inputs.ansible_host_filter ]]
+    ANSIBLE_REMOTE_USER: $[[ inputs.ansible_remote_user ]]
 
 
 # ============================================================================
@@ -132,7 +132,9 @@ include:
   extends: .ansible-lint
   stage: $[[ inputs.playbook_lint_stage ]]
   variables:
-    ANSIBLE_LINTABLE_PATH: $[[ inputs.playbook_dir ]]/$[[ inputs.playbook_file ]]
+    ANSIBLE_DIR: $[[ inputs.ansible_dir ]]
+    ANSIBLE_FILE: $[[ inputs.ansible_file ]]
+    ANSIBLE_CFG_FILE: $[[ inputs.ansible_cfg_file ]]
     ANSIBLE_LINT_STRICT: $[[ inputs.playbook_lint_strict ]]
 
 
@@ -141,11 +143,11 @@ include:
   extends: .ansible-playbook-run
   stage: $[[ inputs.playbook_dry_run_stage ]]
   variables:
-    ANSIBLE_PLAYBOOK_DIR: $[[ inputs.playbook_dir ]]
-    ANSIBLE_PLAYBOOK_PATH: $[[ inputs.playbook_file ]]
-    PLAYBOOK_INVENTORY_DIR: $[[ inputs.playbook_inventory_dir ]]
-    ANSIBLE_HOST_FILTER: $[[ inputs.playbook_host_filter ]]
-    ANSIBLE_REMOTE_USER: $[[ inputs.playbook_remote_user ]]
+    ANSIBLE_DIR: $[[ inputs.ansible_dir ]]
+    ANSIBLE_FILE: $[[ inputs.ansible_file ]]
+    ANSIBLE_INVENTORY_PATH: $[[ inputs.ansible_inventory_path ]]
+    ANSIBLE_HOST_FILTER: $[[ inputs.ansible_host_filter ]]
+    ANSIBLE_REMOTE_USER: $[[ inputs.ansible_remote_user ]]
     ANSIBLE_DRY_RUN: true
   rules:
     - !reference [.rules//not-a-merge-request,  rules]
@@ -157,12 +159,13 @@ include:
   extends: .ansible-playbook-run
   stage: $[[ inputs.playbook_run_stage ]]
   variables:
-    ANSIBLE_PLAYBOOK_DIR: $[[ inputs.playbook_dir ]]
-    ANSIBLE_PLAYBOOK_PATH: $[[ inputs.playbook_file ]]
-    PLAYBOOK_INVENTORY_DIR: $[[ inputs.playbook_inventory_dir ]]
-    ANSIBLE_HOST_FILTER: $[[ inputs.playbook_host_filter ]]
+    ANSIBLE_DIR: $[[ inputs.ansible_dir ]]
+    ANSIBLE_FILE: $[[ inputs.ansible_file ]]
+    ANSIBLE_INVENTORY_PATH: $[[ inputs.ansible_inventory_path ]]
+    ANSIBLE_HOST_FILTER: $[[ inputs.ansible_host_filter ]]
     ANSIBLE_DRY_RUN: false
-    ANSIBLE_REMOTE_USER: $[[ inputs.playbook_remote_user ]]
+    ANSIBLE_REMOTE_USER: $[[ inputs.ansible_remote_user ]]
+    ANSIBLE_REQUIREMENTS_FILE: $[[ inputs.ansible_requirements_file ]]
   rules:
     - !reference [.rules//not-a-merge-request,  rules]
     - !reference [.rules//default-branch,        rules]

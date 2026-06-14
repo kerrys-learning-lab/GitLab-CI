@@ -2,10 +2,14 @@
 spec:
   inputs:
     # ------------------------------------------------------------------------
-    collection_dir:
+    ansible_dir:
       description: Relative path to the collection contents
       type: string
       default: .
+    ansible_cfg_file:
+      description: Path for ansible.cfg, relative to 'ansible_dir'
+      type: string
+      default: ansible.cfg
 
 
     # ------------------------------------------------------------------------
@@ -80,7 +84,8 @@ include:
   extends: .ansible-collection-build
   stage: $[[ inputs.collection_build_stage ]]
   variables:
-    ANSIBLE_COLLECTION_DIR: $[[ inputs.collection_dir ]]
+    ANSIBLE_DIR: $[[ inputs.ansible_dir ]]
+    ANSIBLE_CFG_FILE: $[[ inputs.ansible_cfg_file ]]
 
 
 # ============================================================================
@@ -88,8 +93,9 @@ include:
   extends: .ansible-lint
   stage: $[[ inputs.collection_lint_stage ]]
   variables:
-    ANSIBLE_LINTABLE_PATH: $[[ inputs.collection_dir ]]
+    ANSIBLE_DIR: $[[ inputs.ansible_dir ]]
     ANSIBLE_LINT_STRICT: $[[ inputs.collection_lint_strict ]]
+    ANSIBLE_CFG_FILE: $[[ inputs.ansible_cfg_file ]]
 
 
 # ============================================================================
