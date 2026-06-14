@@ -49,15 +49,9 @@ include:
       image_build_dockerfile: Dockerfile.derived
       image_build_base_image_name: examples/base
       image_unit_test_enabled: false
-      # Must exactly match the base's generated 'image build' Job name so
-      # that the child build runs after (and consumes) the base build.
-      #
-      #                       +----------------------- jobs_name_prefix from base
-      #                       |
-      #                       |                   +--- jobs_name_suffix from base
-      #                       |                   |
-      #                   vvvvvvvvv             vvvvvv
-      image_build_needs: "[example] image build (base)"
+      image_build_needs:
+        - pipeline version
+        - "[example] image build (base)"
       image_structure_test_filenames: examples/base-and-derived-images/tests/image-structure-tests-derived.yaml
       # Only one job in the Pipeline can create a Release... we defer to the
       # 'main' Pipeline:

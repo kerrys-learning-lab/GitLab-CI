@@ -46,8 +46,9 @@ spec:
       default: build
     image_build_needs:
       description: DAG specification for the 'image build' Job
-      type: string
-      default: ''
+      type: array
+      default:
+        - pipeline version
 
 
     # ------------------------------------------------------------------------
@@ -185,12 +186,9 @@ include:
     IMAGE_BUILD_IGNOREFILE: $[[ inputs.image_build_ignorefile ]]
     IMAGE_BUILD_TARGET:  $[[ inputs.image_build_target ]]
     IMAGE_BUILD_BASE_IMAGE_NAME: $[[ inputs.image_build_base_image_name ]]
+  needs: $[[ inputs.image_build_needs ]]
   rules:
     - !reference [.rules//not-a-merge-request,  rules]
-    - if: '"$[[ inputs.image_build_needs ]]"'
-      needs:
-        - "$[[ inputs.image_build_needs ]]"
-        - pipeline version
     - when: on_success
 
 

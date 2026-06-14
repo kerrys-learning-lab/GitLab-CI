@@ -13,8 +13,9 @@ spec:
       default: build
     helm_package_needs:
       description: DAG specification for the 'helm package' Job
-      type: string
-      default: ''
+      type: array
+      default:
+        - pipeline version
 
 
     # ------------------------------------------------------------------------
@@ -129,12 +130,9 @@ include:
   stage: $[[ inputs.helm_package_stage ]]
   variables:
     HELM_CHART_DIR:  $[[ inputs.helm_chart_dir ]]
+  needs: $[[ inputs.helm_package_needs ]]
   rules:
     - !reference [.rules//not-a-merge-request,  rules]
-    - if: '"$[[ inputs.helm_package_needs ]]"'
-      needs:
-        - "$[[ inputs.helm_package_needs ]]"
-        - pipeline version
     - when: on_success
 
 
