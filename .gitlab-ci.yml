@@ -7,52 +7,52 @@ include:
   - local: .gitlab-ci/lib/pipeline-version.gitlab-ci.yml
   - local: .gitlab-ci/lib/rules.gitlab-ci.yml
   - local: .gitlab-ci/lib/stages.gitlab-ci.yml
-  # - local: ci-cd-examples/base-and-derived-images/.gitlab-ci.yml
-  # - local: ci-cd-examples/helm-chart/.gitlab-ci.yml
-  # - local: ci-cd-examples/simple-image/.gitlab-ci.yml
-  # - local: ci-cd-examples/test_ansible_collection/.gitlab-ci.yml
+  - local: ci-cd-examples/base-and-derived-images/.gitlab-ci.yml
+  - local: ci-cd-examples/helm-chart/.gitlab-ci.yml
+  - local: ci-cd-examples/simple-image/.gitlab-ci.yml
+  - local: ci-cd-examples/test_ansible_collection/.gitlab-ci.yml
   - local: ci-cd-examples/test_ansible_playbook/.gitlab-ci.yml
 
 
-#   # --------------------------------------------------------------------------
-#   - local: templates/image.pipeline.yml
-#     inputs:
-#       jobs_name_suffix: " (base-builder)"
-#       image_name: base-builder
-#       image_unit_test_enabled: false
-#       image_structure_test_enabled: false
-#       # Only one job in the Pipeline can create a Release... we defer to the
-#       # 'main' Pipeline:
-#       image_release_enabled: false
+  # --------------------------------------------------------------------------
+  - local: templates/image.pipeline.yml
+    inputs:
+      jobs_name_suffix: " (base-builder)"
+      image_name: base-builder
+      image_unit_test_enabled: false
+      image_structure_test_enabled: false
+      # Only one job in the Pipeline can create a Release... we defer to the
+      # 'main' Pipeline:
+      image_release_enabled: false
 
 
 
-# # ============================================================================
-# bash unit-test:
-#   extends: .bash-unit-test
-#   variables:
-#     BASH_UNITTEST_TEST_PATH: test/*.test.sh
-#   before_script:
-#     - !reference [.utilities//load-all,         script]
-#     - !reference [.pipeline-version//load-all,  script]
-#     - !reference [.image-settings//load-all,    script]
-#     - |
-#       # --- bash unit-test (before_script) -----------------------------------
+# ============================================================================
+bash unit-test:
+  extends: .bash-unit-test
+  variables:
+    BASH_UNITTEST_TEST_PATH: test/*.test.sh
+  before_script:
+    - !reference [.utilities//load-all,         script]
+    - !reference [.pipeline-version//load-all,  script]
+    - !reference [.image-settings//load-all,    script]
+    - |
+      # --- bash unit-test (before_script) -----------------------------------
 
-#       # These environment variables need to be exported to the bashunit
-#       # context:
-#       BASH_UNITTEST_EXPORT_ENV+="$(compgen -v RELEASE_) "
+      # These environment variables need to be exported to the bashunit
+      # context:
+      BASH_UNITTEST_EXPORT_ENV+="$(compgen -v RELEASE_) "
 
-#       # These bash functions (from the !reference above) need to be exported to
-#       # the bashunit context:
-#       BASH_UNITTEST_EXPORT_FUNCTIONS="$(compgen -A function fn_)"
+      # These bash functions (from the !reference above) need to be exported to
+      # the bashunit context:
+      BASH_UNITTEST_EXPORT_FUNCTIONS="$(compgen -A function fn_)"
 
 
 
-# # ============================================================================
-# release:
-#   extends: .release
-#   stage: release
-#   rules:
-#     - !reference [.rules//not-a-merge-request,  rules]
-#     - !reference [.rules//protected-tag,        rules]
+# ============================================================================
+release:
+  extends: .release
+  stage: release
+  rules:
+    - !reference [.rules//not-a-merge-request,  rules]
+    - !reference [.rules//protected-tag,        rules]
