@@ -1,7 +1,7 @@
 include:
-  - local: jobs/.defaults.gitlab-ci.yml
-  - local: jobs/.stages.gitlab-ci.yml
-  - local: lib/utilities.gitlab-ci.yml
+  - local: .gitlab-ci/lib/defaults.gitlab-ci.yml
+  - local: .gitlab-ci/lib/stages.gitlab-ci.yml
+  - local: .gitlab-ci/lib/utilities.gitlab-ci.yml
 
 
 # ============================================================================

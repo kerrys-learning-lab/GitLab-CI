@@ -1,9 +1,9 @@
 include:
-  - local: jobs/.defaults.gitlab-ci.yml
-  - local: jobs/.stages.gitlab-ci.yml
-  - local: lib/image-settings.gitlab-ci.yml
-  - local: lib/pipeline-version.gitlab-ci.yml
-  - local: lib/utilities.gitlab-ci.yml
+  - local: .gitlab-ci/lib/defaults.gitlab-ci.yml
+  - local: .gitlab-ci/lib/stages.gitlab-ci.yml
+  - local: .gitlab-ci/lib/image-settings.gitlab-ci.yml
+  - local: .gitlab-ci/lib/pipeline-version.gitlab-ci.yml
+  - local: .gitlab-ci/lib/utilities.gitlab-ci.yml
 
 
 # ============================================================================
