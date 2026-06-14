@@ -17,4 +17,4 @@ include:
       collection_dir: examples/test_ansible_collection
       # Only one job in the Pipeline can create a Release... we defer to the
       # 'main' Pipeline:
-      helm_release_enabled: false
+      collection_release_enabled: false
