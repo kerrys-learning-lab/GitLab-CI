@@ -1,0 +1,138 @@
+# ============================================================================
+.ansible-test-ssh-connection:
+  image: $GITLABCI_DEFAULT_ANSIBLE_BUILDER_IMAGE:$GITLABCI_DEFAULT_ANSIBLE_BUILDER_IMAGE_REF
+  variables:
+    ANSIBLE_PLAYBOOK_DIR: .
+    PLAYBOOK_INVENTORY_DIR: ''
+    ANSIBLE_HOST_FILTER: ''
+    ANSIBLE_REMOTE_USER: gitlab-runner
+    SSH_TEST_COMMAND: uname -a
+    SSH_TEST_OPTIONS: -o BatchMode=yes
+  before_script:
+    - !reference [.utilities//load-all,     script]
+    - !reference [.auth//ssh-remote-access, script]
+  script:
+    - |
+      # --- ansible-test-ssh-connection --------------------------------------
+      ANSIBLE_LIST_HOSTS_CLI_ARGS=()
+      ANSIBLE_LIST_HOSTS_CLI_ARGS+=(--list-hosts)
+
+
+      if [[ -n "${PLAYBOOK_INVENTORY_DIR}" ]]; then
+        ANSIBLE_LIST_HOSTS_CLI_ARGS+=(--inventory ${ANSIBLE_PLAYBOOK_DIR}/${PLAYBOOK_INVENTORY_DIR})
+      fi
+
+      if [[ -n "${ANSIBLE_HOST_FILTER}" ]]; then
+        ANSIBLE_LIST_HOSTS_CLI_ARGS+=(--limit "${ANSIBLE_HOST_FILTER}")
+      fi
+
+      # List the inventory (hosts), skipping the first line, which is a header
+      ANSIBLE_HOSTS=$(ansible all "${ANSIBLE_LIST_HOSTS_CLI_ARGS[@]}" | tail -n +2)
+
+      for host in ${ANSIBLE_HOSTS}; do
+        if [[ -n "${GITLABCI_DOMAIN_NAME}" ]]; then
+          host=${host}.${GITLABCI_DOMAIN_NAME}
+        fi
+
+        fn_log_info "ssh ${ANSIBLE_REMOTE_USER}@${host}..."
+        ssh  ${SSH_TEST_OPTIONS}  ${ANSIBLE_REMOTE_USER}@${host}  ${SSH_TEST_COMMAND}
+      done
+
+
+# ============================================================================
+.ansible-collection-build:
+  image: $GITLABCI_DEFAULT_ANSIBLE_BUILDER_IMAGE:$GITLABCI_DEFAULT_ANSIBLE_BUILDER_IMAGE_REF
+  variables:
+    ANSIBLE_COLLECTION_DIR: .
+    ANSIBLE_COLLECTION_BUILD_DIR: .ansible-collection-build
+  script:
+    - |
+      # --- ansible-collection-build -----------------------------------------
+
+      yq -i ".version = \"${GITLABCI_SEMANTIC_VERSION}\"" ${ANSIBLE_COLLECTION_DIR}/galaxy.yml
+
+      if [[ -f ${ANSIBLE_COLLECTION_DIR}/ansible.cfg ]]; then
+        export ANSIBLE_CONFIG=${ANSIBLE_COLLECTION_DIR}/ansible.cfg
+      fi
+
+      mkdir -p ${ANSIBLE_COLLECTION_BUILD_DIR}
+      ansible-galaxy collection build --output-path ${ANSIBLE_COLLECTION_BUILD_DIR}  ${ANSIBLE_COLLECTION_DIR}
+  artifacts:
+    paths:
+      - $ANSIBLE_COLLECTION_BUILD_DIR
+    when: always
+
+
+# ============================================================================
+.ansible-lint:
+  image: $GITLABCI_DEFAULT_ANSIBLE_BUILDER_IMAGE:$GITLABCI_DEFAULT_ANSIBLE_BUILDER_IMAGE_REF
+  variables:
+    ANSIBLE_LINTABLE_PATH: .
+    ANSIBLE_LINT_STRICT: true
+  script:
+    - |
+      # --- ansible-lint -----------------------------------------------------
+
+      ANSIBLE_LINT_CLI_ARGS=()
+      ANSIBLE_LINT_CLI_ARGS+=(--profile=production)
+
+      if [[ "${ANSIBLE_LINT_STRICT}" == "true" ]]; then
+        ANSIBLE_LINT_CLI_ARGS+=(--strict)
+      fi
+
+      export PYTHONWARNINGS=ignore
+      ansible-lint  ${ANSIBLE_LINT_CLI_ARGS[@]}  ${ANSIBLE_LINTABLE_PATH}
+
+
+# ============================================================================
+.ansible-playbook-run:
+  image: $GITLABCI_DEFAULT_ANSIBLE_BUILDER_IMAGE:$GITLABCI_DEFAULT_ANSIBLE_BUILDER_IMAGE_REF
+  stage: publish
+  variables:
+    ANSIBLE_PLAYBOOK_DIR: .
+    PLAYBOOK_INVENTORY_DIR: ''
+    PLAYBOOK_ANSIBLE_CFG_FILE: ansible.cfg
+    PLAYBOOK_REQUIREMENTS_FILE: ''
+    ANSIBLE_HOST_FILTER: ''
+    ANSIBLE_DRY_RUN: true
+    ANSIBLE_LOG_PATH: ./.ansible-run/ansible.log
+  before_script:
+    - !reference [.auth//ssh-remote-access,  script]
+  script:
+    - |
+      # --- ansible-playbook-run ---------------------------------------------
+
+      if [[ -n "${PLAYBOOK_REQUIREMENTS_FILE}" ]]; then
+        ansible-galaxy install --requirements-file ${ANSIBLE_PLAYBOOK_DIR}/${PLAYBOOK_REQUIREMENTS_FILE}
+      fi
+
+      ANSIBLE_PLAYBOOK_CLI_ARGS=()
+
+      if [[ -n "${PLAYBOOK_INVENTORY_DIR}" ]]; then
+        ANSIBLE_PLAYBOOK_CLI_ARGS+=(--inventory ${ANSIBLE_PLAYBOOK_DIR}/${PLAYBOOK_INVENTORY_DIR})
+      fi
+
+      if [[ -n "${ANSIBLE_HOST_FILTER}" ]]; then
+        ANSIBLE_PLAYBOOK_CLI_ARGS+=(--limit "${ANSIBLE_HOST_FILTER}")
+      fi
+
+      if [[ "${ANSIBLE_DRY_RUN}" == "true" ]]; then
+        ANSIBLE_PLAYBOOK_CLI_ARGS+=(--check)
+      fi
+
+      if [[ -n "${ANSIBLE_REMOTE_USER}" ]]; then
+        ANSIBLE_PLAYBOOK_CLI_ARGS+=(--user ${ANSIBLE_REMOTE_USER})
+      fi
+
+      if [[ -f ${ANSIBLE_PLAYBOOK_DIR}/${PLAYBOOK_ANSIBLE_CFG_FILE} ]]; then
+        export ANSIBLE_CONFIG=${ANSIBLE_PLAYBOOK_DIR}/${PLAYBOOK_ANSIBLE_CFG_FILE}
+      fi
+
+      mkdir -p $(dirname ${ANSIBLE_LOG_PATH})
+      ansible-playbook  ${ANSIBLE_PLAYBOOK_CLI_ARGS[@]}  ${ANSIBLE_PLAYBOOK_DIR}/${ANSIBLE_PLAYBOOK_PATH}
+  artifacts:
+    paths:
+      - $ANSIBLE_LOG_PATH
+    when: always
+  retry: 2
+  resource_group: ansible-run

@@ -1,4 +1,16 @@
 # ============================================================================
+.rules//default-branch:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+
+# ============================================================================
+.rules//not-default-branch:
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+
+
+# ============================================================================
 .rules//protected-ref:
   rules:
     - if: $CI_COMMIT_REF_PROTECTED == "true"

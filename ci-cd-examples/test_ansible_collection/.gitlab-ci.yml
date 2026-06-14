@@ -10,7 +10,7 @@ include:
   #       this project.  However, users of this 'image.pipeline' component
   #       will want to use the 'component' include syntax:
   #
-  #       component: $GITLABCI_COMPONENT_CATALOG_PROJECT/ansible-collection@$GITLABCI_COMPONENT_CATALOG_REF
+  #       component: $GITLABCI_COMPONENT_CATALOG_PROJECT/ansible-collection.pipeline@$GITLABCI_COMPONENT_CATALOG_REF
   - local: templates/ansible-collection.pipeline.yml
     inputs:
       jobs_name_prefix: "[example] "

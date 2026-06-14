@@ -1,0 +1,21 @@
+include:
+  - local: templates/pipeline-version.job.yml
+
+  # --------------------------------------------------------------------------
+  # NOTE: Below, we use 'local' include, since this file is tested as part of
+  #       this project.  However, users of this 'image.pipeline' component
+  #       will want to use the 'component' include syntax:
+  #
+  #       component: $GITLABCI_COMPONENT_CATALOG_PROJECT/ansible-playbook.pipeline@$GITLABCI_COMPONENT_CATALOG_REF
+  - local: templates/ansible-playbook.pipeline.yml
+    inputs:
+      jobs_name_prefix: "[example] "
+      playbook_dir: ci-cd-examples/test_ansible_playbook
+      playbook_inventory_dir: inventory
+      playbook_file: ping.playbook.yml
+      playbook_requirements_file: requirements.yaml
+      # Can't trust that my Asus laptop is on/available when CI/CD runs
+      playbook_host_filter: "all:!asus"
+      # Only one job in the Pipeline can create a Release... we defer to the
+      # 'main' Pipeline:
+      playbook_release_enabled: false

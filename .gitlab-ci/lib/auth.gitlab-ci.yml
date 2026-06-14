@@ -1,9 +1,8 @@
-
 # ============================================================================
-.auth//ssh-access:
+.auth//ssh-remote-access:
   script:
     - |
-      # --- auth//ssh-access -------------------------------------------------
+      # --- auth//ssh-remote-access ------------------------------------------
       eval $(ssh-agent -s)
       chmod 400 "${SSH_PRIVATE_KEY_FILE}"
       ssh-add "${SSH_PRIVATE_KEY_FILE}"
