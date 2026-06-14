@@ -1,0 +1,10 @@
+# ============================================================================
+FROM docker.io/bash:5.3.12-alpine3.23
+
+ARG CI_COMMIT_REF_NAME="<none>"
+ARG CI_PIPELINE_IID="<none>"
+ENV BASE_METADATA_FILEPATH=/etc/kerrys-learning-lab/base
+RUN mkdir -p $(dirname ${BASE_METADATA_FILEPATH})  && \
+    touch ${BASE_METADATA_FILEPATH}  && \
+    echo "CI_COMMIT_REF_NAME=${CI_COMMIT_REF_NAME}" >> ${BASE_METADATA_FILEPATH} && \
+    echo "CI_PIPELINE_IID=${CI_PIPELINE_IID}"       >> ${BASE_METADATA_FILEPATH}

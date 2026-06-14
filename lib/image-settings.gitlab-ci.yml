@@ -1,0 +1,221 @@
+include:
+  - local: lib/utilities.gitlab-ci.yml
+
+
+# ============================================================================
+.image-settings//load-all:
+  script:
+    - !reference [.utilities//load-all,                               script]
+    - !reference [.image-settings//calculate-image-name-components,   script]
+    - !reference [.image-settings//calculate-image-build-labels,      script]
+    - !reference [.image-settings//calculate-image-build-args,        script]
+    - !reference [.image-settings//calculate-image-build-secrets,     script]
+    - !reference [.image-settings//calculate-image-build-cli,         script]
+    - !reference [.image-settings//print-image-build-cli-args-table,  script]
+
+
+# ============================================================================
+# NOTE: These are formulated as Bash functions so that they are easy to
+#       unit test using bashunit
+# ============================================================================
+
+
+# ============================================================================
+# Calculates the image name components.
+#
+# Defines/declares the following outputs:
+#   - IMAGE_FULL_NAME:          The full name of the image, including
+#                               the registry, group, and project BUT
+#                               excluding the version
+#   - IMAGE_AS_BUILT_VERSION:   The as-built version.  This version will
+#                               be applied during the build process to
+#                               identify the interim build artifact prior
+#                               to "promotion" during the Publish stage
+#   - IMAGE_AS_BUILT_URI:       The combination of IMAGE_FULL_NAME
+#                               and IMAGE_AS_BUILT_VERSION, suitable for
+#                               pushing and pulling the interim image
+#                               build artifact
+.image-settings//calculate-image-name-components:
+  script:
+    - |
+      # --- image//calculate-image-name-components ---------------------------
+      function fn_image_as_built_name_components() {
+        IMAGE_FULL_NAME=${CI_REGISTRY_IMAGE}
+
+        # --- The caller may have specified a custom image name
+        #     (but in all cases, it's relative to this Pipeline's Project)
+        if [[ -n "${IMAGE_BUILD_NAME}" ]]; then
+          IMAGE_FULL_NAME+=/${IMAGE_BUILD_NAME}
+        fi
+
+        # --- Image version
+        #     (version for the *interim* build artifact.. the *actual* tag will
+        #     be applied at the end of the Pipeline, if successful)
+        IMAGE_AS_BUILT_VERSION=build.${CI_PIPELINE_IID}
+
+        # --- We have the full URI now (name and version)
+        IMAGE_AS_BUILT_URI=${IMAGE_FULL_NAME}:${IMAGE_AS_BUILT_VERSION}
+      }
+
+
+# ============================================================================
+.image-settings//calculate-image-build-labels:
+  script:
+    - |
+      # --- image//calculate-image-build-labels ------------------------------
+      function fn_image_calculate_image_build_labels() {
+        if [[ -z "${IMAGE_BUILD_NO_LABELS}" ]]; then
+          IMAGE_CREATED_TIMESTAMP=${GITLABCI_PIPELINE_TIMESTAMP:-$(date --iso-8601=seconds)}
+          IMAGE_VERSION_SLUG=$(fn_str_slug ${CI_COMMIT_REF_NAME})
+
+          IMAGE_BUILD_CLI_ARGS+=(--label org.opencontainers.image.title="${CI_PROJECT_TITLE}")
+          IMAGE_BUILD_CLI_ARGS+=(--label org.opencontainers.image.description="${CI_PROJECT_DESCRIPTION}")
+          IMAGE_BUILD_CLI_ARGS+=(--label org.opencontainers.image.created=${IMAGE_CREATED_TIMESTAMP})
+          IMAGE_BUILD_CLI_ARGS+=(--label org.opencontainers.image.url=${CI_PROJECT_URL})
+          IMAGE_BUILD_CLI_ARGS+=(--label org.opencontainers.image.version=${IMAGE_VERSION_SLUG})
+          IMAGE_BUILD_CLI_ARGS+=(--label org.opencontainers.image.revision=${CI_COMMIT_SHA})
+        fi
+      }
+
+
+# ============================================================================
+.image-settings//calculate-image-build-args:
+  script:
+    - |
+      # --- image//calculate-image-build-args --------------------------------
+      function fn_image_calculate_image_build_args() {
+        for var_name in  CI_COMMIT_REF_NAME  CI_PIPELINE_IID  GITLABCI_SEMANTIC_VERSION  GITLABCI_RELEASE_TRAIN; do
+          if [[ -n "${!var_name}" ]]; then
+            IMAGE_BUILD_CLI_ARGS+=(--build-arg ${var_name}="${!var_name}")
+          fi
+        done
+
+        for var_name in $(compgen -v IMAGE_BUILD_ARG_); do
+          arg=${var_name#IMAGE_BUILD_ARG_}
+          IMAGE_BUILD_CLI_ARGS+=(--build-arg ${arg}="${!var_name}")
+        done
+      }
+
+
+# ============================================================================
+.image-settings//calculate-image-build-secrets:
+  script:
+    - |
+      # --- image//calculate-image-build-secrets -----------------------------
+      function fn_image_calculate_image_build_secrets() {
+
+        # -- File secrets:
+        for var_name in $(compgen -v IMAGE_BUILD_SECRET_FILE_); do
+          id=${var_name#IMAGE_BUILD_SECRET_FILE_}
+          id=${id//_/-}
+          id=${id,,}
+          IMAGE_BUILD_CLI_ARGS+=(--secret id=${id},src=${!var_name})
+        done
+
+        # --- Stting secrets:
+        mkdir -p .image-build/secrets
+        for var_name in $(compgen -v IMAGE_BUILD_SECRET_STRING_); do
+          id=${var_name#IMAGE_BUILD_SECRET_STRING_}
+          id=${id//_/-}
+          id=${id,,}
+
+          echo "${!var_name}" > .image-build/secrets/${id}
+          IMAGE_BUILD_CLI_ARGS+=(--secret id=${id},src=.image-build/secrets/${id})
+        done
+      }
+
+
+# ============================================================================
+.image-settings//print-image-build-cli-args-table:
+  before_script:
+    - !reference [.utilities//load-all, script]
+  script:
+    - |
+      # --- image-settings//print-image-build-cli-args-table -----------------
+      # Displays the IMAGE_BUILD_CLI_ARGS in tabular format
+      function fn_image_print_build_cli_args_table() {
+        JOB_SETTINGS_TABLE=()
+
+        local cli_args_copy=("${IMAGE_BUILD_CLI_ARGS[@]}")
+        while (( ${#cli_args_copy[@]} )); do
+          cli_key="${cli_args_copy[0]}"
+          cli_value="${cli_args_copy[1]}"
+
+          if [[ "${cli_key}" == "--"* ]]; then
+            # Strip off the prefix from the beginning
+            cli_key="${cli_key#--}"
+            cli_args_copy=("${cli_args_copy[@]:2}")
+          else
+            # The only positional argument (not a switch prefixed by "--") is
+            # the build context
+            cli_value=${cli_key}
+            cli_key="context"
+            cli_args_copy=("${cli_args_copy[@]:1}")
+          fi
+
+          cli_key=$(fn_str_title_case ${cli_key})
+
+          JOB_SETTINGS_TABLE+=("${cli_key};${cli_value}")
+        done
+
+        fn_print_settings_table "${JOB_SETTINGS_TABLE[@]}"
+      }
+
+
+# ============================================================================
+.image-settings//calculate-image-build-cli:
+  script:
+    - |
+      # --- image//calculate-image-build-cli ---------------------------------
+
+
+      # ----------------------------------------------------------------------
+      # Calculates the Podman CLI arguments for building the image.
+      #
+      # Defines/declares the following outputs:
+      #   - IMAGE_BUILD_CLI_ARGS: A Bash *array* containing the Podman CLI
+      #                           arguments suitable for passing to
+      #                           'podman image build ...'
+      function fn_image_calculate_build_cli() {
+        IMAGE_BUILD_CLI_ARGS=()
+        IMAGE_BUILD_CLI_ARGS+=(--tag ${IMAGE_AS_BUILT_URI})
+
+        IMAGE_BUILD_CONTEXT=${IMAGE_BUILD_CONTEXT:-.}
+
+        # --- Dockerfile:
+        IMAGE_BUILD_DOCKERFILE=${IMAGE_BUILD_DOCKERFILE:-Dockerfile}
+        if [[ -f ${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_DOCKERFILE} ]]; then
+          IMAGE_BUILD_DOCKERFILE=${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_DOCKERFILE}
+        fi
+        IMAGE_BUILD_CLI_ARGS+=(--file ${IMAGE_BUILD_DOCKERFILE})
+
+
+        # --- Custom build target, if applicable:
+        if [[ -n "${IMAGE_BUILD_TARGET}" ]]; then
+          IMAGE_BUILD_CLI_ARGS+=(--target ${IMAGE_BUILD_TARGET})
+        fi
+
+
+        # --- Ignorefile:
+        if [[ -f ${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_IGNOREFILE} ]]; then
+          IMAGE_BUILD_IGNOREFILE=${IMAGE_BUILD_CONTEXT}/${IMAGE_BUILD_IGNOREFILE}
+        fi
+        if [[ -f ${IMAGE_BUILD_IGNOREFILE} ]]; then
+          IMAGE_BUILD_CLI_ARGS+=(--ignorefile ${IMAGE_BUILD_IGNOREFILE})
+        fi
+
+
+        # --- Labels:
+        fn_image_calculate_image_build_labels
+
+        # --- Build args:
+        fn_image_calculate_image_build_args
+
+        # --- Secrets:
+        fn_image_calculate_image_build_secrets
+
+
+        # --- Context:
+        # Should be the last argument (it's positional)
+        IMAGE_BUILD_CLI_ARGS+=(${IMAGE_BUILD_CONTEXT})
+      }

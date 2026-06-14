@@ -36,7 +36,7 @@ ENV HELM_UNITTEST_PLUGIN_URL=https://github.com/helm-unittest/helm-unittest.git
 ENV HELM_PUSH_PLUGIN_URL=https://github.com/chartmuseum/helm-push
 RUN mkdir -p ${INSTALL_DIR}/helm-${HELM_VERSION}  && \
     cd ${INSTALL_DIR}/helm-${HELM_VERSION} && \
-    curl -sSLO ${HELM_URL}/helm-${HELM_VERSION}-linux-amd64.tar.gz  && \
+    curl -fsSLO ${HELM_URL}/helm-${HELM_VERSION}-linux-amd64.tar.gz  && \
     tar --extract --auto-compress --file helm-${HELM_VERSION}-linux-amd64.tar.gz  && \
     ln -s ${INSTALL_DIR}/helm-${HELM_VERSION}/linux-amd64/helm  /usr/local/bin/helm  && \
     helm plugin install --verify=false ${HELM_UNITTEST_PLUGIN_URL}  && \
@@ -48,7 +48,7 @@ RUN mkdir -p ${INSTALL_DIR}/helm-${HELM_VERSION}  && \
 # Ref: https://github.com/GoogleContainerTools/container-structure-test/tags
 ENV CST_URL=https://github.com/GoogleContainerTools/container-structure-test
 ENV CST_VERSION=v1.22.1
-RUN curl -sSLO ${CST_URL}/releases/download/${CST_VERSION}/container-structure-test-linux-amd64 && \
+RUN curl -fsSLO ${CST_URL}/releases/download/${CST_VERSION}/container-structure-test-linux-amd64 && \
     chmod +x container-structure-test-linux-amd64 && \
     sudo mv container-structure-test-linux-amd64 /usr/local/bin/container-structure-test
 
@@ -58,3 +58,11 @@ RUN curl -sSLO ${CST_URL}/releases/download/${CST_VERSION}/container-structure-t
 ENV GLAB_VERSION=1.102.0
 ENV GLAB_URL=https://gitlab.com/gitlab-org/cli/-/releases/v${GLAB_VERSION}/downloads/glab_${GLAB_VERSION}_linux_amd64.rpm
 RUN dnf install --assumeyes ${GLAB_URL}
+
+
+# ----------------------------------------------------------------------------
+ENV BASHUNIT_VERSION=0.38.0
+ENV BASHUNIT_URL=https://bashunit.typeddevs.com/install.sh
+RUN mkdir -p ${INSTALL_DIR}/bashunit-${BASHUNIT_VERSION}  && \
+    curl -fsSL ${BASHUNIT_URL} | bash -s ${INSTALL_DIR}/bashunit-${BASHUNIT_VERSION} ${BASHUNIT_VERSION}  && \
+    ln -s ${INSTALL_DIR}/bashunit-${BASHUNIT_VERSION}/bashunit  /usr/local/bin/bashunit

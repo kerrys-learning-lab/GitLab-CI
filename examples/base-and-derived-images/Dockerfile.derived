@@ -1,11 +1,11 @@
 # ============================================================================
-ARG BASE_IMAGE=registry.kerrys-learning-lab/devsecops/gitlab-ci/parent-child-images--parent:main
+ARG BASE_IMAGE=registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/parent-child-images--parent:main
 FROM ${BASE_IMAGE}
 
-ARG CI_COMMIT_REF_SLUG="<none>"
+ARG CI_COMMIT_REF_NAME="<none>"
 ARG CI_PIPELINE_IID="<none>"
-ENV CHILD_METADATA_FILEPATH=/etc/kerrys-learning-lab/child
+ENV CHILD_METADATA_FILEPATH=/etc/kerrys-learning-lab/derived
 RUN mkdir -p $(dirname ${CHILD_METADATA_FILEPATH})  && \
     touch ${CHILD_METADATA_FILEPATH}  && \
-    echo "CI_COMMIT_REF_SLUG=${CI_COMMIT_REF_SLUG}" >> ${CHILD_METADATA_FILEPATH} && \
+    echo "CI_COMMIT_REF_NAME=${CI_COMMIT_REF_NAME}" >> ${CHILD_METADATA_FILEPATH} && \
     echo "CI_PIPELINE_IID=${CI_PIPELINE_IID}"       >> ${CHILD_METADATA_FILEPATH}
