@@ -1,0 +1,58 @@
+# ============================================================================
+# This example produces two images in the same Pipeline: 'base', and 'derived'
+#
+# A base/derived image relationship exists when one image is produced in a
+# Pipeline and is used as a FROM base by another image within the same
+# Pipeline
+#
+# The base must meet the following criteria:
+#   - Unique 'image_name' (will be referenced by derviced image[s])
+#
+# The derived (may be more than one) must meet the following criteria:
+#   - Dockerfile references base image like so:
+#       ARG BASE_IMAGE=<optional-default-base=image>
+#       FROM $BASE_IMAGE
+#   - Unique 'image_name' (distinct from base and any other children)
+#   - 'image_build_base_image_name' references the base's unique
+#     'image_name'
+#   - 'image_build_needs' contains the base's build Job name
+# --------------------------------------------------------------------------
+include:
+  - local: templates/pipeline-version.gitlab-ci.yml
+
+
+  # --------------------------------------------------------------------------
+  # Base image
+  - local: templates/image-pipeline.yml
+    inputs:
+      jobs_name_prefix: "[example] "
+      jobs_name_suffix: " (base)"
+      image_name: examples/base
+      image_build_context: examples/base-and-derived-images
+      image_build_dockerfile: Dockerfile.base
+      image_unit_test_enabled: false
+      image_structure_test_enabled: true
+      image_structure_test_filenames: examples/base-and-derived-images/tests/image-structure-tests-base.yaml
+      # Only one job in the Pipeline can create a Release... we defer to the
+      # 'main' Pipeline:
+      image_release_enabled: false
+
+
+  # --------------------------------------------------------------------------
+  # Derived image:
+  - local: templates/image-pipeline.yml
+    inputs:
+      jobs_name_prefix: "[example] "
+      jobs_name_suffix: " (derived)"
+      image_name: examples/derived
+      image_build_context: examples/base-and-derived-images
+      image_build_dockerfile: Dockerfile.derived
+      image_build_base_image_name: examples/base
+      image_unit_test_enabled: false
+      image_build_needs:
+        - pipeline version
+        - "[example] image build (base)"
+      image_structure_test_filenames: examples/base-and-derived-images/tests/image-structure-tests-derived.yaml
+      # Only one job in the Pipeline can create a Release... we defer to the
+      # 'main' Pipeline:
+      image_release_enabled: false

@@ -1,0 +1,31 @@
+# ============================================================================
+.rules//protected-ref:
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED == "true"
+
+
+# ============================================================================
+.rules//protected-tag:
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED == "true" && $CI_COMMIT_TAG
+
+
+# ============================================================================
+.rules//not-a-merge-request:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+
+
+# ============================================================================
+.rules//gitlab-ci:
+  rules:
+    - if: $GITLAB_CI != "true"
+      when: never
+
+
+# ============================================================================
+.rules//gitlab-ci-local:
+  rules:
+    - if: $GITLAB_CI == "true"
+      when: never

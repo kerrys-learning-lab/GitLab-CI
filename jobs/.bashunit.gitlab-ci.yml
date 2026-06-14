@@ -1,0 +1,35 @@
+.bash-unit-test:
+  stage: test
+  variables:
+    BASH_UNITTEST_OUTPUT_DIR: .bash-unit-test
+    BASH_UNITTEST_FILE: bash-test-results.${CI_JOB_ID}.xml
+    BASH_UNITTEST_TEST_PATH: tests
+    BASH_UNITTEST_EXPORT_ENV: ''
+    BASH_UNITTEST_EXPORT_FUNCTIONS: ''
+    BASHUNIT_VERBOSE: ''
+  script:
+    - |
+      mkdir -p ${BASH_UNITTEST_OUTPUT_DIR}
+      rm -f ${BASH_UNITTEST_OUTPUT_DIR}/uut.sh
+      for var in ${BASH_UNITTEST_EXPORT_ENV}; do
+        declare -p ${var} >> ${BASH_UNITTEST_OUTPUT_DIR}/uut.sh
+      done
+
+      for func in ${BASH_UNITTEST_EXPORT_FUNCTIONS}; do
+        declare -f ${func} >> ${BASH_UNITTEST_OUTPUT_DIR}/uut.sh
+      done
+
+      BASH_UNITTEST_CLI_ARGS=()
+      BASH_UNITTEST_CLI_ARGS+=(--run-all)
+      BASH_UNITTEST_CLI_ARGS+=(--log-junit ${BASH_UNITTEST_OUTPUT_DIR}/${BASH_UNITTEST_FILE})
+
+      if [[ -f ${BASH_UNITTEST_OUTPUT_DIR}/uut.sh ]]; then
+        BASH_UNITTEST_CLI_ARGS+=(--boot ${BASH_UNITTEST_OUTPUT_DIR}/uut.sh)
+      fi
+
+      bashunit  ${BASH_UNITTEST_CLI_ARGS[@]}  ${BASH_UNITTEST_TEST_PATH}
+  artifacts:
+    paths:
+      - $BASH_UNITTEST_OUTPUT_DIR/$BASH_UNITTEST_FILE
+    reports:
+      junit: $BASH_UNITTEST_OUTPUT_DIR/$BASH_UNITTEST_FILE

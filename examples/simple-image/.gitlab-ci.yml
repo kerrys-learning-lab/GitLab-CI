@@ -1,16 +1,24 @@
+# ============================================================================
+# A simple image example with a customized image name and build context.
+# ----------------------------------------------------------------------------
 include:
+  - local: templates/pipeline-version.gitlab-ci.yml
+
+
+  # --------------------------------------------------------------------------
+  # NOTE: Below, we use 'local' include, since this file is tested as part of
+  #       this project.  However, users of this 'image-pipeline' component
+  #       will want to use the 'component' include syntax:
+  #
+  #       component: $GITLABCI_COMPONENT_CATALOG_PROJECT/image-pipeline@$GITLABCI_COMPONENT_CATALOG_REF
   - local: templates/image-pipeline.yml
     inputs:
       jobs_name_prefix: "[example] "
       jobs_name_suffix: " (simple)"
-      image_name: gitlab-ci/examples/simple-image
+      image_name: examples/simple-image
       image_build_context: examples/simple-image
       image_unit_test_enabled: false
       image_structure_test_enabled: false
-      # As part of exercising the Pipeline, we force this image to be pushed
-      # (but, the image is not actually a "deliverable artifact" of the
-      # Pipeline)
-      image_promote_option: force
       # Only one job in the Pipeline can create a Release... we defer to the
       # 'main' Pipeline:
       image_release_enabled: false

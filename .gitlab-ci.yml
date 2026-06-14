@@ -1,16 +1,44 @@
 include:
+  - local: templates/pipeline-version.gitlab-ci.yml
+  - local: jobs/.bashunit.gitlab-ci.yml
+  - local: jobs/.image.gitlab-ci.yml
+  - local: jobs/.stages.gitlab-ci.yml
   - local: jobs/.release.gitlab-ci.yml
-  - local: jobs/.utilities.gitlab-ci.yml
-  - local: test/all-tests.gitlab-ci.yml
+  - local: lib/image-settings.gitlab-ci.yml
+  - local: lib/pipeline-version.gitlab-ci.yml
+  - local: lib/rules.gitlab-ci.yml
+  - local: examples/base-and-derived-images/.gitlab-ci.yml
   - local: examples/simple-image/.gitlab-ci.yml
-  - local: examples/parent-child-images/.gitlab-ci.yml
   - local: examples/helm-chart/.gitlab-ci.yml
 
 
-# ----------------------------------------------------------------------------
-pipeline release:
+
+# ============================================================================
+bash unit-test:
+  extends: .bash-unit-test
+  variables:
+    BASH_UNITTEST_TEST_PATH: test/*.test.sh
+  before_script:
+    - !reference [.utilities//load-all,         script]
+    - !reference [.pipeline-version//load-all,  script]
+    - !reference [.image-settings//load-all,    script]
+    - |
+      # --- bash unit-test (before_script) -----------------------------------
+
+      # These environment variables need to be exported to the bashunit
+      # context:
+      BASH_UNITTEST_EXPORT_ENV+="$(compgen -v RELEASE_) "
+
+      # These bash functions (from the !reference above) need to be exported to
+      # the bashunit context:
+      BASH_UNITTEST_EXPORT_FUNCTIONS="$(compgen -A function fn_)"
+
+
+
+# ============================================================================
+release:
   extends: .release
   stage: release
   rules:
-    - !reference [.utility//not-a-merge-request,  rules]
-    - !reference [.utility//protected-tag,        rules]
+    - !reference [.rules//not-a-merge-request,  rules]
+    - !reference [.rules//protected-tag,        rules]

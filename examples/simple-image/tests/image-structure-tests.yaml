@@ -1,0 +1,8 @@
+schemaVersion: "2.0.0"
+
+metadataTest:
+  labels:
+    - key: org.opencontainers.image.title
+      value: GitLab CI
+    - key: org.opencontainers.image.url
+      value: https://gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci

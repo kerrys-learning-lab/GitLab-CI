@@ -1,6 +1,0 @@
-include:
-  - local: jobs/.auth.gitlab-ci.yml
-  - local: jobs/.stages.gitlab-ci.yml
-  - local: test/helm-tests.gitlab-ci.yml
-  - local: test/image-tests.gitlab-ci.yml
-  - local: test/pipeline-version-tests.gitlab-ci.yml
