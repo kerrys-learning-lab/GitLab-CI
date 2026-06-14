@@ -13,7 +13,6 @@
     - !reference [.auth//ssh-remote-access, script]
   script:
     - |
-      set -x
       # --- ansible-test-ssh-connection --------------------------------------
       ANSIBLE_LIST_HOSTS_CLI_ARGS=()
       ANSIBLE_LIST_HOSTS_CLI_ARGS+=(--list-hosts)
