@@ -10,12 +10,12 @@ include:
   - local: templates/ansible-playbook.pipeline.yml
     inputs:
       jobs_name_prefix: "[example] "
-      playbook_dir: ci-cd-examples/test_ansible_playbook
-      playbook_inventory_dir: inventory
-      playbook_file: ping.playbook.yml
-      playbook_requirements_file: requirements.yaml
+      ansible_dir: ci-cd-examples/test_ansible_playbook
+      ansible_inventory_dir: inventory
+      ansible_file: ping.playbook.yml
+      ansible_requirements_file: requirements.yaml
       # Can't trust that my Asus laptop is on/available when CI/CD runs
-      playbook_host_filter: "all:!asus"
+      ansible_host_filter: "all:!asus"
       # Only one job in the Pipeline can create a Release... we defer to the
       # 'main' Pipeline:
       playbook_release_enabled: false

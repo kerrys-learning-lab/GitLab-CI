@@ -14,7 +14,7 @@ include:
   - local: templates/ansible-collection.pipeline.yml
     inputs:
       jobs_name_prefix: "[example] "
-      collection_dir: ci-cd-examples/test_ansible_collection
+      ansible_dir: ci-cd-examples/test_ansible_collection
       # Only one job in the Pipeline can create a Release... we defer to the
       # 'main' Pipeline:
       collection_release_enabled: false
