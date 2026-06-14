@@ -1,0 +1,12 @@
+all:
+  hosts:
+    asus:
+      ansible_host: asus.westsidestreet.net
+    elitedesk:
+      ansible_host: elitedesk.westsidestreet.net
+    gitlab01:
+      ansible_host: gitlab01.westsidestreet.net
+    infrastructure01:
+      ansible_host: infrastructure01.westsidestreet.net
+    nvidia-5080:
+      ansible_host: nvidia-5080.westsidestreet.net

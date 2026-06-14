@@ -66,9 +66,9 @@ spec:
 
 # ============================================================================
 include:
-  - local: .gitlab-ci/lib/defaults.gitlab-ci.yml
-  - local: .gitlab-ci/jobs/.ansible-collection.gitlab-ci.yml
+  - local: .gitlab-ci/jobs/.ansible.gitlab-ci.yml
   - local: .gitlab-ci/jobs/.release.gitlab-ci.yml
+  - local: .gitlab-ci/lib/defaults.gitlab-ci.yml
   - local: .gitlab-ci/lib/stages.gitlab-ci.yml
   - local: .gitlab-ci/lib/rules.gitlab-ci.yml
   - local: templates/pipeline-version.job.yml
@@ -88,7 +88,7 @@ include:
   extends: .ansible-lint
   stage: $[[ inputs.collection_lint_stage ]]
   variables:
-    ANSIBLE_COLLECTION_DIR: $[[ inputs.collection_dir ]]
+    ANSIBLE_LINTABLE_PATH: $[[ inputs.collection_dir ]]
     ANSIBLE_LINT_STRICT: $[[ inputs.collection_lint_strict ]]
 
 

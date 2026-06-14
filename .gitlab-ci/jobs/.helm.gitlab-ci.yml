@@ -1,9 +1,3 @@
-include:
-  - local: .gitlab-ci/lib/defaults.gitlab-ci.yml
-  - local: .gitlab-ci/lib/stages.gitlab-ci.yml
-  - local: .gitlab-ci/lib/utilities.gitlab-ci.yml
-
-
 # ============================================================================
 .helm-base:
   before_script:
