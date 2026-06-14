@@ -17,7 +17,7 @@ function test_image_full_name_default() {
 
   fn_image_as_built_name_components
 
-  assert_equals "${EXPECTED_FULL_NAME}" "${IMAGE_AS_BUILT_FULL_NAME}"
+  assert_equals "${EXPECTED_FULL_NAME}" "${IMAGE_FULL_NAME}"
   assert_equals "${EXPECTED_VERSION}"   "${IMAGE_AS_BUILT_VERSION}"
   assert_equals "${EXPECTED_FULL_URI}"  "${IMAGE_AS_BUILT_URI}"
 }
@@ -35,7 +35,7 @@ function test_image_full_name_custom() {
 
   fn_image_as_built_name_components
 
-  assert_equals "${EXPECTED_FULL_NAME}" "${IMAGE_AS_BUILT_FULL_NAME}"
+  assert_equals "${EXPECTED_FULL_NAME}" "${IMAGE_FULL_NAME}"
   assert_equals "${EXPECTED_VERSION}"   "${IMAGE_AS_BUILT_VERSION}"
   assert_equals "${EXPECTED_FULL_URI}"  "${IMAGE_AS_BUILT_URI}"
 }
@@ -51,7 +51,7 @@ function test_image_cli_tag_default() {
   EXPECTED_FULL_URI=${EXPECTED_FULL_NAME}:build.${CI_PIPELINE_IID}
 
   fn_image_as_built_name_components
-  fn_image_build_cli
+  fn_image_calculate_build_cli
 
   assert_contains "--tag ${EXPECTED_FULL_URI}" "${IMAGE_BUILD_CLI_ARGS[*]}"
 }
@@ -68,7 +68,7 @@ function test_image_cli_tag_custom() {
   EXPECTED_FULL_URI=${EXPECTED_FULL_NAME}:build.${CI_PIPELINE_IID}
 
   fn_image_as_built_name_components
-  fn_image_build_cli
+  fn_image_calculate_build_cli
 
   assert_contains "--tag ${EXPECTED_FULL_URI}" "${IMAGE_BUILD_CLI_ARGS[*]}"
 }
@@ -76,7 +76,7 @@ function test_image_cli_tag_custom() {
 
 # ============================================================================
 function test_image_cli_dockerfile() {
-  fn_image_build_cli
+  fn_image_calculate_build_cli
 
   EXPECTED_DOCKERFILE_ARG=./Dockerfile
 
@@ -89,7 +89,7 @@ function test_image_cli_custom_dockerfile_and_context() {
   IMAGE_BUILD_CONTEXT=$(dirname ${TMP_FAKE_DOCKERFILE})
   IMAGE_BUILD_DOCKERFILE=$(basename ${TMP_FAKE_DOCKERFILE})
 
-  fn_image_build_cli
+  fn_image_calculate_build_cli
 
   EXPECTED_CONTEXT_ARG=${IMAGE_BUILD_CONTEX}
   EXPECTED_DOCKERFILE_ARG=${TMP_FAKE_DOCKERFILE}
@@ -103,7 +103,7 @@ function test_image_cli_custom_dockerfile_and_context() {
 function test_image_cli_custom_target() {
   IMAGE_BUILD_TARGET=foo
 
-  fn_image_build_cli
+  fn_image_calculate_build_cli
 
   assert_contains "--target ${IMAGE_BUILD_TARGET}" "${IMAGE_BUILD_CLI_ARGS[*]}"
 }
@@ -114,7 +114,7 @@ function test_image_cli_custom_ignorefile_and_context() {
   IMAGE_BUILD_CONTEXT=$(dirname ${TMP_FAKE_DOCKERFILE})
   IMAGE_BUILD_IGNOREFILE=$(basename ${TMP_FAKE_DOCKERFILE})
 
-  fn_image_build_cli
+  fn_image_calculate_build_cli
 
   EXPECTED_CONTEXT_ARG=${IMAGE_BUILD_CONTEX}
   EXPECTED_IGNOREFILE_ARG=${TMP_FAKE_DOCKERFILE}
@@ -132,10 +132,10 @@ function test_image_cli_labels() {
   CI_COMMIT_REF_NAME=release/1.2
   CI_COMMIT_SHA=123456789abcdefgh
 
-  fn_image_build_cli
+  fn_image_calculate_build_cli
 
-  assert_contains "--label org.opencontainers.image.title='${CI_PROJECT_TITLE}'"              "${IMAGE_BUILD_CLI_ARGS[*]}"
-  assert_contains "--label org.opencontainers.image.description='${CI_PROJECT_DESCRIPTION}'"  "${IMAGE_BUILD_CLI_ARGS[*]}"
+  assert_contains "--label org.opencontainers.image.title=${CI_PROJECT_TITLE}"              "${IMAGE_BUILD_CLI_ARGS[*]}"
+  assert_contains "--label org.opencontainers.image.description=${CI_PROJECT_DESCRIPTION}"  "${IMAGE_BUILD_CLI_ARGS[*]}"
   assert_contains "--label org.opencontainers.image.url=${CI_PROJECT_URL}"                  "${IMAGE_BUILD_CLI_ARGS[*]}"
   assert_contains "--label org.opencontainers.image.version=release-1.2"                    "${IMAGE_BUILD_CLI_ARGS[*]}"
   assert_contains "--label org.opencontainers.image.revision=${CI_COMMIT_SHA}"              "${IMAGE_BUILD_CLI_ARGS[*]}"
@@ -148,17 +148,17 @@ function test_image_build_args() {
   CI_PIPELINE_IID=763
   IMAGE_BUILD_ARG_FLOBBER=blam
   IMAGE_BUILD_ARG_FLIM_FLAM=flim-flam
-  RELEASE_TRAIN=1.2
-  SEMANTIC_VERSION=1.2.3-rc+763
+  GITLABCI_RELEASE_TRAIN=1.2
+  GITLABCI_SEMANTIC_VERSION=1.2.3-rc+763
 
-  fn_image_build_cli
+  fn_image_calculate_build_cli
 
   assert_contains "--build-arg CI_COMMIT_REF_NAME=feat/73-this-is-my-task"  "${IMAGE_BUILD_CLI_ARGS[*]}"
   assert_contains "--build-arg CI_PIPELINE_IID=763"                         "${IMAGE_BUILD_CLI_ARGS[*]}"
   assert_contains "--build-arg FLOBBER=blam"                                "${IMAGE_BUILD_CLI_ARGS[*]}"
   assert_contains "--build-arg FLIM_FLAM=flim-flam"                         "${IMAGE_BUILD_CLI_ARGS[*]}"
-  assert_contains "--build-arg RELEASE_TRAIN=1.2"                           "${IMAGE_BUILD_CLI_ARGS[*]}"
-  assert_contains "--build-arg SEMANTIC_VERSION=1.2.3-rc+763"               "${IMAGE_BUILD_CLI_ARGS[*]}"
+  assert_contains "--build-arg GITLABCI_RELEASE_TRAIN=1.2"                           "${IMAGE_BUILD_CLI_ARGS[*]}"
+  assert_contains "--build-arg GITLABCI_SEMANTIC_VERSION=1.2.3-rc+763"               "${IMAGE_BUILD_CLI_ARGS[*]}"
 }
 
 
@@ -166,7 +166,7 @@ function test_image_build_args() {
 function test_image_build_secret_file() {
   IMAGE_BUILD_SECRET_FILE_FOO_BAR=/foo/bar
 
-  fn_image_build_cli
+  fn_image_calculate_build_cli
 
   assert_contains "--secret id=foo-bar,src=/foo/bar"  "${IMAGE_BUILD_CLI_ARGS[*]}"
 }
@@ -178,7 +178,7 @@ function test_image_build_secret_string() {
 
   EXPECTED_SECRET_FILE=.image-build/secrets/foo-bar
 
-  fn_image_build_cli
+  fn_image_calculate_build_cli
 
   assert_file_exists    "${EXPECTED_SECRET_FILE}"
   assert_file_contains  "${EXPECTED_SECRET_FILE}"                         "${IMAGE_BUILD_SECRET_STRING_FOO_BAR}"

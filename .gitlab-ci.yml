@@ -1,98 +1,16 @@
 include:
+  - local: templates/pipeline-version.gitlab-ci.yml
   - local: jobs/.bashunit.gitlab-ci.yml
   - local: jobs/.image.gitlab-ci.yml
   - local: jobs/.stages.gitlab-ci.yml
   - local: jobs/.release.gitlab-ci.yml
+  - local: lib/image-settings.gitlab-ci.yml
   - local: lib/pipeline-version.gitlab-ci.yml
   - local: lib/rules.gitlab-ci.yml
+  - local: examples/base-and-derived-images/.gitlab-ci.yml
+  - local: examples/simple-image/.gitlab-ci.yml
+  - local: examples/helm-chart/.gitlab-ci.yml
 
-
-  # --------------------------------------------------------------------------
-  # A simple Helm Chart example, including helmunit tests.
-  # --------------------------------------------------------------------------
-  # NOTE: As part of exercising this Pipeline, we force this Chart to be
-  #       pushed, even for non-protected refs.
-  - component: $CI_SERVER_FQDN/$CI_PROJECT_PATH/helm-pipeline@$CI_COMMIT_SHA
-    inputs:
-      jobs_name_prefix: "[example] "
-      helm_chart_dir: examples/helm-chart
-      helm_unit_test_chart_dir: examples/helm-chart
-      helm_push_option: force
-      helm_release_enabled: false
-
-
-  # --------------------------------------------------------------------------
-  # A simple image example with a customized image name and build context.
-  # --------------------------------------------------------------------------
-  # NOTE: As part of exercising this Pipeline, we force this image to be
-  #       pushed, even for non-protected refs.
-  - component: $CI_SERVER_FQDN/$CI_PROJECT_PATH/image-pipeline@$CI_COMMIT_SHA
-    inputs:
-      jobs_name_prefix: "[simple-image] "
-      image_name: simple-image
-      image_build_context: examples/simple-image
-      image_unit_test_enabled: false
-      image_structure_test_enabled: false
-      image_promote_option: force
-      image_release_enabled: false
-
-
-  # --------------------------------------------------------------------------
-  # A parent/child image relationship exists when an image is produced in a
-  # Pipeline and is used as a FROM base by another image within the same
-  # Pipeline
-  #
-  # The parent must meet the following criteria:
-  #   - Unique 'image_name' (will be referenced by child/children)
-  #
-  # The child/children must meet the following criteria:
-  #   - Dockerfile references parent image like so:
-  #       ARG BASE_IMAGE=<optional-default-base=image>
-  #       FROM $BASE_IMAGE
-  #   - Unique 'image_name' (distinct from parent and any other children)
-  #   - 'image_build_parent_image_name' references the parent's unique
-  #     'image_name'
-  #   - 'image_build_needs' contains the parent's build Job name
-  # --------------------------------------------------------------------------
-
-  # --------------------------------------------------------------------------
-  # Parent (base) image
-  - component: $CI_SERVER_FQDN/$CI_PROJECT_PATH/image-pipeline@$CI_COMMIT_SHA
-    inputs:
-      jobs_name_prefix: "[parent-child-images] "
-      jobs_name_suffix: " (parent)"
-      image_name: parent-child-images/parent
-      image_build_context: examples/parent-child-images
-      image_build_dockerfile: Dockerfile.parent
-      image_unit_test_enabled: false
-      image_structure_test_enabled: true
-      image_structure_test_filenames: examples/parent-child-images/image-structure-tests/parent.yaml
-      image_release_enabled: false
-
-
-  # --------------------------------------------------------------------------
-  # Child image (FROM the parent)
-  - component: $CI_SERVER_FQDN/$CI_PROJECT_PATH/image-pipeline@$CI_COMMIT_SHA
-    inputs:
-      jobs_name_prefix: "[parent-child-images] "
-      jobs_name_suffix: " (child)"
-      image_name: parent-child-images/child
-      image_build_context: examples/parent-child-images
-      image_build_dockerfile: Dockerfile.child
-      image_build_parent_image_name: parent-child-images/parent
-      image_build_needs:
-        # Must exactly match the parent's generated 'image build' job name so the
-        # child build runs after (and consumes) the parent build.
-        #
-        #           +------------------------------- jobs_name_prefix from parent
-        #           |
-        #           |                           +--- jobs_name_suffix from parent
-        #           |                           |
-        #  vvvvvvvvvvvvvvvvvvvvv             vvvvvvvv
-        - "[parent-child-images] image build (parent)"
-      image_unit_test_enabled: false
-      image_structure_test_filenames: examples/parent-child-images/image-structure-tests/child.yaml
-      image_release_enabled: false
 
 
 # ============================================================================
@@ -101,13 +19,15 @@ bash unit-test:
   variables:
     BASH_UNITTEST_TEST_PATH: test/*.test.sh
   before_script:
-    - !reference [.image//functions,  script]
-    - !reference [.pipeline-version,  script]
+    - !reference [.utilities//load-all,         script]
+    - !reference [.pipeline-version//load-all,  script]
+    - !reference [.image-settings//load-all,    script]
     - |
       # --- bash unit-test (before_script) -----------------------------------
 
-      # These environment variables need to be exported to the bashunit context:
-      BASH_UNITTEST_EXPORT_ENV="$(compgen -v RELEASE_)"
+      # These environment variables need to be exported to the bashunit
+      # context:
+      BASH_UNITTEST_EXPORT_ENV+="$(compgen -v RELEASE_) "
 
       # These bash functions (from the !reference above) need to be exported to
       # the bashunit context:

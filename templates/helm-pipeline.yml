@@ -13,8 +13,8 @@ spec:
       default: build
     helm_package_needs:
       description: DAG specification for the 'helm package' Job
-      type: array
-      default: []
+      type: string
+      default: ''
 
 
     # ------------------------------------------------------------------------
@@ -120,21 +120,25 @@ include:
   - local: jobs/.release.gitlab-ci.yml
   - local: lib/rules.gitlab-ci.yml
   - local: lib/utilities.gitlab-ci.yml
+  - local: templates/pipeline-version.gitlab-ci.yml
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 "$[[ inputs.jobs_name_prefix ]]helm package$[[ inputs.jobs_name_suffix ]]":
   extends: .helm-package
   stage: $[[ inputs.helm_package_stage ]]
   variables:
     HELM_CHART_DIR:  $[[ inputs.helm_chart_dir ]]
-  needs: $[[ inputs.helm_package_needs ]]
   rules:
     - !reference [.rules//not-a-merge-request,  rules]
+    - if: '"$[[ inputs.helm_package_needs ]]"'
+      needs:
+        - "$[[ inputs.helm_package_needs ]]"
+        - pipeline version
     - when: on_success
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 "$[[ inputs.jobs_name_prefix ]]helm unit-test$[[ inputs.jobs_name_suffix ]]":
   extends: .helm-unit-test
   stage: $[[ inputs.helm_unit_test_stage ]]
@@ -148,7 +152,7 @@ include:
     - when: on_success
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 "$[[ inputs.jobs_name_prefix ]]helm push$[[ inputs.jobs_name_suffix ]]":
   extends: .helm-push
   stage: $[[ inputs.helm_push_stage ]]
@@ -166,7 +170,7 @@ include:
     - !reference [.rules//protected-ref,        rules]
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 "$[[ inputs.jobs_name_prefix ]]helm release$[[ inputs.jobs_name_suffix ]]":
   extends: .release
   stage: $[[ inputs.helm_release_stage ]]

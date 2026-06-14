@@ -1,37 +1,37 @@
 include:
   - local: jobs/.defaults.gitlab-ci.yml
-  - local: lib/pipeline-version.gitlab-ci.yml
   - local: jobs/.stages.gitlab-ci.yml
+  - local: lib/utilities.gitlab-ci.yml
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 .helm-base:
   before_script:
-    - !reference [.helm//add-repos, script]
+    - !reference [.utilities//load-all, script]
+    - !reference [.helm//add-repos,     script]
     - |
       # --- helm-base --------------------------------------------------------
       helm dependency update ${HELM_CHART_DIR:-.}
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 .helm-package:
   stage: build
   extends: .helm-base
   script:
-    - !reference [.pipeline-version,    script]
     - |
       # --- helm-package -----------------------------------------------------
-      HELM_CHART_APP_VERSION=${RELEASE_TRAIN:-${SEMANTIC_VERSION}}
+      HELM_CHART_APP_VERSION=${GITLABCI_RELEASE_TRAIN:-${GITLABCI_SEMANTIC_VERSION}}
 
       JOB_SETTINGS_TABLE=()
       JOB_SETTINGS_TABLE+=("App version;${HELM_CHART_APP_VERSION}")
-      JOB_SETTINGS_TABLE+=("Version;${SEMANTIC_VERSION}")
+      JOB_SETTINGS_TABLE+=("Version;${GITLABCI_SEMANTIC_VERSION}")
 
       fn_print_settings_table "${JOB_SETTINGS_TABLE[@]}"
 
       mkdir -p .helm-package
       helm package  --app-version ${HELM_CHART_APP_VERSION}  \
-                    --version     ${SEMANTIC_VERSION}  \
+                    --version     ${GITLABCI_SEMANTIC_VERSION}  \
                     --destination .helm-package  \
                     ${HELM_CHART_DIR:-.}
   artifacts:
@@ -41,7 +41,7 @@ include:
     expire_in: 1 week
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 .helm-unit-test:
   stage: test
   extends: .helm-base
@@ -62,16 +62,15 @@ include:
     expire_in: 1 week
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 .helm-push:
   stage: publish
   extends: .helm-base
   script:
-    - !reference [.pipeline-version,    script]
     - |
       # --- helm-push --------------------------------------------------------
       HELM_CHART_NAME=$(helm show chart ${HELM_CHART_DIR} | grep -Po '^name:\s+\K.*')
-      helm  cm-push   .helm-package/${HELM_CHART_NAME}-${SEMANTIC_VERSION}.tgz  \
+      helm  cm-push   .helm-package/${HELM_CHART_NAME}-${GITLABCI_SEMANTIC_VERSION}.tgz  \
                       pipeline-push
 
       RELEASE_README_FILEPATH=.release/helm-chart.${CI_JOB_ID}.md
@@ -88,7 +87,7 @@ include:
       echo "# Add the Helm repository:"                                   >> ${RELEASE_README_FILEPATH}
       echo "helm repo add ${REPO_ALIAS} ${REPO_URL}"                      >> ${RELEASE_README_FILEPATH}
       echo ""                                                             >> ${RELEASE_README_FILEPATH}
-      echo "# Verify the new version (${SEMANTIC_VERSION}) is available:" >> ${RELEASE_README_FILEPATH}
+      echo "# Verify the new version (${GITLABCI_SEMANTIC_VERSION}) is available:" >> ${RELEASE_README_FILEPATH}
       echo "helm search repo --versions ${CHART_ALIAS}"                   >> ${RELEASE_README_FILEPATH}
       echo ""                                                             >> ${RELEASE_README_FILEPATH}
       echo "# If the latest version isn't available, update the repo:"    >> ${RELEASE_README_FILEPATH}
@@ -105,7 +104,7 @@ include:
       - .release
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 .helm//add-repos:
   script:
     - |
@@ -122,7 +121,7 @@ include:
         HELM_REPO_PIPELINE_PUSH_PASSWORD=${CI_JOB_TOKEN}
       fi
 
-      HELM_REPO_PIPELINE_PUSH_ALIAS_EXISTS=$(helm repo list | grep pipeline-push || true)
+      HELM_REPO_PIPELINE_PUSH_ALIAS_EXISTS=$(helm repo list 2> /dev/null | grep pipeline-push || true)
       if [[ -n "${HELM_REPO_PIPELINE_PUSH_ALIAS_EXISTS}" ]]; then
         helm repo remove pipeline-push
       fi

@@ -1,0 +1,51 @@
+include:
+  - local: lib/pipeline-version.gitlab-ci.yml
+  - local: lib/utilities.gitlab-ci.yml
+
+
+# ============================================================================
+# Calculates this pipeline's Semantic Version information and writes
+# the variables to .dotenv/version.env
+#
+# Defines/declares the following outputs:
+#   - GITLABCI_RELEASE_TRAIN:           The release train (first two digits of
+#                                       the SemVer)
+#   - GITLABCI_SEMANTIC_VERSION:        The full SemVer, possibly including
+#                                       release candidate information and
+#                                       build metadata
+#   - GITLABCI_SEMANTIC_VERSION_MAJOR:  The major component of the SemVer
+#   - GITLABCI_SEMANTIC_VERSION_MINOR:  The minor component of the SemVer
+#   - GITLABCI_SEMANTIC_VERSION_PATCH:  The patch component of the SemVer
+#   - GITLABCI_PIPELINE_TIMESTAMP:      The ISO-8601 timestamp when this
+#                                       Pipeline started
+#
+# NOTE: Below, we use a "public" Job name (not "hidden" with a '.' prefix)
+#       because there need only ever be one of these Jobs per Pipeline
+#       instance
+pipeline version:
+  stage: .pre
+  variables:
+    PIPELINE_VERSION_DOTENV_FILE: .dotenv/version.env
+  script:
+    - !reference [.utilities//load-all,         script]
+    - !reference [.pipeline-version//load-all,  script]
+    - |
+      # --- pipeline version -------------------------------------------------
+
+      # --- Invoke the function to determine SemVer based on CI_COMMIT_TAG or
+      #     CI_COMMIT_BRANCH (see 'lib/pipeline-version.gitlab-ci.yml')
+      fn_calculate_pipeline_version
+
+      # --- Write the environment variable results to file
+      rm -f ${PIPELINE_VERSION_DOTENV_FILE}
+      mkdir -p $(dirname ${PIPELINE_VERSION_DOTENV_FILE})
+      for varname in $(compgen -v GITLABCI_); do
+        fn_log_info "$(fn_random_emoji) ${varname}=${!varname}"
+
+        echo "${varname}=${!varname}" >> ${PIPELINE_VERSION_DOTENV_FILE}
+      done
+  artifacts:
+    paths:
+      - $PIPELINE_VERSION_DOTENV_FILE
+    reports:
+      dotenv: $PIPELINE_VERSION_DOTENV_FILE

@@ -160,7 +160,7 @@ them as project or job variables — no input wiring needed.
   (`--secret id=<id>,src=<path>`); `<ID>` is lower-cased and `_`→`-`.
 - `IMAGE_BUILD_SECRET_STRING_<ID>` → build secret from a literal value.
 - Automatically injected build-args: `CI_COMMIT_REF_SLUG`, `CI_PIPELINE_IID`,
-  `SEMANTIC_VERSION`, `RELEASE_TRAIN`.
+  `GITLABCI_SEMANTIC_VERSION`, `GITLABCI_RELEASE_TRAIN`.
 
 **`helm-pipeline`:**
 

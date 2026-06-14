@@ -1,15 +1,15 @@
 schemaVersion: "2.0.0"
 
 fileExistenceTests:
-  - name: Parent Metadata
-    path: /etc/kerrys-learning-lab/parent
+  - name: Base Metadata
+    path: /etc/kerrys-learning-lab/base
     shouldExist: true
     permissions: '-rw-r--r--'
     uid: 0
     gid: 0
 
-  - name: Child Metadata
-    path: /etc/kerrys-learning-lab/child
+  - name: Derived Metadata
+    path: /etc/kerrys-learning-lab/derived
     shouldExist: true
     permissions: '-rw-r--r--'
     uid: 0

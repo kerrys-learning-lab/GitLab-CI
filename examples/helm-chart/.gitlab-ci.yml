@@ -1,0 +1,26 @@
+# ============================================================================
+# A simple Helm Chart example, including helmunit tests.
+# --------------------------------------------------------------------------
+# NOTE: As part of exercising this Pipeline, we force this Chart to be
+#       pushed (helm_push_option: force), even for non-protected refs.
+#
+#       This is a contrived setting only for testing the Pipeline!
+#       Don't copy this setting!
+include:
+  - local: templates/pipeline-version.gitlab-ci.yml
+
+
+  # --------------------------------------------------------------------------
+  # NOTE: Below, we use 'local' include, since this file is tested as part of
+  #       this project.  However, users of this 'image-pipeline' component
+  #       will want to use the 'component' include syntax:
+  #
+  #       component: $GITLABCI_COMPONENT_CATALOG_PROJECT/helm-pipeline@$GITLABCI_COMPONENT_CATALOG_REF
+  - local: templates/helm-pipeline.yml
+    inputs:
+      jobs_name_prefix: "[example] "
+      helm_chart_dir: examples/helm-chart
+      helm_unit_test_chart_dir: examples/helm-chart
+      # Only one job in the Pipeline can create a Release... we defer to the
+      # 'main' Pipeline:
+      helm_release_enabled: false

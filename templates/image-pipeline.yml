@@ -30,14 +30,14 @@ spec:
       description: The relative path to the ignorefile, if applicable
       type: string
       default: .dockerignore
-    image_build_parent_image_name:
-      description: Set to the parent image's short-name if this image is a
-                   child image.  The parent image produced by this Pipeline
-                   will be injected into the child image's build process as
-                   the BASE_IMAGE build-arg.
+    image_build_base_image_name:
+      description: Set to the base image's short-name *if this image is
+                   derived from a base image produced by this same Pipeline.
+                   The base image produced by this Pipeline will be injected
+                   into the child image's build process as the BASE_IMAGE build-arg.
 
                    NOTE - Be sure and set this Job's 'image_build_needs' to
-                          the name of the Job which builds the parent!
+                          the name of the Job which builds the base image!
       type: string
       default: ''
     image_build_stage:
@@ -46,8 +46,8 @@ spec:
       default: build
     image_build_needs:
       description: DAG specification for the 'image build' Job
-      type: array
-      default: []
+      type: string
+      default: ''
 
 
     # ------------------------------------------------------------------------
@@ -171,6 +171,7 @@ include:
   - local: jobs/.release.gitlab-ci.yml
   - local: lib/utilities.gitlab-ci.yml
   - local: lib/rules.gitlab-ci.yml
+  - local: templates/pipeline-version.gitlab-ci.yml
 
 
 # ============================================================================
@@ -183,10 +184,13 @@ include:
     IMAGE_BUILD_CONTEXT:  $[[ inputs.image_build_context ]]
     IMAGE_BUILD_IGNOREFILE: $[[ inputs.image_build_ignorefile ]]
     IMAGE_BUILD_TARGET:  $[[ inputs.image_build_target ]]
-    IMAGE_BUILD_PARENT_IMAGE_NAME: $[[ inputs.image_build_parent_image_name ]]
-  needs: $[[ inputs.image_build_needs ]]
+    IMAGE_BUILD_BASE_IMAGE_NAME: $[[ inputs.image_build_base_image_name ]]
   rules:
     - !reference [.rules//not-a-merge-request,  rules]
+    - if: '"$[[ inputs.image_build_needs ]]"'
+      needs:
+        - "$[[ inputs.image_build_needs ]]"
+        - pipeline version
     - when: on_success
 
 

@@ -1,4 +1,4 @@
-# ----------------------------------------------------------------------------
+# ============================================================================
 .utilities//load-all:
   script:
     # NOTE: Order is important ('constants' must come before 'logging')
@@ -8,7 +8,7 @@
     - !reference [.utilities//table,      script]
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 .utilities//string:
   script:
     - |
@@ -50,7 +50,7 @@
       fi
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 .utilities//table:
   script:
     - |
@@ -81,7 +81,7 @@
       fi
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 .utilities//constants:
   script:
     - |
@@ -102,18 +102,56 @@
         readonly COLOR_RESET=$'\e[0m'
 
         # --- Emoji
-        readonly EMOJI_FIRE=$'🔥'
-        readonly EMOJI_ROCKET=$'🚀'
-        readonly EMOJI_REDX=$'❌'
-        readonly EMOJI_HAMMER_WRENCH=$'🛠️'
+        readonly EMOJI_1ST_PLACE_MEDAL=$'🥇'
+        readonly EMOJI_ATHLETIC_SHOE=$'👟'
+        readonly EMOJI_BEACH_UMBRELLA=$'🏖️'
+        readonly EMOJI_BLOSSOM=$'🌼'
+        readonly EMOJI_BLUE_HEART=$'💙'
+        readonly EMOJI_BOAT=$'⛵'
         readonly EMOJI_CLIPBOARD=$'📋'
         readonly EMOJI_DOWNARROW=$'⤵️'
+        readonly EMOJI_FIRE=$'🔥'
+        readonly EMOJI_GREEN_CIRCLE=$'🟢'
+        readonly EMOJI_HAMMER_WRENCH=$'🛠️'
+        readonly EMOJI_RAINBOW=$'🌈'
+        readonly EMOJI_REDX=$'❌'
+        readonly EMOJI_ROCKET=$'🚀'
+        readonly EMOJI_SHELL=$'🐚'
+        readonly EMOJI_TURTLE=$'🐢'
+        readonly EMOJI_UNLOCK=$'🔓'
+        readonly EMOJI_VIDEO_GAME=$'🎮'
+        readonly EMOJI_WAFFLE=$'🧇'
+        readonly EMOJI_XRAY=$'🩻'
+        readonly EMOJI_YARN=$'🧶'
+        readonly EMOJI_ZOMBIE=$'🧟'
+
+        RANDOM_EMOJIS=()
+        RANDOM_EMOJIS+=(${EMOJI_1ST_PLACE_MEDAL})
+        RANDOM_EMOJIS+=(${EMOJI_ATHLETIC_SHOE})
+        RANDOM_EMOJIS+=(${EMOJI_BEACH_UMBRELLA})
+        RANDOM_EMOJIS+=(${EMOJI_BLOSSOM})
+        RANDOM_EMOJIS+=(${EMOJI_BLUE_HEART})
+        RANDOM_EMOJIS+=(${EMOJI_BOAT})
+        RANDOM_EMOJIS+=(${EMOJI_RAINBOW})
+        RANDOM_EMOJIS+=(${EMOJI_ROCKET})
+        RANDOM_EMOJIS+=(${EMOJI_SHELL})
+        RANDOM_EMOJIS+=(${EMOJI_TURTLE})
+        RANDOM_EMOJIS+=(${EMOJI_UNLOCK})
+        RANDOM_EMOJIS+=(${EMOJI_VIDEO_GAME})
+        RANDOM_EMOJIS+=(${EMOJI_WAFFLE})
+        RANDOM_EMOJIS+=(${EMOJI_XRAY})
+        RANDOM_EMOJIS+=(${EMOJI_YARN})
+        RANDOM_EMOJIS+=(${EMOJI_ZOMBIE})
+
+        fn_random_emoji() {
+          echo ${RANDOM_EMOJIS[$RANDOM % ${#RANDOM_EMOJIS[@]}]}
+        }
 
         UTILITIES_CONSTANTS__DEFINED=true
       fi
 
 
-# ----------------------------------------------------------------------------
+# ============================================================================
 .utilities//logging:
   script:
     - |
