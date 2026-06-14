@@ -110,7 +110,7 @@ function test_pipeline_version_developer_branch() {
 
   fn_calculate_pipeline_version
 
-  assert_empty  "${GITLABCI_RELEASE_TRAIN}"
+  assert_empty  "${RELEASE_TRAIN}"
   assert_equals "0"                                                     "${GITLABCI_SEMANTIC_VERSION_MAJOR}"
   assert_equals "0"                                                     "${GITLABCI_SEMANTIC_VERSION_MINOR}"
   assert_equals "0"                                                     "${GITLABCI_SEMANTIC_VERSION_PATCH}"
