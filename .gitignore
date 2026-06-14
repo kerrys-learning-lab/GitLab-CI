@@ -10,8 +10,8 @@
 .data
 .dotenv
 .gitlab-ci-local
-.helm*
-.image*
+.helm-*
+.image-*
 .pytest_cache
 .release
 .venv

@@ -6,8 +6,8 @@ for building, testing, and publishing project artifacts on
 
 | Component        | Purpose                                                              |
 | ---------------- | ------------------------------------------------------------------- |
-| `image-pipeline` | Build, test, promote, and release an OCI/container image.           |
-| `helm-pipeline`  | Package, test, push, and release a Helm chart.                      |
+| `image.pipeline` | Build, test, promote, and release an OCI/container image.           |
+| `helm-chart.pipeline`  | Package, test, push, and release a Helm chart.                      |
 
 Both components compute a SemVer for the pipeline (see
 [Versioning](#versioning--artifact-tags)) and share a common job-naming hook.
@@ -21,7 +21,7 @@ pinned to a released version:
 
 ```yaml
 include:
-  - component: gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/image-pipeline@v0.1.3
+  - component: gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/image.pipeline@v0.1.3
     inputs:
       image_name: my-app
 ```
@@ -34,18 +34,18 @@ include:
 
 ### Local includes within a project
 
-If you keep your pipeline definition in this repo (e.g. the `examples/`), you
+If you keep your pipeline definition in this repo (e.g. the `ci-cd-examples/`), you
 reference the component by path instead:
 
 ```yaml
 include:
-  - local: templates/image-pipeline.yml
+  - local: templates/image.pipeline.yml
     inputs: { ... }
 ```
 
 ---
 
-## `image-pipeline`
+## `image.pipeline`
 
 Creates these jobs (default stage in parentheses):
 
@@ -62,7 +62,7 @@ promotes on protected refs:
 
 ```yaml
 include:
-  - component: gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/image-pipeline@v0.1.3
+  - component: gitlab.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-ci/image.pipeline@v0.1.3
 ```
 
 **Commonly used inputs** (see the component's `spec:inputs` for the full list):
@@ -89,11 +89,11 @@ the child build as the `BASE_IMAGE` build-arg:
 
 ```yaml
 include:
-  - component: .../image-pipeline@v0.1.3
+  - component: .../image.pipeline@v0.1.3
     inputs:
       image_name: my-app/base
       image_release_enabled: false        # only one job per pipeline makes a Release
-  - component: .../image-pipeline@v0.1.3
+  - component: .../image.pipeline@v0.1.3
     inputs:
       image_name: my-app/service
       image_build_parent_image_name: my-app/base
@@ -153,16 +153,16 @@ Use these when you include a component more than once, to keep job names unique.
 Beyond `spec:inputs`, the jobs pick up specially-named CI/CD variables. Define
 them as project or job variables — no input wiring needed.
 
-**`image-pipeline`:**
+**`image.pipeline`:**
 
 - `IMAGE_BUILD_ARG_<NAME>` → passed as `--build-arg <NAME>=<value>`.
 - `IMAGE_BUILD_SECRET_FILE_<ID>` → build secret from a file path
   (`--secret id=<id>,src=<path>`); `<ID>` is lower-cased and `_`→`-`.
 - `IMAGE_BUILD_SECRET_STRING_<ID>` → build secret from a literal value.
 - Automatically injected build-args: `CI_COMMIT_REF_SLUG`, `CI_PIPELINE_IID`,
-  `GITLABCI_SEMANTIC_VERSION`, `GITLABCI_RELEASE_TRAIN`.
+  `SEMANTIC_VERSION`, `RELEASE_TRAIN`.
 
-**`helm-pipeline`:**
+**`helm-chart.pipeline`:**
 
 - `HELM_REPO_<NAME>_URL` (+ optional `_USERNAME` / `_PASSWORD`) → adds a Helm
   repo (alias `<name>`, lower-cased, `_`→`-`) before packaging, so charts with
@@ -178,9 +178,9 @@ The pipeline derives a SemVer from the ref:
 | ------------------------------ | ---------------------------------------------- |
 | Protected tag `vX.Y.Z`         | `X.Y.Z` (release)                              |
 | Protected branch `release/X.Y` | `X.Y.<next>-rc+<pipeline>` (release candidate) |
-| Any other ref                  | `0.0.0-<ref-str_slug>+<pipeline>` (dev build)      |
+| Any other ref                  | `0.0.0-<ref-slug>+<pipeline>` (dev build)      |
 
-Promoted images are tagged with the commit ref str_slug, and (where applicable) the
+Promoted images are tagged with the commit ref slug, and (where applicable) the
 release-train `X.Y` and the full SemVer.
 
 > Release tags and `release/X.Y` branches are expected to be **protected**.
@@ -189,7 +189,7 @@ release-train `X.Y` and the full SemVer.
 
 ## Testing this repo
 
-Components and their `examples/` are exercised with
+Components and their `ci-cd-examples/` are exercised with
 [`gitlab-ci-local`](https://github.com/firecow/gitlab-ci-local). **`git add`
 all relevant files first** (it only sees tracked content):
 
