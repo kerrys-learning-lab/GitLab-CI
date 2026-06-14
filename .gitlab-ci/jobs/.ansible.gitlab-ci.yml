@@ -12,6 +12,7 @@
     - !reference [.auth//ssh-remote-access,  script]
   script:
     - |
+      set -x
       # --- ansible-test-ssh-connection --------------------------------------
       ANSIBLE_LIST_HOSTS_CLI_ARGS=()
       ANSIBLE_LIST_HOSTS_CLI_ARGS+=(--list-hosts)
@@ -33,6 +34,7 @@
           host=${host}.${GITLABCI_DOMAIN_NAME}
         fi
 
+        fn_log_info "ssh ${ANSIBLE_REMOTE_USER}@${host}..."
         ssh  ${SSH_TEST_OPTIONS}  ${ANSIBLE_REMOTE_USER}@${host}  ${SSH_TEST_COMMAND}
       done
 
