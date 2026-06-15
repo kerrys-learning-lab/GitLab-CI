@@ -113,13 +113,9 @@
     ANSIBLE_HOST_FILTER: ''
     ANSIBLE_DRY_RUN: true
     ANSIBLE_LOG_PATH: ./.ansible-run/ansible.log
-  before_script:
-    - !reference [.auth//ssh-remote-access,  script]
   script:
     - |
       # --- ansible-playbook-run ---------------------------------------------
-      set -x
-
       if [[ -n "${ANSIBLE_REQUIREMENTS_FILE}" ]]; then
         ansible-galaxy collection install --requirements-file ${ANSIBLE_DIR}/${ANSIBLE_REQUIREMENTS_FILE}
       fi

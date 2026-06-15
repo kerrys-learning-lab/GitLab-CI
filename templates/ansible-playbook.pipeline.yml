@@ -106,13 +106,16 @@ spec:
 
 # ============================================================================
 include:
+  - local: templates/pipeline-version.job.yml
+  - local: templates/release.job.yml
+    rules:
+      - if: "'$[[ inputs.playbook_release_enabled ]]' == 'false'"
+        when: never
   - local: .gitlab-ci/jobs/.ansible.gitlab-ci.yml
-  - local: .gitlab-ci/jobs/.release.gitlab-ci.yml
   - local: .gitlab-ci/lib/auth.gitlab-ci.yml
   - local: .gitlab-ci/lib/defaults.gitlab-ci.yml
   - local: .gitlab-ci/lib/stages.gitlab-ci.yml
   - local: .gitlab-ci/lib/rules.gitlab-ci.yml
-  - local: templates/pipeline-version.job.yml
 
 
 # ============================================================================
@@ -148,6 +151,8 @@ include:
     ANSIBLE_INVENTORY_PATH: $[[ inputs.ansible_inventory_path ]]
     ANSIBLE_HOST_FILTER: $[[ inputs.ansible_host_filter ]]
     ANSIBLE_REMOTE_USER: $[[ inputs.ansible_remote_user ]]
+    ANSIBLE_CFG_FILE: $[[ inputs.ansible_cfg_file ]]
+    ANSIBLE_REQUIREMENTS_FILE: $[[ inputs.ansible_requirements_file ]]
     ANSIBLE_DRY_RUN: true
   rules:
     - !reference [.rules//not-a-merge-request,  rules]
@@ -163,20 +168,10 @@ include:
     ANSIBLE_FILE: $[[ inputs.ansible_file ]]
     ANSIBLE_INVENTORY_PATH: $[[ inputs.ansible_inventory_path ]]
     ANSIBLE_HOST_FILTER: $[[ inputs.ansible_host_filter ]]
-    ANSIBLE_DRY_RUN: false
     ANSIBLE_REMOTE_USER: $[[ inputs.ansible_remote_user ]]
+    ANSIBLE_CFG_FILE: $[[ inputs.ansible_cfg_file ]]
     ANSIBLE_REQUIREMENTS_FILE: $[[ inputs.ansible_requirements_file ]]
+    ANSIBLE_DRY_RUN: false
   rules:
     - !reference [.rules//not-a-merge-request,  rules]
     - !reference [.rules//default-branch,        rules]
-
-
-# ============================================================================
-"$[[ inputs.jobs_name_prefix ]]playbook release$[[ inputs.jobs_name_suffix ]]":
-  extends: .release
-  stage: $[[ inputs.playbook_release_stage ]]
-  rules:
-    - if: "'$[[ inputs.playbook_release_enabled ]]' == 'false'"
-      when: never
-    - !reference [.rules//not-a-merge-request,  rules]
-    - !reference [.rules//protected-tag,        rules]

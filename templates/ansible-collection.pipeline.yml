@@ -70,12 +70,15 @@ spec:
 
 # ============================================================================
 include:
+  - local: templates/pipeline-version.job.yml
+  - local: templates/release.job.yml
+    rules:
+      - if: "'$[[ inputs.collection_release_enabled ]]' == 'false'"
+        when: never
   - local: .gitlab-ci/jobs/.ansible.gitlab-ci.yml
-  - local: .gitlab-ci/jobs/.release.gitlab-ci.yml
   - local: .gitlab-ci/lib/defaults.gitlab-ci.yml
   - local: .gitlab-ci/lib/stages.gitlab-ci.yml
   - local: .gitlab-ci/lib/rules.gitlab-ci.yml
-  - local: templates/pipeline-version.job.yml
 
 
 # ============================================================================
@@ -96,14 +99,3 @@ include:
     ANSIBLE_DIR: $[[ inputs.ansible_dir ]]
     ANSIBLE_LINT_STRICT: $[[ inputs.collection_lint_strict ]]
     ANSIBLE_CFG_FILE: $[[ inputs.ansible_cfg_file ]]
-
-
-# ============================================================================
-"$[[ inputs.jobs_name_prefix ]]collection release$[[ inputs.jobs_name_suffix ]]":
-  extends: .release
-  stage: $[[ inputs.collection_release_stage ]]
-  rules:
-    - if: "'$[[ inputs.collection_release_enabled ]]' == 'false'"
-      when: never
-    - !reference [.rules//not-a-merge-request,  rules]
-    - !reference [.rules//protected-tag,        rules]
