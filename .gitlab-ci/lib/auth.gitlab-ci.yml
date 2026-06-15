@@ -3,8 +3,10 @@
   script:
     - |
       # --- auth//ssh-remote-access ------------------------------------------
-      eval $(ssh-agent -s)
-      chmod 400 "${SSH_PRIVATE_KEY_FILE}"
-      ssh-add "${SSH_PRIVATE_KEY_FILE}"
+      set -x
       mkdir -p ~/.ssh && chmod 700 ~/.ssh
-      cp "${SSH_KNOWN_HOSTS_FILE}" ~/.ssh/known_hosts
+      cp ${SSH_KNOWN_HOSTS_FILE} ~/.ssh/known_hosts
+      chmod 400 ~/.ssh/known_hosts
+      eval $(ssh-agent -s)
+      chmod 400 ${SSH_PRIVATE_KEY_FILE}
+      ssh-add ${SSH_PRIVATE_KEY_FILE}
