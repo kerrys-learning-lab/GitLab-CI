@@ -1,7 +1,6 @@
 *
-!test/pipeline-tests
 !data
 !pyproject.toml
 !src
-!test
+!tests
 !uv.lock
