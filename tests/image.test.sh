@@ -78,7 +78,7 @@ function test_image_cli_tag_custom() {
 function test_image_cli_dockerfile() {
   fn_image_calculate_build_cli
 
-  EXPECTED_DOCKERFILE_ARG=./Dockerfile
+  EXPECTED_DOCKERFILE_ARG=Dockerfile
 
   assert_contains "--file ${EXPECTED_DOCKERFILE_ARG}" "${IMAGE_BUILD_CLI_ARGS[*]}"
 }
