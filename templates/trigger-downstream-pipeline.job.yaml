@@ -45,6 +45,7 @@ spec:
 
 # ============================================================================
 include:
+  - local: .gitlab-ci/lib/rules.gitlab-ci.yml
   - local: .gitlab-ci/lib/stages.gitlab-ci.yml
 
 
@@ -55,3 +56,5 @@ include:
     project: $[[ inputs.downstream_project_name ]]
     branch: $[[ inputs.downstream_project_ref ]]
     strategy: mirror
+  rules:
+    - !reference [.rules//default-branch, script]
