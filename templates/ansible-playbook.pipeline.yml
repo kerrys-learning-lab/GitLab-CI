@@ -139,6 +139,7 @@ include:
     ANSIBLE_FILE: $[[ inputs.ansible_file ]]
     ANSIBLE_CFG_FILE: $[[ inputs.ansible_cfg_file ]]
     ANSIBLE_LINT_STRICT: $[[ inputs.playbook_lint_strict ]]
+    ANSIBLE_REQUIREMENTS_FILE: $[[ inputs.ansible_requirements_file ]]
 
 
 # ============================================================================
