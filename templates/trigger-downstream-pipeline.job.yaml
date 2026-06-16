@@ -56,5 +56,5 @@ include:
     project: $[[ inputs.downstream_project_name ]]
     branch: $[[ inputs.downstream_project_ref ]]
     strategy: mirror
-  rules:
-    - !reference [.rules//default-branch, rules]
+  # rules:
+  #   - !reference [.rules//default-branch, rules]
