@@ -76,6 +76,7 @@ include:
       - if: "'$[[ inputs.collection_release_enabled ]]' == 'false'"
         when: never
   - local: .gitlab-ci/jobs/.ansible.gitlab-ci.yml
+  - local: .gitlab-ci/lib/auth.gitlab-ci.yml
   - local: .gitlab-ci/lib/defaults.gitlab-ci.yml
   - local: .gitlab-ci/lib/stages.gitlab-ci.yml
   - local: .gitlab-ci/lib/rules.gitlab-ci.yml
