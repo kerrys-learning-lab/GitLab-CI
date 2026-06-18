@@ -138,7 +138,7 @@ include:
     HELM_CHART_DIR:  $[[ inputs.helm_chart_dir ]]
   needs: $[[ inputs.helm_package_needs ]]
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
     - when: on_success
 
 
@@ -150,7 +150,7 @@ include:
     HELM_CHART_DIR:  $[[ inputs.helm_unit_test_chart_dir ]]
     HELM_UNITTEST_FILE_GLOB: $[[ inputs.helm_unit_test_file_glob ]]
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
     - if: "'$[[ inputs.helm_unit_test_enabled ]]' == 'false'"
       when: never
     - when: on_success
@@ -167,8 +167,8 @@ include:
     HELM_REPO_PIPELINE_PUSH_PASSWORD: $[[ inputs.helm_push_repo_password ]]
     HELM_REPO_PIPELINE_PUSH_CHANNEL: devel
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
     - if: "'$[[ inputs.helm_push_option ]]' == 'skip'"
       when: never
     - if: "'$[[ inputs.helm_push_option ]]' == 'force'"
-    - !reference [.rules//protected-ref,        rules]
+    - !reference [.rules//only-protected-refs,        rules]

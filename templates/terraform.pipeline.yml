@@ -1,0 +1,81 @@
+# ============================================================================
+spec:
+  inputs:
+
+
+    # ------------------------------------------------------------------------
+    tf_plan_stage:
+      description: Assigns the Pipeline stage for the 'terraform plan' Job
+      type: string
+      default: build
+
+
+    # ------------------------------------------------------------------------
+    tf_validate_stage:
+      description: Assigns the Pipeline stage for the 'terraform validate' Job
+      type: string
+      default: test
+
+
+    # ------------------------------------------------------------------------
+    tf_apply_stage:
+      description: Assigns the Pipeline stage for the 'terraform apply' Job
+      type: string
+      default: build
+
+
+    # ------------------------------------------------------------------------
+    # These settings affect Job names for all Jobs instantiated by the component
+    jobs_name_prefix:
+      description: Optional prefix for the Job names
+      type: string
+      default: ''
+    jobs_name_suffix:
+      description: Optional suffix for the Job names
+      type: string
+      default: ''
+
+
+  # --------------------------------------------------------------------------
+  # Propagate component metadata
+  component:
+    - name
+    - version
+    - reference
+
+
+---
+
+
+# ============================================================================
+include:
+  - local: .gitlab-ci/lib/stages.gitlab-ci.yml
+  - local: .gitlab-ci/lib/rules.gitlab-ci.yml
+  - local: .gitlab-ci/jobs/.terraform.gitlab-ci.yml
+
+
+# ============================================================================
+"$[[ inputs.jobs_name_prefix ]]terraform plan$[[ inputs.jobs_name_suffix ]]":
+  extends: .terraform-plan
+  stage: $[[ inputs.tf_plan_stage ]]
+  rules:
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
+    - when: on_success
+
+
+# ============================================================================
+"$[[ inputs.jobs_name_prefix ]]terraform validate$[[ inputs.jobs_name_suffix ]]":
+  extends: .terraform-validate
+  stage: $[[ inputs.tf_validate_stage ]]
+  rules:
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
+    - when: on_success
+
+
+# ============================================================================
+"$[[ inputs.jobs_name_prefix ]]terraform apply$[[ inputs.jobs_name_suffix ]]":
+  extends: .terraform-apply
+  stage: $[[ inputs.tf_apply_stage ]]
+  rules:
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
+    - !reference [.rules//only-default-branch,          rules]

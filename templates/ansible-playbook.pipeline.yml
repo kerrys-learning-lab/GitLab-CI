@@ -156,8 +156,7 @@ include:
     ANSIBLE_REQUIREMENTS_FILE: $[[ inputs.ansible_requirements_file ]]
     ANSIBLE_DRY_RUN: true
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
-    - !reference [.rules//not-default-branch,   rules]
+    - !reference [.rules//exclude-default-branch,           rules]
 
 
 # ============================================================================
@@ -174,5 +173,4 @@ include:
     ANSIBLE_REQUIREMENTS_FILE: $[[ inputs.ansible_requirements_file ]]
     ANSIBLE_DRY_RUN: false
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
-    - !reference [.rules//default-branch,        rules]
+    - !reference [.rules//only-default-branch,               rules]

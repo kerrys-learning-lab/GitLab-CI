@@ -193,7 +193,7 @@ include:
     IMAGE_BUILD_BASE_IMAGE_NAME: $[[ inputs.image_build_base_image_name ]]
   needs: $[[ inputs.image_build_needs ]]
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
     - when: on_success
 
 
@@ -210,7 +210,7 @@ include:
     IMAGE_UNITTEST_CONTAINER_OUTPUT_DIR: $[[ inputs.image_unit_test_container_output_dir ]]
     IMAGE_UNITTEST_CONTAINER_OUTPUT_FILE: $[[ inputs.image_unit_test_results_filename ]]
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
     - if: "'$[[ inputs.image_unit_test_enabled ]]' == 'false'"
       when: never
     - when: on_success
@@ -224,7 +224,7 @@ include:
     IMAGE_BUILD_NAME: $[[ inputs.image_name ]]
     IMAGE_STRUCTURE_TEST_FILENAMES: "$[[ inputs.image_structure_test_filenames ]]"
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
     - if: "'$[[ inputs.image_structure_test_enabled ]]' == 'false'"
       when: never
     - when: on_success
@@ -239,8 +239,8 @@ include:
     IMAGE_PROMOTE_RELEASE_TRAIN: $[[ inputs.image_promote_release_train ]]
     IMAGE_PROMOTE_SEMANTIC_VERSION: $[[ inputs.image_promote_semantic_version ]]
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
     - if: "'$[[ inputs.image_promote_option ]]' == 'skip'"
       when: never
     - if: "'$[[ inputs.image_promote_option ]]' == 'force'"
-    - !reference [.rules//protected-ref,        rules]
+    - !reference [.rules//only-protected-refs,        rules]
