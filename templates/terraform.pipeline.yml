@@ -2,8 +2,15 @@
 spec:
   inputs:
 
+    # ------------------------------------------------------------------------
+    # Apply to TF, generally:
+    tf_environment:
+      description: Environment controlled by this TF Pipeline (required)
+      type: string
+
 
     # ------------------------------------------------------------------------
+    # Plan Job(s):
     tf_plan_stage:
       description: Assigns the Pipeline stage for the 'terraform plan' Job
       type: string
@@ -11,6 +18,7 @@ spec:
 
 
     # ------------------------------------------------------------------------
+    # Validate Job(s):
     tf_validate_stage:
       description: Assigns the Pipeline stage for the 'terraform validate' Job
       type: string
@@ -18,6 +26,7 @@ spec:
 
 
     # ------------------------------------------------------------------------
+    # Apply Job(s):
     tf_apply_stage:
       description: Assigns the Pipeline stage for the 'terraform apply' Job
       type: string

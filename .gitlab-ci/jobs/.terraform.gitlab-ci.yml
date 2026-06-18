@@ -45,7 +45,7 @@ variables:
       TF_PLAN_CLI_ARGS+=(-input=false)
       TF_PLAN_CLI_ARGS+=(-out=tfplan)
 
-      for var  in ${TF_EXTRA_VARS}; do
+      for var in ${TF_EXTRA_VARS}; do
         TF_PLAN_CLI_ARGS+=(-var "${var}")
       done
 

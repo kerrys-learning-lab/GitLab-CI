@@ -3,13 +3,14 @@ spec:
   inputs:
 
     # ------------------------------------------------------------------------
+    # Apply to TF, generally:
     tf_action:
       description: Apply (start) or undo (stop) cloud infrastructure using
                    Terraform.
 
                    - start = provision/keep the resources
-                   - stop = shut-down the resources, keeping low-cost/long-
-                      term resources as necessary
+                   - stop = shut-down the resources, possibly keeping
+                      low-cost/long-term resources as necessary
       type: string
       options:
         - start
@@ -21,6 +22,7 @@ spec:
 
 
     # ------------------------------------------------------------------------
+    # Plan Job(s):
     tf_plan_stage:
       description: Assigns the Pipeline stage for the 'terraform plan' Job
       type: string
@@ -28,6 +30,7 @@ spec:
 
 
     # ------------------------------------------------------------------------
+    # Validate Job(s):
     tf_validate_stage:
       description: Assigns the Pipeline stage for the 'terraform validate' Job
       type: string
@@ -35,10 +38,18 @@ spec:
 
 
     # ------------------------------------------------------------------------
+    # Apply Job(s):
     tf_apply_stage:
       description: Assigns the Pipeline stage for the 'terraform apply' Job
       type: string
       default: build
+    tf_apply_when:
+      description: Controls when the 'terraform apply' Job executes
+      type: string:
+      options:
+        - on_success
+        - manual
+      default: on_success
 
 
     # ------------------------------------------------------------------------
@@ -98,7 +109,8 @@ include:
   environment:
     name: $[[ inputs.tf_environment ]]
     action: $[[ inputs.tf_action ]]
+  resource_group: $[[ inputs.tf_environment ]]
   rules:
     - !reference [.rules//prevent-duplicate-pipelines,  rules]
     - !reference [.rules//only-default-branch,          rules]
-    - when: manual
+    - when: $[[ inputs.tf_apply_when ]]
