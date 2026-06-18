@@ -7,10 +7,6 @@ spec:
     tf_action:
       description: Apply (start) or undo (stop) cloud infrastructure using
                    Terraform.
-
-                   - start = provision/keep the resources
-                   - stop = shut-down the resources, possibly keeping
-                      low-cost/long-term resources as necessary
       type: string
       options:
         - start
