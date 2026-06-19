@@ -15,7 +15,7 @@ include:
       ansible_file: ping.playbook.yml
       ansible_requirements_file: requirements.yaml
       # Can't trust that my Asus laptop is on/available when CI/CD runs
-      ansible_host_filter: "all:!asus"
+      ansible_host_filter: "all:!asus:!infrastructure01:!proxmox01"
       # Only one job in the Pipeline can create a Release... we defer to the
       # 'main' Pipeline:
       playbook_release_enabled: false
