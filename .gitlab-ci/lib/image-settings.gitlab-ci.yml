@@ -214,9 +214,9 @@
 
         # --- Cache:
         IMAGE_BUILD_CLI_ARGS+=(--layers)
-        IMAGE_BUILD_CLI_ARGS+=(--cache-from=${IMAGE_AS_BUILT_CACHE_URI})
+        IMAGE_BUILD_CLI_ARGS+=(--cache-from=${IMAGE_FULL_NAME})
         if [[ ${CI_COMMIT_REF_PROTECTED} == true ]]; then
-          IMAGE_BUILD_CLI_ARGS+=(--cache-to=${IMAGE_AS_BUILT_CACHE_URI})
+          IMAGE_BUILD_CLI_ARGS+=(--cache-to=${IMAGE_FULL_NAME})
         fi
 
         # --- Context:
