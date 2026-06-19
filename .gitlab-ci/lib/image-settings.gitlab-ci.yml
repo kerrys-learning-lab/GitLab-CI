@@ -51,6 +51,7 @@
 
         # --- We have the full URI now (name and version)
         IMAGE_AS_BUILT_URI=${IMAGE_FULL_NAME}:${IMAGE_AS_BUILT_VERSION}
+        IMAGE_AS_BUILT_CACHE_URI=${IMAGE_FULL_NAME}/cache
       }
 
 
@@ -210,6 +211,13 @@
         # --- Secrets:
         fn_image_calculate_image_build_secrets
 
+
+        # --- Cache:
+        IMAGE_BUILD_CLI_ARGS+=(--layers)
+        IMAGE_BUILD_CLI_ARGS+=(--cache-from=${IMAGE_AS_BUILT_CACHE_URI})
+        if [[ ${CI_COMMIT_REF_PROTECTED} == true ]]; then
+          IMAGE_BUILD_CLI_ARGS+=(--cache-to=${IMAGE_AS_BUILT_CACHE_URI})
+        fi
 
         # --- Context:
         # Should be the last argument (it's positional)
