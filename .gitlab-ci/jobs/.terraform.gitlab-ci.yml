@@ -1,0 +1,78 @@
+# ============================================================================
+variables:
+  TF_IMAGE_TAG: 1.15.6
+
+
+# ============================================================================
+.terraform-base:
+  image:
+    name: docker.io/hashicorp/terraform:${TF_IMAGE_TAG}
+    entrypoint: [""]
+  variables:
+    TF_DIR: .
+    TF_IN_AUTOMATION: true
+    TF_INPUT: false
+  before_script:
+    - |
+      # --- terraform-base ---------------------------------------------------
+      TF_INIT_CLI_ARGS=()
+      TF_INIT_CLI_ARGS+=(-input=false)
+      TF_INIT_CLI_ARGS+=(-backend-config=config.s3.tfbackend)
+      TF_INIT_CLI_ARGS+=(-backend-config="access_key=${AWS_TERRAFORM_BUCKET_ACCESS_KEY_ID}")
+      TF_INIT_CLI_ARGS+=(-backend-config="secret_key=${AWS_TERRAFORM_BUCKET_SECRET_ACCESS_KEY}")
+
+      terraform -chdir ${TF_DIR}  init    \
+                                         \
+                                         \
+
+
+
+# ============================================================================
+.terraform-validate:
+  extends: .terraform-base
+  stage: test
+  script:
+    - |
+      # --- terraform-validate -----------------------------------------------
+      terraform fmt -check -recursive -diff
+      terraform validate
+
+
+# ============================================================================
+.terraform-plan:
+  stage: build
+  extends: .terraform-base
+  variables:
+    TF_PLAN_ARTIFACT_BINARY: tfplan
+    TF_PLAN_ARTIFACT_TEST: tfplan.txt
+  script:
+    - |
+      # --- terraform-plan ---------------------------------------------------
+      TF_PLAN_CLI_ARGS=()
+      TF_PLAN_CLI_ARGS+=(-input=false)
+      TF_PLAN_CLI_ARGS+=(-out=tfplan)
+
+      for var in ${TF_EXTRA_VARS}; do
+        TF_PLAN_CLI_ARGS+=(-var "${var}")
+      done
+
+      terraform plan ${TF_PLAN_CLI_ARGS[@]}
+      terraform show tfplan | tee tfplan.txt
+  artifacts:
+    paths:
+      - $TF_PLAN_ARTIFACT_BINARY
+      - $TF_PLAN_ARTIFACT_TEST
+    expire_in: 7 days
+    when: always
+
+
+# ============================================================================
+.terraform-apply:
+  extends: .terraform-base
+  variables:
+    TF_PLAN_ARTIFACT_BINARY: tfplan
+  script:
+    - |
+      # --- terraform-apply --------------------------------------------------
+      terraform apply -input=false ${TF_PLAN_ARTIFACT_BINARY}
+      terraform output

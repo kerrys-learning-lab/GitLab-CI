@@ -202,7 +202,7 @@ include:
   extends: .image-unit-test
   stage: $[[ inputs.image_unit_test_stage ]]
   variables:
-    IMAGE_BUILD_NAME: $[[ inputs.image_name ]]
+    IMAGE_BUILD_NAME: $[[ inputs.image_name ]]-unit-test
     IMAGE_BUILD_DOCKERFILE: $[[ inputs.image_build_dockerfile ]]
     IMAGE_BUILD_CONTEXT:  $[[ inputs.image_build_context ]]
     IMAGE_BUILD_IGNOREFILE: $[[ inputs.image_build_ignorefile ]]
