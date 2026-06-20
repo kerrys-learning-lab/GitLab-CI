@@ -5,9 +5,7 @@ variables:
 
 # ============================================================================
 .terraform-base:
-  image:
-    name: docker.io/hashicorp/terraform:${TF_IMAGE_TAG}
-    entrypoint: [""]
+  image: registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-builder/terraform:0.2
   variables:
     TF_DIR: .
     TF_IN_AUTOMATION: true
@@ -21,9 +19,7 @@ variables:
       TF_INIT_CLI_ARGS+=(-backend-config="access_key=${AWS_TERRAFORM_BUCKET_ACCESS_KEY_ID}")
       TF_INIT_CLI_ARGS+=(-backend-config="secret_key=${AWS_TERRAFORM_BUCKET_SECRET_ACCESS_KEY}")
 
-      terraform -chdir ${TF_DIR}  init    \
-                                         \
-                                         \
+      terraform -chdir ${TF_DIR}  init  ${TF_INIT_CLI_ARGS[@]}
 
 
 
@@ -34,8 +30,8 @@ variables:
   script:
     - |
       # --- terraform-validate -----------------------------------------------
-      terraform fmt -check -recursive -diff
-      terraform validate
+      terraform -chdir ${TF_DIR} fmt -check -recursive -diff
+      terraform -chdir ${TF_DIR} validate
 
 
 # ============================================================================
@@ -56,8 +52,8 @@ variables:
         TF_PLAN_CLI_ARGS+=(-var "${var}")
       done
 
-      terraform plan ${TF_PLAN_CLI_ARGS[@]}
-      terraform show tfplan | tee tfplan.txt
+      terraform -chdir ${TF_DIR} plan ${TF_PLAN_CLI_ARGS[@]}
+      terraform -chdir ${TF_DIR} show tfplan | tee tfplan.txt
   artifacts:
     paths:
       - $TF_PLAN_ARTIFACT_BINARY
@@ -74,5 +70,5 @@ variables:
   script:
     - |
       # --- terraform-apply --------------------------------------------------
-      terraform apply -input=false ${TF_PLAN_ARTIFACT_BINARY}
-      terraform output
+      terraform -chdir ${TF_DIR} apply -input=false ${TF_PLAN_ARTIFACT_BINARY}
+      terraform -chdir ${TF_DIR} output
