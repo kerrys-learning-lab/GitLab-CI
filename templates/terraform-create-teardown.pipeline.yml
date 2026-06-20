@@ -58,7 +58,7 @@ spec:
       default: build
     tf_apply_when:
       description: Controls when the 'terraform apply' Job executes
-      type: string:
+      type: string
       options:
         - on_success
         - manual
