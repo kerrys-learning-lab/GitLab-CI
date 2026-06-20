@@ -11,7 +11,7 @@ spec:
       options:
         - start
         - stop
-      default: create
+      default: start
     tf_dir:
       description: Directory (relative to repository root) of the Terraform
                    scripts
