@@ -9,5 +9,4 @@ release:
   extends: .release
   stage: release
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
-    - !reference [.rules//protected-tag,        rules]
+    - !reference [.rules//only-protected-tag,        rules]
