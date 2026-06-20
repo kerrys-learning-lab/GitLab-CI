@@ -1,0 +1,14 @@
+include:
+  - local: templates/pipeline-version.job.yml
+
+  # --------------------------------------------------------------------------
+  # NOTE: Below, we use 'local' include, since this file is tested as part of
+  #       this project.  However, users of this 'image.pipeline' component
+  #       will want to use the 'component' include syntax:
+  #
+  #       component: $GITLABCI_COMPONENT_CATALOG_PROJECT/terraform.pipeline@$GITLABCI_COMPONENT_CATALOG_REF
+  - local: templates/terraform.pipeline.yml
+    inputs:
+      jobs_name_prefix: "[example] "
+      tf_dir: ci-cd-examples/terraform
+      playbook_release_enabled: false

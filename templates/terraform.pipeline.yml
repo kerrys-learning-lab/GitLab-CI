@@ -4,9 +4,26 @@ spec:
 
     # ------------------------------------------------------------------------
     # Apply to TF, generally:
+    tf_dir:
+      description: Directory (relative to repository root) of the Terraform
+                   scripts
+      type: string
+      default: .
     tf_environment:
       description: Environment controlled by this TF Pipeline (required)
       type: string
+    tf_s3_backend:
+      description: If true, the S3 backend will be used
+      type: boolean
+      default: false
+    tf_s3_access_key:
+      description: The S3 access key for the TF backend
+      type: string
+      default: ''
+    tf_s3_secret_key:
+      description: The S3 secret key for the TF backend
+      type: string
+      default: ''
 
 
     # ------------------------------------------------------------------------
@@ -67,6 +84,11 @@ include:
 "$[[ inputs.jobs_name_prefix ]]terraform plan$[[ inputs.jobs_name_suffix ]]":
   extends: .terraform-plan
   stage: $[[ inputs.tf_plan_stage ]]
+  variables:
+    TF_DIR: $[[ inputs.tf_dir ]]
+    TF_S3_BACKEND: $[[ inputs.tf_s3_backend ]]
+    TF_S3_ACCESS_KEY: $[[ inputs.tf_s3_access_key ]]
+    TF_S3_SECRET_KEY: $[[ inputs.tf_s3_secret_key ]]
   rules:
     - !reference [.rules//prevent-duplicate-pipelines,  rules]
     - when: on_success
@@ -76,6 +98,11 @@ include:
 "$[[ inputs.jobs_name_prefix ]]terraform validate$[[ inputs.jobs_name_suffix ]]":
   extends: .terraform-validate
   stage: $[[ inputs.tf_validate_stage ]]
+  variables:
+    TF_DIR: $[[ inputs.tf_dir ]]
+    TF_S3_BACKEND: $[[ inputs.tf_s3_backend ]]
+    TF_S3_ACCESS_KEY: $[[ inputs.tf_s3_access_key ]]
+    TF_S3_SECRET_KEY: $[[ inputs.tf_s3_secret_key ]]
   rules:
     - !reference [.rules//prevent-duplicate-pipelines,  rules]
     - when: on_success
@@ -85,6 +112,11 @@ include:
 "$[[ inputs.jobs_name_prefix ]]terraform apply$[[ inputs.jobs_name_suffix ]]":
   extends: .terraform-apply
   stage: $[[ inputs.tf_apply_stage ]]
+  variables:
+    TF_DIR: $[[ inputs.tf_dir ]]
+    TF_S3_BACKEND: $[[ inputs.tf_s3_backend ]]
+    TF_S3_ACCESS_KEY: $[[ inputs.tf_s3_access_key ]]
+    TF_S3_SECRET_KEY: $[[ inputs.tf_s3_secret_key ]]
   rules:
     - !reference [.rules//prevent-duplicate-pipelines,  rules]
     - !reference [.rules//only-default-branch,          rules]

@@ -10,6 +10,7 @@ include:
   - local: ci-cd-examples/base-and-derived-images/.gitlab-ci.yml
   - local: ci-cd-examples/helm-chart/.gitlab-ci.yml
   - local: ci-cd-examples/simple-image/.gitlab-ci.yml
+  - local: ci-cd-examples/terraform/.gitlab-ci.yml
   - local: ci-cd-examples/test_ansible_collection/.gitlab-ci.yml
   - local: ci-cd-examples/test_ansible_playbook/.gitlab-ci.yml
 

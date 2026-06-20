@@ -10,17 +10,22 @@ variables:
     TF_DIR: .
     TF_IN_AUTOMATION: true
     TF_INPUT: false
+    TF_S3_BACKEND: false
+    TF_S3_ACCESS_KEY: ''
+    TF_S3_SECRET_KEY: ''
   before_script:
     - |
       # --- terraform-base ---------------------------------------------------
       TF_INIT_CLI_ARGS=()
       TF_INIT_CLI_ARGS+=(-input=false)
-      TF_INIT_CLI_ARGS+=(-backend-config=config.s3.tfbackend)
-      TF_INIT_CLI_ARGS+=(-backend-config="access_key=${AWS_TERRAFORM_BUCKET_ACCESS_KEY_ID}")
-      TF_INIT_CLI_ARGS+=(-backend-config="secret_key=${AWS_TERRAFORM_BUCKET_SECRET_ACCESS_KEY}")
 
-      terraform -chdir ${TF_DIR}  init  ${TF_INIT_CLI_ARGS[@]}
+      if [[ "${TF_S3_BACKEND}" == "true" ]]; then
+        TF_INIT_CLI_ARGS+=(-backend-config=config.s3.tfbackend)
+        TF_INIT_CLI_ARGS+=(-backend-config="access_key=${TF_S3_ACCESS_KEY}")
+        TF_INIT_CLI_ARGS+=(-backend-config="secret_key=${TF_S3_SECRET_KEY}")
+      fi
 
+      terraform -chdir=${TF_DIR}  init  ${TF_INIT_CLI_ARGS[@]}
 
 
 # ============================================================================
@@ -30,8 +35,8 @@ variables:
   script:
     - |
       # --- terraform-validate -----------------------------------------------
-      terraform -chdir ${TF_DIR} fmt -check -recursive -diff
-      terraform -chdir ${TF_DIR} validate
+      terraform -chdir=${TF_DIR} fmt -check -recursive -diff
+      terraform -chdir=${TF_DIR} validate
 
 
 # ============================================================================
@@ -52,8 +57,8 @@ variables:
         TF_PLAN_CLI_ARGS+=(-var "${var}")
       done
 
-      terraform -chdir ${TF_DIR} plan ${TF_PLAN_CLI_ARGS[@]}
-      terraform -chdir ${TF_DIR} show tfplan | tee tfplan.txt
+      terraform -chdir=${TF_DIR} plan ${TF_PLAN_CLI_ARGS[@]}
+      terraform -chdir=${TF_DIR} show tfplan | tee tfplan.txt
   artifacts:
     paths:
       - $TF_PLAN_ARTIFACT_BINARY
@@ -70,5 +75,5 @@ variables:
   script:
     - |
       # --- terraform-apply --------------------------------------------------
-      terraform -chdir ${TF_DIR} apply -input=false ${TF_PLAN_ARTIFACT_BINARY}
-      terraform -chdir ${TF_DIR} output
+      terraform -chdir=${TF_DIR} apply -input=false ${TF_PLAN_ARTIFACT_BINARY}
+      terraform -chdir=${TF_DIR} output
