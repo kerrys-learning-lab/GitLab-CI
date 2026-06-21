@@ -1,0 +1,37 @@
+
+
+# ============================================================================
+.aws-stop-instances:
+  stage: .post
+  image: registry.westsidestreet.net/kerrys-learning-lab/devsecops/gitlab-builder/aws:0.2
+  variables:
+    AWS_EC2_FILTER: ''
+  before_script:
+    - !reference [.utilities//load-all, script]
+  script:
+    - |
+      # --- aws-stop-instance ------------------------------------------------
+      if [[ -z "${AWS_EC2_FILTER}" ]]; then
+        fn_log_error "${EMOJI_REDX} AWS_EC2_FILTER is required!"
+        exit 5
+      fi
+
+      AWS_EC2_CLI_ARGS=()
+      AWS_EC2_CLI_ARGS+=(describe-instances)
+      AWS_EC2_CLI_ARGS+=(--filters "${AWS_EC2_FILTER}")
+      AWS_EC2_CLI_ARGS+=(--query)
+      AWS_EC2_CLI_ARGS+=('Reservations[].Instances[].InstanceId')
+      AWS_EC2_CLI_ARGS+=(--output text)
+
+      INSTANCE_IDS=$(aws ec2 ${AWS_EC2_CLI_ARGS[@]})
+
+      if [[ -n "${INSTANCE_IDS}" ]]; then
+        fn_log_info "${EMOJI_CHECKERED_FLAG} Stopping the following EC2 instance(s):"
+        for id in ${INSTANCE_IDS}; do
+          fn_log_info "  -> ${id}"
+        done
+
+        aws ec2 stop-instances --instance-ids ${INSTANCE_IDS}
+      else
+        fn_log_info "${EMOJI_EMPTY_NEST} Nothing to do (no instances matched the given filter)"
+      fi

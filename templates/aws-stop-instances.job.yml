@@ -1,0 +1,48 @@
+# ============================================================================
+# This Pipeline start an environment and schedules it to stop after a
+# pre-determined amount of time.
+spec:
+  inputs:
+
+    # ------------------------------------------------------------------------
+    aws_ec2_filter:
+      description: Filter(s) used to query for EC2 instance(s) to stop
+      type: array
+    aws_stop_stage:
+      description: Assigns the Pipeline stage for the 'stop AWS instances' Job
+      type: string
+      default: deploy
+
+
+    # ------------------------------------------------------------------------
+    # These settings affect Job names for all Jobs instantiated by the component
+    jobs_name_prefix:
+      description: Optional prefix for the Job names
+      type: string
+      default: ''
+    jobs_name_suffix:
+      description: Optional suffix for the Job names
+      type: string
+      default: ''
+
+
+---
+
+
+# ============================================================================
+include:
+  - local: .gitlab-ci/lib/rules.gitlab-ci.yml
+  - local: .gitlab-ci/lib/stages.gitlab-ci.yml
+  - local: .gitlab-ci/jobs/.aws.gitlab-ci.yml
+  - local: .gitlab-ci/jobs/.terraform.gitlab-ci.yml
+
+
+# ============================================================================
+"$[[ inputs.jobs_name_prefix ]]stop AWS instances$[[ inputs.jobs_name_suffix ]]":
+  extends: .aws-stop-instances
+  stage: $[[ inputs.aws_stop_stage ]]
+  variables:
+    AWS_EC2_FILTER: $[[ inputs.aws_ec2_filter ]]
+  rules:
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
+    - !reference [.rules//only-default-branch,          rules]

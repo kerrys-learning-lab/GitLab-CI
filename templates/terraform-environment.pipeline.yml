@@ -68,7 +68,7 @@ spec:
     tf_stop_stage:
       description: Assigns the Pipeline stage for the 'terraform stop' Job
       type: string
-      default: .post
+      default: deploy
     tf_stop_when:
       description: Controls when the 'terraform stop' Job executes
       type: string
