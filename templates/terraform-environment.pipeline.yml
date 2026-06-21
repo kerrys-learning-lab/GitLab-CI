@@ -115,7 +115,7 @@ include:
   extends: .terraform-plan
   stage: $[[ inputs.tf_plan_stage ]]
   variables:
-    TF_EXTRA_VARS: action=$[[ inputs.tf_action ]]
+    TF_EXTRA_VARS: action=start
     TF_DIR: $[[ inputs.tf_dir ]]
     TF_S3_BACKEND: $[[ inputs.tf_s3_backend ]]
     TF_S3_ACCESS_KEY: $[[ inputs.tf_s3_access_key ]]
