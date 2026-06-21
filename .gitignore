@@ -18,4 +18,5 @@
 artifacts
 images
 dist
+tfplan.txt
 version.env

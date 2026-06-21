@@ -1,17 +1,11 @@
 # ============================================================================
+# This Pipeline start an environment and schedules it to stop after a
+# pre-determined amount of time.
 spec:
   inputs:
 
     # ------------------------------------------------------------------------
     # Apply to TF, generally:
-    tf_action:
-      description: Apply (start) or undo (stop) cloud infrastructure using
-                   Terraform.
-      type: string
-      options:
-        - start
-        - stop
-      default: start
     tf_dir:
       description: Directory (relative to repository root) of the Terraform
                    scripts
@@ -43,7 +37,7 @@ spec:
 
 
     # ------------------------------------------------------------------------
-    # Validate Job(s):
+    # Validate Job:
     tf_validate_stage:
       description: Assigns the Pipeline stage for the 'terraform validate' Job
       type: string
@@ -51,18 +45,38 @@ spec:
 
 
     # ------------------------------------------------------------------------
-    # Apply Job(s):
-    tf_apply_stage:
-      description: Assigns the Pipeline stage for the 'terraform apply' Job
+    # Start Job:
+    tf_start_stage:
+      description: Assigns the Pipeline stage for the 'terraform start' Job
       type: string
-      default: build
-    tf_apply_when:
-      description: Controls when the 'terraform apply' Job executes
+      default: deploy
+    tf_start_when:
+      description: Controls when the 'terraform start' Job executes
       type: string
       options:
         - on_success
         - manual
       default: on_success
+    tf_start_job_extends:
+      description: Base Job from which the 'terraform start' Job should extend
+      type: string
+      default: .terraform-apply
+
+
+    # ------------------------------------------------------------------------
+    # Stop Job:
+    tf_stop_stage:
+      description: Assigns the Pipeline stage for the 'terraform stop' Job
+      type: string
+      default: .post
+    tf_stop_when:
+      description: Controls when the 'terraform stop' Job executes
+      type: string
+      default: 4 hours
+    tf_stop_job_extends:
+      description: Base Job from which the 'terraform stop' Job should extend
+      type: string
+      default: .terraform-apply
 
 
     # ------------------------------------------------------------------------
@@ -96,7 +110,7 @@ include:
 
 
 # ============================================================================
-"$[[ inputs.jobs_name_prefix ]]terraform plan ($[[ inputs.tf_action ]])$[[ inputs.jobs_name_suffix ]]":
+"$[[ inputs.jobs_name_prefix ]]terraform plan$[[ inputs.jobs_name_suffix ]]":
   extends: .terraform-plan
   stage: $[[ inputs.tf_plan_stage ]]
   variables:
@@ -125,9 +139,9 @@ include:
 
 
 # ============================================================================
-"$[[ inputs.jobs_name_prefix ]]terraform apply ($[[ inputs.tf_action ]])$[[ inputs.jobs_name_suffix ]]":
-  extends: .terraform-apply
-  stage: $[[ inputs.tf_apply_stage ]]
+"$[[ inputs.jobs_name_prefix ]]terraform start$[[ inputs.jobs_name_suffix ]]":
+  extends: $[[ inputs.tf_start_job_extends ]]
+  stage: $[[ inputs.tf_start_stage ]]
   variables:
     TF_DIR: $[[ inputs.tf_dir ]]
     TF_S3_BACKEND: $[[ inputs.tf_s3_backend ]]
@@ -135,9 +149,30 @@ include:
     TF_S3_SECRET_KEY: $[[ inputs.tf_s3_secret_key ]]
   environment:
     name: $[[ inputs.tf_environment ]]
-    action: $[[ inputs.tf_action ]]
+    action: start
+    on_stop: "$[[ inputs.jobs_name_prefix ]]terraform stop$[[ inputs.jobs_name_suffix ]]"
+    auto_stop_in: $[[ inputs.tf_stop_when ]]
   resource_group: $[[ inputs.tf_environment ]]
   rules:
     - !reference [.rules//prevent-duplicate-pipelines,  rules]
     - !reference [.rules//only-default-branch,          rules]
-    - when: $[[ inputs.tf_apply_when ]]
+    - when: $[[ inputs.tf_start_when ]]
+
+
+# ============================================================================
+"$[[ inputs.jobs_name_prefix ]]terraform stop$[[ inputs.jobs_name_suffix ]]":
+  extends: $[[ inputs.tf_start_job_extends ]]
+  stage: $[[ inputs.tf_stop_stage ]]
+  variables:
+    TF_DIR: $[[ inputs.tf_dir ]]
+    TF_S3_BACKEND: $[[ inputs.tf_s3_backend ]]
+    TF_S3_ACCESS_KEY: $[[ inputs.tf_s3_access_key ]]
+    TF_S3_SECRET_KEY: $[[ inputs.tf_s3_secret_key ]]
+  environment:
+    name: $[[ inputs.tf_environment ]]
+    action: stop
+  resource_group: $[[ inputs.tf_environment ]]
+  rules:
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
+    - !reference [.rules//only-default-branch,          rules]
+    - when: manual
