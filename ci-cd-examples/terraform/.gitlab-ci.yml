@@ -11,4 +11,4 @@ include:
     inputs:
       jobs_name_prefix: "[example] "
       tf_dir: ci-cd-examples/terraform
-      playbook_release_enabled: false
+      tf_environment: ci-cd-examples
