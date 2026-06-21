@@ -104,6 +104,7 @@ spec:
 
 # ============================================================================
 include:
+  - local: templates/pipeline-version.job.yml
   - local: .gitlab-ci/lib/stages.gitlab-ci.yml
   - local: .gitlab-ci/lib/rules.gitlab-ci.yml
   - local: .gitlab-ci/jobs/.terraform.gitlab-ci.yml
