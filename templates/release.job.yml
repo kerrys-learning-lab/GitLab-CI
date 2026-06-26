@@ -10,3 +10,4 @@ release:
   stage: release
   rules:
     - !reference [.rules//only-protected-tags,        rules]
+    - when: on_success
