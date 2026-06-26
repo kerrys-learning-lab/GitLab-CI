@@ -1,13 +1,48 @@
 # ============================================================================
+spec:
+  inputs:
+
+    # ------------------------------------------------------------------------
+    release_stage:
+      description: Assigns the Pipeline stage for the 'release' Job
+      type: string
+      default: release
+    release_enabled:
+      description: If true, and this Pipeline is for a protected tag, a
+                   Release will be created.
+
+                   NOTE -  Only one Job in a Pipeline should create a Release.
+      type: boolean
+      default: true
+
+
+    # ------------------------------------------------------------------------
+    # These settings affect Job names for all Jobs instantiated by the component
+    jobs_name_prefix:
+      description: Optional prefix for the Job names
+      type: string
+      default: ''
+    jobs_name_suffix:
+      description: Optional suffix for the Job names
+      type: string
+      default: ''
+
+
+---
+
+
+# ============================================================================
 include:
   - local: .gitlab-ci/rules.gitlab-ci.yml
   - local: .gitlab-ci/release.gitlab-ci.yml
 
 
 # ============================================================================
-release:
+"$[[ inputs.jobs_name_prefix ]]release$[[ inputs.jobs_name_suffix ]]":
   extends: .release
-  stage: release
+  stage: $[[ inputs.release_stage ]]
   rules:
-    - !reference [.rules//only-protected-tags,        rules]
+    - if: "'$[[ inputs.release_enabled ]]' == 'false'"
+      when: never
+    - !reference [.rules//only-protected-tags,  rules]
     - when: on_success

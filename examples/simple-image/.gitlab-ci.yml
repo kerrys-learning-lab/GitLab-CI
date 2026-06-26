@@ -19,6 +19,4 @@ include:
       image_build_context: examples/simple-image
       image_unit_test_enabled: false
       image_structure_test_enabled: false
-      # Only one job in the Pipeline can create a Release... we defer to the
-      # 'main' Pipeline:
       image_release_enabled: false

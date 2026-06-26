@@ -17,6 +17,4 @@ include:
       jobs_name_prefix: "[example] "
       helm_chart_dir: examples/helm-chart
       helm_unit_test_chart_dir: examples/helm-chart
-      # Only one job in the Pipeline can create a Release... we defer to the
-      # 'main' Pipeline:
       helm_release_enabled: false
