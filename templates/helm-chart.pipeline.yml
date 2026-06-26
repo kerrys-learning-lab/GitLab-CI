@@ -120,9 +120,11 @@ spec:
 include:
   - local: templates/pipeline-version.job.yml
   - local: templates/release.job.yml
-    rules:
-      - if: "'$[[ inputs.helm_release_enabled ]]' == 'false'"
-        when: never
+    inputs:
+      release_enabled: $[[ inputs.helm_release_enabled ]]
+      release_stage: $[[ inputs.helm_release_stage ]]
+      jobs_name_prefix: $[[ inputs.jobs_name_prefix ]]
+      jobs_name_suffix: $[[ inputs.jobs_name_suffix ]]
   - local: .gitlab-ci/helm.gitlab-ci.yml
   - local: .gitlab-ci/defaults.gitlab-ci.yml
   - local: .gitlab-ci/stages.gitlab-ci.yml
