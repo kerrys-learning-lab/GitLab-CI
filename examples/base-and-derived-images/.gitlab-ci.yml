@@ -33,8 +33,6 @@ include:
       image_unit_test_enabled: false
       image_structure_test_enabled: true
       image_structure_test_filenames: examples/base-and-derived-images/tests/image-structure-tests-base.yaml
-      # Only one job in the Pipeline can create a Release... we defer to the
-      # 'main' Pipeline:
       image_release_enabled: false
 
 
@@ -53,6 +51,4 @@ include:
         - pipeline version
         - "[example] image build (base)"
       image_structure_test_filenames: examples/base-and-derived-images/tests/image-structure-tests-derived.yaml
-      # Only one job in the Pipeline can create a Release... we defer to the
-      # 'main' Pipeline:
       image_release_enabled: false

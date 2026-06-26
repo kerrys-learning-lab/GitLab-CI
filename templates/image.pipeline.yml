@@ -179,9 +179,11 @@ spec:
 include:
   - local: templates/pipeline-version.job.yml
   - local: templates/release.job.yml
-    rules:
-      - if: "'$[[ inputs.image_release_enabled ]]' == 'false'"
-        when: never
+    inputs:
+      release_enabled: $[[ inputs.image_release_enabled ]]
+      release_stage: $[[ inputs.image_release_stage ]]
+      jobs_name_prefix: $[[ inputs.jobs_name_prefix ]]
+      jobs_name_suffix: $[[ inputs.jobs_name_suffix ]]
   - local: .gitlab-ci/image.gitlab-ci.yml
   - local: .gitlab-ci/defaults.gitlab-ci.yml
   - local: .gitlab-ci/stages.gitlab-ci.yml
@@ -255,3 +257,4 @@ workflow:
       when: never
     - if: "'$[[ inputs.image_promote_option ]]' == 'force'"
     - !reference [.rules//only-protected-refs,        rules]
+    - when: on_success

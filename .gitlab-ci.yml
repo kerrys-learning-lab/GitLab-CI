@@ -2,24 +2,25 @@
 include:
 
   # --------------------------------------------------------------------------
+  # Standard includes:
   - local: templates/pipeline-version.job.yml
+  - local: templates/release.job.yml
+  - local: .gitlab-ci/stages.gitlab-ci.yml
 
   # --------------------------------------------------------------------------
+  # Artifacts:
   - local: templates/image.pipeline.yml
     inputs:
       image_name: base-builder
       image_unit_test_enabled: false
+      image_release_enabled: false
 
   # --------------------------------------------------------------------------
-  - local: templates/release.job.yml
-
-  # --------------------------------------------------------------------------
+  # Testing:
   - local: .gitlab-ci/bashunit.gitlab-ci.yml
 
   # --------------------------------------------------------------------------
-  - local: .gitlab-ci/stages.gitlab-ci.yml
-
-  # --------------------------------------------------------------------------
+  # Child pipelines:
   - local: templates/trigger-child-pipeline.job.yml
     inputs:
       local_path: examples/base-and-derived-images/.gitlab-ci.yml
