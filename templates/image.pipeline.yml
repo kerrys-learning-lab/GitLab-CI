@@ -182,7 +182,7 @@ include:
     inputs:
       release_enabled: $[[ inputs.image_release_enabled ]]
       release_stage: $[[ inputs.image_release_stage ]]
-      jobs_name_prefix: $[[ inputs.jobs_name_prefix ]]
+      jobs_name_prefix: $[[ inputs.jobs_name_prefix ]]image
       jobs_name_suffix: $[[ inputs.jobs_name_suffix ]]
   - local: .gitlab-ci/image.gitlab-ci.yml
   - local: .gitlab-ci/defaults.gitlab-ci.yml
