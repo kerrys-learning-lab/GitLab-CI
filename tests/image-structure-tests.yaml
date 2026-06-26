@@ -1,0 +1,51 @@
+schemaVersion: "2.0.0"
+
+commandTests:
+  - name: podman version
+    command: podman
+    args:
+      - version
+    expectedOutput:
+      - "Version:\\s+5.\\d+.\\d+"
+  - name: helm version
+    command: helm
+    args:
+      - version
+    expectedOutput:
+      - "Version:\"v4.\\d+.\\d+"
+  - name: glab version
+    command: glab
+    args:
+      - --version
+    expectedOutput:
+      - "glab\\s+1.105.\\d+"
+  - name: bashunit version
+    envVars:
+      - key: NO_COLOR
+        value: 1
+    command: bashunit
+    args:
+      - --version
+    expectedOutput:
+      - "bashunit\\s+-\\s+0.38.\\d+"
+fileExistenceTests:
+  - name: ci-semver
+    path: /bin/ci-semver
+    shouldExist: true
+    isExecutableBy: any
+  - name: ci-image-build-args
+    path: /bin/ci-image-build-args
+    shouldExist: true
+    isExecutableBy: any
+  - name: ci-image-build-secrets
+    path: /bin/ci-image-build-secrets
+    shouldExist: true
+    isExecutableBy: any
+  - name: ci-image-label
+    path: /bin/ci-image-labels
+    shouldExist: true
+    isExecutableBy: any
+metadataTest:
+  labels:
+    - key: org.opencontainers.image.title
+      value: Core Pipelines

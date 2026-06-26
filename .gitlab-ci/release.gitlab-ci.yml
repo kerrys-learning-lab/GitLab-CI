@@ -1,0 +1,33 @@
+# ============================================================================
+.release:
+  variables:
+    ARTIFACT_TYPES:
+      image
+      helm-chart
+  script:
+    - |
+      # --- release ----------------------------------------------------------
+      echo "Creating release: ${CI_COMMIT_TAG}"
+
+      RELEASE_README_FILEPATH=RELEASE.md
+      echo "# Release ${CI_COMMIT_TAG}"   >> ${RELEASE_README_FILEPATH}
+      echo ""                             >> ${RELEASE_README_FILEPATH}
+
+      for type in ${ARTIFACT_TYPES}; do
+        md_file_list=$(ls -1 .release/${type}.*.md 2> /dev/null || true)
+        if [[ -n "${md_file_list}" ]]; then
+          artifact_type_label=${type//-/ }
+          artifact_type_label=$(str-title-case ${artifact_type_label})
+
+          echo "## ${artifact_type_label}(s)" >> ${RELEASE_README_FILEPATH}
+          echo ""                             >> ${RELEASE_README_FILEPATH}
+
+          for md in ${md_file_list}; do
+            cat ${md}                         >> ${RELEASE_README_FILEPATH}
+            echo ""                           >> ${RELEASE_README_FILEPATH}
+          done
+        fi
+      done
+  release:
+    tag_name: $CI_COMMIT_TAG
+    description: RELEASE.md

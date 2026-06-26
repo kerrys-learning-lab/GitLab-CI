@@ -123,11 +123,17 @@ include:
     rules:
       - if: "'$[[ inputs.helm_release_enabled ]]' == 'false'"
         when: never
-  - local: .gitlab-ci/jobs/.helm.gitlab-ci.yml
-  - local: .gitlab-ci/lib/defaults.gitlab-ci.yml
-  - local: .gitlab-ci/lib/stages.gitlab-ci.yml
-  - local: .gitlab-ci/lib/rules.gitlab-ci.yml
-  - local: .gitlab-ci/lib/utilities.gitlab-ci.yml
+  - local: .gitlab-ci/helm.gitlab-ci.yml
+  - local: .gitlab-ci/defaults.gitlab-ci.yml
+  - local: .gitlab-ci/stages.gitlab-ci.yml
+  - local: .gitlab-ci/rules.gitlab-ci.yml
+
+
+# ============================================================================
+workflow:
+  name: Helm Chart Pipeline
+  rules:
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
 
 
 # ============================================================================
@@ -137,9 +143,6 @@ include:
   variables:
     HELM_CHART_DIR:  $[[ inputs.helm_chart_dir ]]
   needs: $[[ inputs.helm_package_needs ]]
-  rules:
-    - !reference [.rules//not-a-merge-request,  rules]
-    - when: on_success
 
 
 # ============================================================================
@@ -150,7 +153,6 @@ include:
     HELM_CHART_DIR:  $[[ inputs.helm_unit_test_chart_dir ]]
     HELM_UNITTEST_FILE_GLOB: $[[ inputs.helm_unit_test_file_glob ]]
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
     - if: "'$[[ inputs.helm_unit_test_enabled ]]' == 'false'"
       when: never
     - when: on_success
@@ -167,8 +169,7 @@ include:
     HELM_REPO_PIPELINE_PUSH_PASSWORD: $[[ inputs.helm_push_repo_password ]]
     HELM_REPO_PIPELINE_PUSH_CHANNEL: devel
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
     - if: "'$[[ inputs.helm_push_option ]]' == 'skip'"
       when: never
     - if: "'$[[ inputs.helm_push_option ]]' == 'force'"
-    - !reference [.rules//protected-ref,        rules]
+    - !reference [.rules//only-protected-refs,        rules]

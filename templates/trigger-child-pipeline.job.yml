@@ -4,15 +4,9 @@ spec:
 
 
     # ------------------------------------------------------------------------
-    downstream_project_name:
-      description: The full name and namespace of the downstream project to
-                   be triggered
+    local_path:
+      description: The relative path to the child Pipeline to be triggered
       type: string
-    downstream_project_ref:
-      description: The ref (branch, tag) of the downstream project Pipeline
-                   to be triggered
-      type: string
-      default: main
 
 
     # ------------------------------------------------------------------------
@@ -50,11 +44,9 @@ include:
 
 
 # ----------------------------------------------------------------------------
-"$[[ inputs.jobs_name_prefix ]]trigger downstream$[[ inputs.jobs_name_suffix ]]":
+"$[[ inputs.jobs_name_prefix ]]trigger child$[[ inputs.jobs_name_suffix ]]":
   stage: $[[ inputs.trigger_stage ]]
   trigger:
-    project: $[[ inputs.downstream_project_name ]]
-    branch: $[[ inputs.downstream_project_ref ]]
+    include:
+      - local: $[[ inputs.local_path ]]
     strategy: mirror
-  rules:
-    - !reference [.rules//only-default-branch, rules]

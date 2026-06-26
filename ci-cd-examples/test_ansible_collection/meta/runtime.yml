@@ -1,5 +1,0 @@
----
-# Minimum ansible-core the collection's roles are tested against.
-# Home Lab and Cloud Lab both run ansible-core 2.20.x; 2.15 is the floor we
-# are willing to support.
-requires_ansible: ">=2.15.0"

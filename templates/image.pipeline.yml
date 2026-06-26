@@ -26,15 +26,24 @@ spec:
       description: The image build target, if applicable
       type: string
       default: ''
+    image_build_cache_from:
+      description: Enables potential image build cache source
+      type: boolean
+      default: true
+    image_build_cache_to:
+      description: Enables potential image build cache destination
+      type: boolean
+      default: true
     image_build_ignorefile:
       description: The relative path to the ignorefile, if applicable
       type: string
       default: .dockerignore
-    image_build_base_image_name:
-      description: Set to the base image's short-name *if this image is
-                   derived from a base image produced by this same Pipeline.
-                   The base image produced by this Pipeline will be injected
-                   into the child image's build process as the BASE_IMAGE build-arg.
+    image_build_parent_image_name:
+      description: Set to the base image's short-name if *this* image is
+                   derived from a base image produced by another job in this
+                   same Pipeline.  The base image produced by this Pipeline
+                   will be injected into the child image's build process as
+                   the BASE_IMAGE build-arg.
 
                    NOTE - Be sure and set this Job's 'image_build_needs' to
                           the name of the Job which builds the base image!
@@ -95,7 +104,7 @@ spec:
       description: If not empty, the image will be unit tested by building and
                    executing the corresponding target
       type: string
-      default: test/image-structure-test.yaml
+      default: tests/image-structure-tests.yaml
     image_structure_test_stage:
       description: Assigns the Pipeline stage for the 'image structure-test' Job
       type: string
@@ -165,6 +174,7 @@ spec:
 
 ---
 
+
 # ============================================================================
 include:
   - local: templates/pipeline-version.job.yml
@@ -172,12 +182,17 @@ include:
     rules:
       - if: "'$[[ inputs.image_release_enabled ]]' == 'false'"
         when: never
-  - local: .gitlab-ci/jobs/.image.gitlab-ci.yml
-  - local: .gitlab-ci/lib/defaults.gitlab-ci.yml
-  - local: .gitlab-ci/lib/image-settings.gitlab-ci.yml
-  - local: .gitlab-ci/lib/stages.gitlab-ci.yml
-  - local: .gitlab-ci/lib/utilities.gitlab-ci.yml
-  - local: .gitlab-ci/lib/rules.gitlab-ci.yml
+  - local: .gitlab-ci/image.gitlab-ci.yml
+  - local: .gitlab-ci/defaults.gitlab-ci.yml
+  - local: .gitlab-ci/stages.gitlab-ci.yml
+  - local: .gitlab-ci/rules.gitlab-ci.yml
+
+
+# ============================================================================
+workflow:
+  name: OCI Image Pipeline
+  rules:
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
 
 
 # ============================================================================
@@ -190,11 +205,10 @@ include:
     IMAGE_BUILD_CONTEXT:  $[[ inputs.image_build_context ]]
     IMAGE_BUILD_IGNOREFILE: $[[ inputs.image_build_ignorefile ]]
     IMAGE_BUILD_TARGET:  $[[ inputs.image_build_target ]]
-    IMAGE_BUILD_BASE_IMAGE_NAME: $[[ inputs.image_build_base_image_name ]]
+    IMAGE_BUILD_PARENT_IMAGE_NAME: $[[ inputs.image_build_parent_image_name ]]
+    IMAGE_BUILD_CACHE_FROM: $[[ inputs.image_build_cache_from ]]
+    IMAGE_BUILD_CACHE_TO: $[[ inputs.image_build_cache_to ]]
   needs: $[[ inputs.image_build_needs ]]
-  rules:
-    - !reference [.rules//not-a-merge-request,  rules]
-    - when: on_success
 
 
 # ============================================================================
@@ -202,7 +216,7 @@ include:
   extends: .image-unit-test
   stage: $[[ inputs.image_unit_test_stage ]]
   variables:
-    IMAGE_BUILD_NAME: $[[ inputs.image_name ]]-unit-test
+    IMAGE_BUILD_NAME: $[[ inputs.image_name ]]
     IMAGE_BUILD_DOCKERFILE: $[[ inputs.image_build_dockerfile ]]
     IMAGE_BUILD_CONTEXT:  $[[ inputs.image_build_context ]]
     IMAGE_BUILD_IGNOREFILE: $[[ inputs.image_build_ignorefile ]]
@@ -210,7 +224,6 @@ include:
     IMAGE_UNITTEST_CONTAINER_OUTPUT_DIR: $[[ inputs.image_unit_test_container_output_dir ]]
     IMAGE_UNITTEST_CONTAINER_OUTPUT_FILE: $[[ inputs.image_unit_test_results_filename ]]
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
     - if: "'$[[ inputs.image_unit_test_enabled ]]' == 'false'"
       when: never
     - when: on_success
@@ -224,7 +237,6 @@ include:
     IMAGE_BUILD_NAME: $[[ inputs.image_name ]]
     IMAGE_STRUCTURE_TEST_FILENAMES: "$[[ inputs.image_structure_test_filenames ]]"
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
     - if: "'$[[ inputs.image_structure_test_enabled ]]' == 'false'"
       when: never
     - when: on_success
@@ -239,8 +251,7 @@ include:
     IMAGE_PROMOTE_RELEASE_TRAIN: $[[ inputs.image_promote_release_train ]]
     IMAGE_PROMOTE_SEMANTIC_VERSION: $[[ inputs.image_promote_semantic_version ]]
   rules:
-    - !reference [.rules//not-a-merge-request,  rules]
     - if: "'$[[ inputs.image_promote_option ]]' == 'skip'"
       when: never
     - if: "'$[[ inputs.image_promote_option ]]' == 'force'"
-    - !reference [.rules//protected-ref,        rules]
+    - !reference [.rules//only-protected-refs,        rules]
