@@ -34,7 +34,7 @@ include:
 
 ### Local includes within a project
 
-If you keep your pipeline definition in this repo (e.g. the `ci-cd-examples/`), you
+If you keep your pipeline definition in this repo (e.g. the `examples/`), you
 reference the component by path instead:
 
 ```yaml
@@ -77,7 +77,7 @@ include:
 | `image_build_needs`              | `[]`                             | DAG `needs:` for the build job.                                  |
 | `image_unit_test_enabled`        | `true`                           | Build + run the `unittest` target.                               |
 | `image_structure_test_enabled`   | `true`                           | Run structure tests.                                             |
-| `image_structure_test_filenames` | `test/image-structure-test.yaml` | Space-separated structure-test config file(s).                   |
+| `image_structure_test_filenames` | `tests/image-structure-test.yaml` | Space-separated structure-test config file(s).                   |
 | `image_promote_option`           | `protected`                      | `protected` \| `force` (push on any ref) \| `skip` (never push). |
 | `image_release_enabled`          | `true`                           | Create a Release on protected tags.                              |
 
@@ -189,7 +189,7 @@ release-train `X.Y` and the full SemVer.
 
 ## Testing this repo
 
-Components and their `ci-cd-examples/` are exercised with
+Components and their `examples/` are exercised with
 [`gitlab-ci-local`](https://github.com/firecow/gitlab-ci-local). **`git add`
 all relevant files first** (it only sees tracked content):
 

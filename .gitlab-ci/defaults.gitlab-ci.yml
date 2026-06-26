@@ -1,0 +1,5 @@
+# ============================================================================
+default:
+  image:
+    name: $GITLABCI_DEFAULT_IMAGE_NAME:backstop
+    pull_policy: if-not-present

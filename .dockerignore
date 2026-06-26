@@ -1,6 +1,2 @@
 *
-!data
-!pyproject.toml
-!src
-!tests
-!uv.lock
+!context

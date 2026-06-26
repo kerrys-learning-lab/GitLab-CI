@@ -1,0 +1,14 @@
+.sbom-base:
+  image:
+    name: registry.gitlab.com/gitlab-ci-utils/container-images/syft:latest
+    entrypoint: [""]
+  stage: test
+  needs: []
+  script:
+    - /syft/syft $CI_PROJECT_DIR -o cyclonedx-json=syft.cdx.json
+  artifacts:
+    paths:
+      - syft.cdx.json
+    reports:
+      cyclonedx:
+        - syft.cdx.json

@@ -1,8 +1,3 @@
-include:
-  - local: .gitlab-ci/lib/pipeline-version.gitlab-ci.yml
-  - local: .gitlab-ci/lib/utilities.gitlab-ci.yml
-
-
 # ============================================================================
 # Calculates this pipeline's Semantic Version information and writes
 # the variables to .dotenv/version.env
@@ -27,23 +22,10 @@ pipeline version:
   variables:
     PIPELINE_VERSION_DOTENV_FILE: .dotenv/version.env
   script:
-    - !reference [.utilities//load-all,         script]
-    - !reference [.pipeline-version//load-all,  script]
     - |
       # --- pipeline version -------------------------------------------------
-
-      # --- Invoke the function to determine SemVer based on CI_COMMIT_TAG or
-      #     CI_COMMIT_BRANCH (see '.gitlab-ci/lib/pipeline-version.gitlab-ci.yml')
-      fn_calculate_pipeline_version
-
-      # --- Write the environment variable results to file
-      rm -f ${PIPELINE_VERSION_DOTENV_FILE}
       mkdir -p $(dirname ${PIPELINE_VERSION_DOTENV_FILE})
-      for varname in $(compgen -v GITLABCI_); do
-        fn_log_info "$(fn_random_emoji) ${varname}=${!varname}"
-
-        echo "${varname}=${!varname}" >> ${PIPELINE_VERSION_DOTENV_FILE}
-      done
+      ci-semver > ${PIPELINE_VERSION_DOTENV_FILE}
   artifacts:
     paths:
       - $PIPELINE_VERSION_DOTENV_FILE

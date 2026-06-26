@@ -1,0 +1,57 @@
+# ============================================================================
+.rules//only-default-branch:
+  rules:
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: never
+
+
+# ============================================================================
+.rules//exclude-default-branch:
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: never
+
+
+# ============================================================================
+.rules//only-protected-refs:
+  rules:
+    - if: $CI_COMMIT_REF_PROTECTED != "true"
+      when: never
+
+
+# ============================================================================
+.rules//only-protected-tags:
+  rules:
+    - if: $CI_COMMIT_BRANCH
+      when: never
+    - if: $CI_COMMIT_REF_PROTECTED != "true"
+      when: never
+
+
+# ============================================================================
+.rules//prevent-duplicate-pipelines:
+  rules:
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS && $CI_PIPELINE_SOURCE == "push"
+      when: never
+    - when: always
+
+
+# ============================================================================
+.rules//not-a-merge-request:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: never
+
+
+# ============================================================================
+.rules//gitlab-ci:
+  rules:
+    - if: $GITLAB_CI != "true"
+      when: never
+
+
+# ============================================================================
+.rules//gitlab-ci-local:
+  rules:
+    - if: $GITLAB_CI == "true"
+      when: never

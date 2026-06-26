@@ -1,17 +1,44 @@
 # ============================================================================
 include:
+
+  # --------------------------------------------------------------------------
   - local: templates/pipeline-version.job.yml
+
+  # --------------------------------------------------------------------------
+  - local: templates/image.pipeline.yml
+    inputs:
+      image_name: base-builder
+      image_unit_test_enabled: false
+
+  # --------------------------------------------------------------------------
   - local: templates/release.job.yml
-  - local: .gitlab-ci/jobs/.bashunit.gitlab-ci.yml
-  - local: .gitlab-ci/jobs/.image.gitlab-ci.yml
-  - local: .gitlab-ci/lib/image-settings.gitlab-ci.yml
-  - local: .gitlab-ci/lib/pipeline-version.gitlab-ci.yml
-  - local: .gitlab-ci/lib/stages.gitlab-ci.yml
-  - local: ci-cd-examples/base-and-derived-images/.gitlab-ci.yml
-  - local: ci-cd-examples/helm-chart/.gitlab-ci.yml
-  - local: ci-cd-examples/simple-image/.gitlab-ci.yml
-  - local: ci-cd-examples/test_ansible_collection/.gitlab-ci.yml
-  - local: ci-cd-examples/test_ansible_playbook/.gitlab-ci.yml
+
+  # --------------------------------------------------------------------------
+  - local: .gitlab-ci/bashunit.gitlab-ci.yml
+
+  # --------------------------------------------------------------------------
+  - local: .gitlab-ci/stages.gitlab-ci.yml
+
+  # --------------------------------------------------------------------------
+  - local: templates/trigger-child-pipeline.job.yml
+    inputs:
+      local_path: examples/base-and-derived-images/.gitlab-ci.yml
+      jobs_name_suffix: " (base-and-derived images)"
+  - local: templates/trigger-child-pipeline.job.yml
+    inputs:
+      local_path: examples/helm-chart/.gitlab-ci.yml
+      jobs_name_suffix: " (helm chart)"
+  - local: templates/trigger-child-pipeline.job.yml
+    inputs:
+      local_path: examples/simple-image/.gitlab-ci.yml
+      jobs_name_suffix: " (simple image)"
+
+
+# ============================================================================
+workflow:
+  name: Core Pipelines
+  rules:
+    - !reference [.rules//prevent-duplicate-pipelines,  rules]
 
 
 
@@ -19,18 +46,4 @@ include:
 bash unit-test:
   extends: .bash-unit-test
   variables:
-    BASH_UNITTEST_TEST_PATH: tests/*.test.sh
-  before_script:
-    - !reference [.utilities//load-all,         script]
-    - !reference [.pipeline-version//load-all,  script]
-    - !reference [.image-settings//load-all,    script]
-    - |
-      # --- bash unit-test (before_script) -----------------------------------
-
-      # These environment variables need to be exported to the bashunit
-      # context:
-      BASH_UNITTEST_EXPORT_ENV+="$(compgen -v RELEASE_) "
-
-      # These bash functions (from the !reference above) need to be exported to
-      # the bashunit context:
-      BASH_UNITTEST_EXPORT_FUNCTIONS="$(compgen -A function fn_)"
+    BASH_UNITTEST_TEST_PATH: tests/*.tests.sh
